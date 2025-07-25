@@ -2,6 +2,13 @@
 
 Полнофункциональное решение для автоматической аннотации телефонных разговоров в контейнере Docker под Gentoo Linux (amd64). CallAnnotate предоставляет разработм и системным администраторам гибкий серверный компонент с WebSocket и REST/JSON API, способный асинхронно обрабатывать аудиозаписи любой длительности и сложности, используя ресурсы CPU или при необходимости GPU.
 
+<!-- Badges -->
+[![CI Status](https://github.com/momentics/CallAnnotate/actions/workflows/ci.yml/badge.svg)](https://github.com/moment/CallAnnotate/actions/workflows/ci.yml)  
+[![Latest Release](https://img.shields.io/github/v/release/momentics/CallAnnotate?style=for-the-badge)](https://github.com/momentics/CallAnnotate/releases)  
+[![License](https://img.shields.io/github/license/momentics/CallAnnotate?style=for-the-badge)](https://github.com/momentics/CallAnnotate/blob/main/LICENSE)  
+[![Last Commit](https://img.shields.io/github/last-commit/momentics/CallAnnotate?style=for-the-badge)](https://github.com/momentics/CallAnnotate/commits/main)  
+
+
 ## Основные возможности
 
 1. **Docker-образ на базе Alpine Linux (amd64)**

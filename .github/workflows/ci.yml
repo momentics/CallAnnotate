@@ -2,25 +2,19 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
+  release:
+    types: [ published ]
 
 jobs:
-  build:
-    runs-on: ubuntuatest
-    services:
-      docker:
-        image: docker:24-cli
-        options: --privileged
-        ports:
-          - 2375:2375
-
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Python 3.13
         uses: actions/setup-python@v4
@@ -28,20 +22,23 @@ jobs:
           python-version: '3.13'
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r dev-requirements.txt
+        run: pip install -r src/requirements.txt
 
       - name: Run tests
-        run: |
-          pytest --maxfail=1 --disable-warnings -q
+        run: pytest tests/
 
-      - name: Build Docker container
+  build-docker:
+    name: Build Docker on Release
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
         run: |
           docker build \
             --file docker/Dockerfile \
-            --tag momentics/callannotate:ci \
+            --tag momentics/callannotate:latest \
             .
-
-      # публикация образа добавим позже
