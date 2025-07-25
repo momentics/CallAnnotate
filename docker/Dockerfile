@@ -1,39 +1,36 @@
-# Используем минимальный образ Alpine Linux
-FROM alpine:latest
+# Используем официальный образ Python slim на базе Debian Bookworm
+FROM python:3.13-slim-bookworm
 
-# Устанавливаем системные зависимости для сборки Python-расширений и работы с аудио
-RUN apk update && \
-    apk add --no-cache \
-      python3 \
-      py3-pip \
-      python3-dev \
-      build-base \
-      libsndfile-dev \
+# Метаданные
+LABEL maintainer="akoodoy@capilot.ru"
+LABEL repository="https://github.com/momentics/CallAnnotate"
+LABEL license="Apache-2.0"
+
+# Устанавливаем системные зависимости
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
       ffmpeg \
       curl \
       git \
-    && pip3 install --no-cache-dir --upgrade pip
+    && rm -rf /var/lib/apt/lists/*
 
+# Создаём рабочую директорию
 WORKDIR /app
 
-# Копируем файл зависимостей и устанавливаем PyTorch и остальные библиотеки
-# Устанавливаем CPU-версию PyTorch из официального индекса, затем pyannote.audio
+# Копируем и устанавливаем Python-зависимости
 COPY src/requirements.txt .
-RUN pip3 install --no-cache-dir \
-      torch==2.0.1+cpu \
-      torchvision==0.15.2+cpu \
-      torchaudio==2.0.2+cpu \
-      --index-url https://download.pytorch.org/whl/cpu && \
-    pip3 install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Копируем исходники и конфиг
+# Копируем исходный код и конфигурацию
 COPY src/ ./src/
 COPY config/default.yaml ./config/default.yaml
 
-# Создаём папку для эмбеддингов
+# Создаём папку для хранения эмбеддингов голосов
 RUN mkdir -p /app/embeddings
 
+# Открываем порт для HTTP/WebSocket
 EXPOSE 8000
 
-# Команда запуска
-CMD ["python3", "src/app.py", "--config", "config/default.yaml"]
+# Точка входа
+CMD ["python", "src/app.py", "--config", "config/default.yaml"]
