@@ -1,8 +1,2 @@
-fastapi
-uvicorn
-numpy
-scikit-learn
-pydub
-webrtcvad
-python-carddav
 pytest
+pyannote.audio
