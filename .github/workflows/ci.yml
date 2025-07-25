@@ -2,20 +2,46 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntuatest
+    services:
+      docker:
+        image: docker:24-cli
+        options: --privileged
+        ports:
+          - 2375:2375
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
         uses: actions/setup-python@v4
         with:
           python-version: '3.13'
+
       - name: Install dependencies
-        run: pip install -r src/requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r dev-requirements.txt
+
       - name: Run tests
-        run: pytest tests/
+        run: |
+          pytest --maxfail=1 --disable-warnings -q
+
+      - name: Build Docker container
+        run: |
+          docker build \
+            --file docker/Dockerfile \
+            --tag momentics/callannotate:ci \
+            .
+
+      # публикация образа добавим позже
