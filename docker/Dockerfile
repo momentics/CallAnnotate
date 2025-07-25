@@ -8,6 +8,7 @@ RUN apk update && \
       py3-pip \
       ffmpeg \
       curl \
+      git \
       && \
     # Обновляем pip и устанавливаем Python-зависимости
     pip3 install --no-cache-dir --upgrade pip
