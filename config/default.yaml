@@ -1,0 +1,32 @@
+# Apache-2.0 License
+# Author: akoodoy@capilot.ru
+# Repository: https://github.com/mics/CallAnnotate
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+carddav:
+  url: "https://carddav.example.com"
+  username: "user@example.com"
+  password: "changeme"
+  contact_group: "CallAnnotate Contacts"
+
+paths:
+  embeddings_dir: "./embeddings"
+  transcription_model: "default-model"
+  diarization_model: "default-model"
+
+asr:
+  engine: "whisper"
+  language: "en"
+
+recognition:
+  threshold: 0.75
+
+annotation:
+  output_file: "report.json"

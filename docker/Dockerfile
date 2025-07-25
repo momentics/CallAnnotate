@@ -7,20 +7,16 @@ LABEL repository="https://github.com/momentics/CallAnnotate"
 LABEL license="Apache-2.0"
 
 # Устанавливаем системные зависимости
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
       ffmpeg \
-      curl \
-      git \
-    && rm -rf /var/lib/apt/lists/*
+      curl 
 
 # Создаём рабочую директорию
 WORKDIR /app
 
 # Копируем и устанавливаем Python-зависимости
 COPY src/requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем исходный код и конфигурацию
 COPY src/ ./src/
