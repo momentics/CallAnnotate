@@ -37,5 +37,10 @@ Copyright (c) 2020-2024 Manuel Pariente
 Licensed under the MIT License
 https://github.com/asteroid-team/asteroid-filterbanks
 
+torchaudio
+Copyright (c) 2017 Facebook Inc. (Soumith Chintala)
+Licensed under the BSD 2-Clause License
+https://github.com/pytorch/audio
+
 For complete license texts, see the LICENSE file and individual 
 component documentation.
