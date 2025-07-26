@@ -48,41 +48,83 @@ class TaskResult:
 
 class QueueManager:
     """Менеджер очереди задач для обработки аудиофайлов"""
-    
-    def __init__(self, config: Dict[str, Any]):
+
+    def __init__(
+        self,
+        config: Dict[str, Any] = None,
+        *,
+        volume_path: str = None,
+        max_queue_size: int = None , max_concurrent_tasks: int = None,
+        task_timeout: int = None,
+        cleanup_interval: int = None
+        ):
+        """
+        Менеджер очереди задач.
+        
+        Args:
+            config: словарь конфигурации (из YAML). Если не передан, читаем из env.
+            volume_path: путь к корню volume, переопределяет config['volume_path'].
+            max_queue_size: максимальный размер очереди, переопределяет config['max_queue_size'].
+            max_concurrent_tasks: количество параллельных задач, переопределяет config['max_concurrent_tasks'].
+            task_timeout: таймаут задачи, переопределяет config['task_timeout'].
+            cleanup_interval: интервал очистки, переопределяет config['cleanup_interval'].
+        """
+        import yaml
+        from pathlib import Path
+
+        # Загружаем базовый config из переданного словаря или из YAML по env
+        if config is None:
+            base_dir = Path(__file__).resolve().parent.parent.parent
+            config_file = base_dir / "config" / "default.yaml"
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f).get('queue', {})
+
+        # Переопределяем параметры, если они переданы явно
+        if volume_path is not None:
+            config['volume_path'] = volume_path
+        if max_queue_size is not None:
+            config['max_queue_size'] = max_queue_size
+        if max_concurrent_tasks is not None:
+            config['max_concurrent_tasks'] = max_concurrent_tasks
+        if task_timeout is not None:
+            config['task_timeout'] = task_timeout
+        if cleanup_interval is not None:
+            config['cleanup_interval'] = cleanup_interval
+
         self.config = config
         self.logger = logging.getLogger(__name__)
-        
+
         # Параметры очереди
         self.max_concurrent_tasks = config.get('max_concurrent_tasks', 2)
         self.max_queue_size = config.get('max_queue_size', 100)
-        self.task_timeout = config.get('task_timeout', 3600)  # 1 час
-        self.cleanup_interval = config.get('cleanup_interval', 300)  # 5 минут
-        
+        self.task_timeout = config.get('task_timeout', 3600)  # сек
+        self.cleanup_interval = config.get('cleanup_interval', 300)  # сек
+
         # Пути для файловой системы
-        self.volume_path = Path(config.get('volume_path', '/volume'))
+        self.volume_path = Path(config.get('volume_path', '/app/volume'))
         self.queue_path = self.volume_path / 'queue'
         self.logs_path = self.volume_path / 'logs'
-        
+
         # Создание необходимых директорий
         self._create_directories()
-        
+
         # Внутренние структуры данных
         self.tasks: Dict[str, TaskResult] = {}
         self.task_queue: asyncio.Queue = asyncio.Queue(maxsize=self.max_queue_size)
         self.processing_tasks: Dict[str, asyncio.Task] = {}
-        self.task_subscribers: Dict[str, List[str]] = {}  # task_id -> [client_ids]
-        
+        self.task_subscribers: Dict[str, List[str]] = {}
+
         # Воркеры и управление
         self.workers: List[asyncio.Task] = []
         self.is_running = False
         self.shutdown_event = asyncio.Event()
-        
+
         # Thread pool для CPU-интенсивных задач
         self.executor = ThreadPoolExecutor(max_workers=self.max_concurrent_tasks)
-        
+
         # Блокировка для thread-safe операций
         self.lock = threading.RLock()
+
     
     def _create_directories(self):
         """Создание необходимых директорий"""

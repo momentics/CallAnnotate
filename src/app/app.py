@@ -86,9 +86,14 @@ class WebSocketManager:
             self.disconnect(client_id)
 
 
-def create_app(config_path: str = "/app/config/default.yaml") -> FastAPI:
+def create_app(config_path: str = None) -> FastAPI:
     """Фабрика создания FastAPI приложения"""
-    
+
+    # Определяем путь к default.yaml, если не передан
+    if config_path is None:
+        base_dir = Path(__file__).resolve().parent.parent  # src/app/.. -> src/
+        config_path = base_dir.parent / "config" / "default.yaml"
+
     # Загрузка конфигурации
     with open(config_path, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)

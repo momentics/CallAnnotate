@@ -6,7 +6,6 @@
 import os
 import json
 import time
-import pytest
 from fastapi import status
 
 def test_health_and_info(client):

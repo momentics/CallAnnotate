@@ -9,7 +9,6 @@ import shutil
 import threading
 import time
 from enum import Enum
-from pathlib import Path
 
 class JobStatus(Enum):
     QUEUED = "queued"

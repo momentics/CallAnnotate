@@ -12,8 +12,9 @@ from fastapi.testclient import TestClient
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-import app as app_module
-from queue_manager import QueueManager
+
+from app.app import create_app
+from app.queue_manager import QueueManager
 
 @pytest.fixture(scope="session")
 def temp_volume():
@@ -37,7 +38,7 @@ def client(monkeypatch, temp_volume):
     
     # Создаём новый экземпляр приложения для каждого теста
     from app import app
-    app_module.queue = QueueManager(volume_path=temp_volume)
+    app.queue = QueueManager(volume_path=temp_volume)
     
     client = TestClient(app, base_url="http://testserver")
     return client
