@@ -11,7 +11,11 @@ RUN apt-get update && apt-get install -y \
     libsndfile1-dev \
     portaudio19-dev \
     ffmpeg \
+    build-essential \
+    git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
+
 
 # Создаём рабочую директорию
 WORKDIR /app
@@ -25,11 +29,24 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY src/ ./src/
 COPY config/default.yaml ./config/default.yaml
 
-# Создаём папку для хранения эмбеддингов голосов
-RUN mkdir -p /app/embeddings
+# Копирование исходного кода
+COPY src/ /app/src/
+COPY config/ /app/config/
+
+# Создание volume директорий
+RUN mkdir -p /app/volume/incoming /app/volume/processing /app/volume/completed /app/volume/logs
+
+# Установка переменных окружения
+ENV PYTHONPATH=/app/src
+ENV CONFIG_PATH=/app/config/default.yaml
+ENV VOLUME_PATH=/app/volume
 
 # Открываем порт для HTTP/WebSocket
 EXPOSE 8000
 
-# Точка входа
-CMD ["python", "src/app.py", "--config", "config/default.yaml"]
+# Health check для Docker
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Запуск приложения
+CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
