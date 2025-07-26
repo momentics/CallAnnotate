@@ -9,6 +9,9 @@ server:
 logging:
   level: INFO
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  rotate:
+    when: midnight
+    backup_count: 7
 
 carddav:
   url: "https://carddav.example.com"
@@ -17,16 +20,12 @@ carddav:
   contact_group: "CallAnnotate Contacts"
 
 paths:
-  embeddings_dir: "./embeddings"
+  volume_path: "/volume"
   transcription_model: "default-model"
   diarization_model: "default-model"
-
-asr:
-  engine: "whisper"
-  language: "en"
-
-recognition:
-  threshold: 0.75
-
-annotation:
-  output_file: "report.json"
+  max_file_size: 1073741824  # 1 GB
+  supported_formats:
+    - wav
+    - mp3
+    - flac
+    - opus

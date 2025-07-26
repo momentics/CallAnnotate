@@ -9,116 +9,106 @@ Repository: https://github.com/momentics/CallAnnotate
 
 import os
 import json
+import shutil
+import threading
 import time
-import logging
-from typing import Optional, Dict, Any
+from enum import Enum
 from pathlib import Path
-from datetime import datetime
 
-logger = logging.getLogger(__name__)
+class JobStatus(Enum):
+    QUEUED = "queued"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
-class FileQueueManager:
-    """Менеджер файловой очереди с атомарными операциями и восстановлением."""
-    
+class QueueManager:
     def __init__(self, volume_path: str):
-        self.volume_path = Path(volume_path)
-        self.queue_path = self.volume_path / "queue"
-        self.state_file = self.volume_path / "config" / "queue_state.json"
-        
-        # Создаём необходимые директории
-        self._ensure_directories()
-        
-    def _ensure_directories(self):
-        """Создание структуры папок очереди."""
-        dirs = [
-            self.queue_path / "incoming",
-            self.queue_path / "processing", 
-            self.queue_path / "completed",
-            self.queue_path / "failed",
-            self.queue_path / "archived",
-            self.volume_path / "intermediate" / "diarization",
-            self.volume_path / "intermediate" / "transcription",
-            self.volume_path / "intermediate" / "recognition", 
-            self.volume_path / "intermediate" / "carddav",
-            self.volume_path / "outputs" / "pending",
-            self.volume_path / "outputs" / "delivered",
-            self.volume_path / "logs" / "tasks",
-            self.volume_path / "logs" / "system",
-            self.volume_path / "logs" / "queue"
-        ]
-        
-        for dir_path in dirs:
-            dir_path.mkdir(parents=True, exist_ok=True)
-            
-    def get_next_task(self) -> Optional[str]:
-        """Получение следующей задачи из очереди incoming/."""
-        incoming_path = self.queue_path / "incoming"
-        
-        for file_name in os.listdir(incoming_path):
-            if file_name.endswith(('.wav', '.mp3', '.flac', '.m4a')):
-                return self._move_to_processing(file_name)
-        
-        return None
-        
-    def _move_to_processing(self, file_name: str) -> str:
-        """Атомарное перемещение файла в processing/ с таймстампом."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        processing_name = f"{file_name}_PROCESSING_{timestamp}"
-        
-        src = self.queue_path / "incoming" / file_name
-        dst = self.queue_path / "processing" / processing_name
-        
-        os.rename(src, dst)
-        logger.info(f"Moved to processing: {file_name} -> {processing_name}")
-        
-        return processing_name
-        
-    def mark_completed(self, processing_file: str, result_data: Dict[str, Any]):
-        """Перемещение в completed/ после успешной обработки."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        completed_name = processing_file.replace("_PROCESSING_", f"_COMPLETED_{timestamp}_")
-        
-        src = self.queue_path / "processing" / processing_file
-        dst = self.queue_path / "completed" / completed_name
-        
-        os.rename(src, dst)
-        
-        # Сохраняем результат обработки
-        result_file = self.volume_path / "outputs" / "pending" / f"{completed_name}.json"
-        with open(result_file, 'w') as f:
-            json.dump(result_data, f, indent=2, ensure_ascii=False)
-            
-        logger.info(f"Task completed: {processing_file}")
-        
-    def mark_failed(self, processing_file: str, error: str):
-        """Перемещение в failed/ при ошибке обработки."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        failed_name = processing_file.replace("_PROCESSING_", f"_FAILED_{timestamp}_")
-        
-        src = self.queue_path / "processing" / processing_file
-        dst = self.queue_path / "failed" / failed_name
-        
-        os.rename(src, dst)
-        
-        # Логируем ошибку
-        error_log = self.volume_path / "logs" / "queue" / f"{failed_name}_error.log"
-        with open(error_log, 'w') as f:
-            f.write(f"Error: {error}\nTimestamp: {datetime.now()}\n")
-            
-        logger.error(f"Task failed: {processing_file} - {error}")
-        
-    def recover_processing_files(self):
-        """Восстановление незавершённых задач при запуске."""
-        processing_path = self.queue_path / "processing"
-        
-        for file_name in os.listdir(processing_path):
-            if "_PROCESSING_" in file_name:
-                # Возвращаем в incoming/ для повторной обработки
-                original_name = file_name.split("_PROCESSING_")[0]
-                retry_name = f"{original_name}_RETRY_{int(time.time())}"
-                
-                src = processing_path / file_name
-                dst = self.queue_path / "incoming" / retry_name
-                
-                os.rename(src, dst)
-                logger.warning(f"Recovered processing file: {file_name} -> {retry_name}")
+        self.volume = volume_path
+        self._lock = threading.Lock()
+        self.jobs = {}  # job_id -> metadata dict
+        self.start_time = time.time()
+        # Создать папки
+        os.makedirs(self.volume, exist_ok=True)
+
+    def incoming_dir(self, job_id: str) -> str:
+        return os.path.join(self.volume, job_id, "incoming")
+    
+    def processing_dir(self, job_id: str) -> str:
+        return os.path.join(self.volume, job_id, "processing")
+    
+    def completed_dir(self, job_id: str) -> str:
+        return os.path.join(self.volume, job_id, "completed")
+    
+    def result_file(self, job_id: str) -> str:
+        return os.path.join(self.completed_dir(job_id), "result.json")
+    
+    def enqueue(self, job_id: str, filepath: str):
+        with self._lock:
+            self.jobs[job_id] = {
+                "job_id": job_id,
+                "status": JobStatus.QUEUED.value,
+                "created_at": time.time(),
+                "updated_at": time.time(),
+                "file_info": {
+                    "filename": os.path.basename(filepath),
+                    "size": os.path.getsize(filepath),
+                },
+                "progress": {"percentage": 0},
+            }
+        # Запустить обработчик в фоне
+        thread = threading.Thread(target=self._worker, args=(job_id, filepath), daemon=True)
+        thread.start()
+    
+    def _worker(self, job_id: str, filepath: str):
+        with self._lock:
+            self.jobs[job_id]["status"] = JobStatus.PROCESSING.value
+            self.jobs[job_id]["updated_at"] = time.time()
+        # Переместить файл в processing
+        proc_dir = self.processing_dir(job_id)
+        os.makedirs(proc_dir, exist_ok=True)
+        dest = os.path.join(proc_dir, os.path.basename(filepath))
+        os.replace(filepath, dest)
+        try:
+            # TODO: здесь будут вызовы diarization, transcription и т.д.
+            time.sleep(2)  # заглушка обработки
+            result = {
+                "job_id": job_id,
+                "speakers": [],
+                "metadata": {"processing_time": 2},
+            }
+
+            # Запись результата
+            comp_dir = self.completed_dir(job_id)
+
+            os.makedirs(comp_dir, exist_ok=True)
+
+            with open(self.result_file(job_id), "w", encoding="utf-8") as f:
+                json.dump(result, f)
+
+            with self._lock:
+                self.jobs[job_id]["status"] = JobStatus.COMPLETED.value
+                self.jobs[job_id]["updated_at"] = time.time()
+                self.jobs[job_id]["result"] = result
+
+        except Exception as e:
+            with self._lock:
+                self.jobs[job_id]["status"] = JobStatus.FAILED.value
+                self.jobs[job_id]["updated_at"] = time.time()
+                self.jobs[job_id]["error"] = str(e)
+    
+    def get(self, job_id: str):
+        return self.jobs.get(job_id)
+    
+    def delete(self, job_id: str) -> bool:
+        if job_id not in self.jobs:
+            return False
+        # Удалить из памяти и диска
+        with self._lock:
+            del self.jobs[job_id]
+        path = os.path.join(self.volume, job_id)
+        if os.path.exists(path):
+            shutil.rmtree(path)
+        return True
+    
+    def length(self) -> int:
+        return len(self.jobs)
