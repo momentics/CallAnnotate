@@ -5,7 +5,7 @@
 <!-- Badges -->
 [![CI Status](https://github.com/momentics/CallAnnotate/actions/workflows/ci.yml/badge.svg)](https://github.com/moment/CallAnnotate/actions/workflows/ci.yml)  
 [![Latest Release](https://img.shields.io/github/v/release/momentics/CallAnnotate?style=for-the-badge)](https://github.com/momentics/CallAnnotate/releases)  
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE) (https://github.com/momentics/CallAnnotate/blob/main/LICENSE)  
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Last Commit](https://img.shields.io/github/last-commit/momentics/CallAnnotate?style=for-the-badge)](https://github.com/momentics/CallAnnotate/commits/main)  
 
 
