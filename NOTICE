@@ -1,46 +1,81 @@
-CallAnnotate
-Copyright 2025 akoodoy@capilot.ru
-
-Licensed under the Apache License, Version 2.0
-
-================================================================================
+CallAnnotate — NOTICE
+Copyright © 2025 momentics/CallAnnotate contributors
+Apache License 2.0
 
 This product includes software developed by third parties:
 
-pyannote.audio
-Copyright (c) 2017-2024 Hervé BREDIN
-Licensed under the MIT License
-https://github.com/pyannote/pyannote-audio
+PyYAML
+Copyright © 2006–2024 Kirill Simonov
+License: MIT
 
-PyTorch
-Copyright (c) 2016-2024 Facebook, Inc. (Adam Paszke)  
-Licensed under the BSD-3-Clause License
-https://github.com/pytorch/pytorch
+asteroid-filterbanks
+Copyright © 2019–2025 Asteroid contributors
+License: MIT
 
-SpeechBrain
-Copyright (c) 2020-2024 Mila - Quebec AI Institute
-Licensed under the Apache License, Version 2.0
-https://github.com/speechbrain/speechbrain
+asyncio-mqtt
+Copyright © 2021–2025 Sander van den Bulk
+License: MIT
+
+fastapi
+Copyright © 2018–2025 Sebastián Ramírez
+License: MIT
 
 librosa
-Copyright (c) 2013-2024 librosa development team
-Licensed under the ISC License
-https://github.com/librosa/librosa
+Copyright © 2013–2025 Librosa contributors
+License: ISC
+
+openai-whisper
+Copyright © 2022–2025 OpenAI
+License: MIT
+
+pyCardDAV
+Copyright © 2011–2013 Christian Geier et al.
+License: MIT (Expat)
+
+pyannote.audio
+Copyright © 2015–2025 Hervé Bredin et al.
+License: MIT
+
+pydantic
+Copyright © 2017–2025 Samuel Colvin et al.
+License: MIT
+
+python-multipart
+Copyright © 2014–2025 Andrew Duke
+License: Apache-2.0
+
+requests
+Copyright © 2011–2025 Kenneth Reitz et al.
+License: Apache-2.0
 
 soundfile
-Copyright (c) 2013-2024 Bastian Bechtold
-Licensed under the BSD-3-Clause License
-https://github.com/bastibe/python-soundfile
+Copyright © 2013–2025 Bastian Pötsch
+License: BSD-3-Clause
 
-asteroid-filterbanks  
-Copyright (c) 2020-2024 Manuel Pariente
-Licensed under the MIT License
-https://github.com/asteroid-team/asteroid-filterbanks
+speechbrain
+Copyright © 2020–2025 SpeechBrain Team
+License: Apache-2.0
+
+torch
+Copyright © 2016–2025 PyTorch Team
+License: BSD-3-Clause
 
 torchaudio
-Copyright (c) 2017 Facebook Inc. (Soumith Chintala)
-Licensed under the BSD 2-Clause License
-https://github.com/pytorch/audio
+Copyright © 2019–2025 PyTorch Team
+License: BSD-3-Clause
+
+transformers
+Copyright © 2018–2025 Hugging Face Inc.
+License: Apache-2.0
+
+uvicorn
+Copyright © 2018–2025 Encode OSS Ltd.
+License: BSD-3-Clause
+
+websockets
+Copyright © 2013–2025 Aymeric Augustin
+License: BSD-3-Clause
+
 
 For complete license texts, see the LICENSE file and individual 
 component documentation.

@@ -20,15 +20,28 @@ REQUIREMENTS = ROOT / "src" / "requirements.txt"
 NOTICE = ROOT / "NOTICE"
 
 # Список обязательных зависимостей для включения в NOTICE
+# Включает все зависимости из requirements.txt, требующие лицензионного уведомления
+# согласно требованиям Apache License 2.0
+
 REQUIRED_PACKAGES = [
+    "PyYAML",
+    "asteroid-filterbanks", 
+    "asyncio-mqtt",
+    "fastapi",
+    "librosa",
+    "openai-whisper",
+    "pyCardDAV",
     "pyannote.audio",
+    "pydantic",
+    "python-multipart",
+    "requests",
+    "soundfile",
+    "speechbrain",
     "torch",
     "torchaudio",
-    "speechbrain",
-    "librosa",
-    "soundfile",
-    "asteroid-filterbanks",
-    "pyCardDAV",
+    "transformers",
+    "uvicorn",
+    "websockets",
 ]
 
 def load_requirements(path: Path) -> set[str]:
