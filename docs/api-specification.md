@@ -759,12 +759,12 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./volume:/app/volume
+      - ./volume:/volume
       - ./config:/app/config:ro
     environment:
       - PYTHONPATH=/app/src
       - CONFIG_PATH=/app/config/default.yaml
-      - VOLUME_PATH=/app/volume
+      - VOLUME_PATH=/volume
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -779,7 +779,7 @@ services:
 | Переменная | Значение по умолчанию | Описание |
 | :-- | :-- | :-- |
 | `CONFIG_PATH` | `/app/config/default.yaml` | Путь к конфигурационному файлу |
-| `VOLUME_PATH` | `/app/volume` | Путь к volume с файлами |
+| `VOLUME_PATH` | `/volume` | Путь к volume с файлами |
 | `LOG_LEVEL` | `INFO` | Уровень логирования |
 | `MAX_FILE_SIZE` | `1073741824` | Максимальный размер файла |
 | `QUEUE_POLL_INTERVAL` | `5` | Интервал проверки очереди (сек) |

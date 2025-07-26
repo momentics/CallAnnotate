@@ -34,12 +34,12 @@ COPY src/ /app/src/
 COPY config/ /app/config/
 
 # Создание volume директорий
-RUN mkdir -p /app/volume/incoming /app/volume/processing /app/volume/completed /app/volume/logs
+RUN mkdir -p /volume/incoming /volume/processing /volume/completed /volume/logs
 
 # Установка переменных окружения
 ENV PYTHONPATH=/app/src
 ENV CONFIG_PATH=/app/config/default.yaml
-ENV VOLUME_PATH=/app/volume
+ENV VOLUME_PATH=/volume
 
 # Открываем порт для HTTP/WebSocket
 EXPOSE 8000

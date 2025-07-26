@@ -13,12 +13,12 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ../volume:/app/volume
+      - ../volume:/volume
       - ../config:/app/config:ro
     environment:
       - PYTHONPATH=/app/src
       - CONFIG_PATH=/app/config/default.yaml
-      - VOLUME_PATH=/app/volume
+      - VOLUME_PATH=/volume
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

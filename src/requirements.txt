@@ -1,34 +1,54 @@
-# Рекомендуемые зависимости для CallAnnotate
-# Автор: akoodoy@capilot.ru
-# Проект: https://github.com/momentics/CallAnnotate
-# Лицензия: Apache-2.0
+# FastAPI и веб-сервер
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+websockets==12.0
 
-# Основа сервера
-fastapi>=0.116.0
-uvicorn[standard]>=0.30.0
+# Асинхронность и concurrent processing
+asyncio-mqtt==0.11.1
+aiofiles==23.2.1
 
-# Аудио обработка
-pyannote.audio>=3.3.1
-openai-whisper>=20240930
-speechbrain>=1.0.3
-librosa>=0.11.0
-soundfile>=0.12.1
+# Обработка аудио
+librosa==0.10.1
+soundfile==0.12.1
+pydub==0.25.1
+scipy==1.11.4
 
-# Интеграция и утилиты
-pyCardDAV>=0.7.0
-PyYAML>=6.0
-requests>=2.32.0
+# ML и AI модели
+torch==2.1.1
+torchaudio==2.1.1
+transformers==4.35.2
+pyannote.audio==3.1.1
+speechbrain==0.5.16
+openai-whisper==20231117
 
-# Дополнительно для аудио
-torch>=2.0.0
-torchaudio>=2.0.0
-transformers>=4.40.0
+# Обработка данных
+numpy==1.24.4
+pandas==2.1.3
+scikit-learn==1.3.2
+
+# CardDAV клиент
+caldav==1.3.9
+vobject==0.9.6.1
+requests==2.31.0
+
+# Конфигурация и логирование
+pyyaml==6.0.1
+python-dotenv==1.0.0
+structlog==23.2.0
 
 # Утилиты
-python-multipart>=0.0.7
-websockets>=12.0
-pydantic>=2.0
-httpx>=0.27.0
-pytest>=8.0.0
-pytest-cov>=4.0.0
-pytest-asyncio>=0.23.0
+pathlib2==2.3.7
+python-dateutil==2.8.2
+pytz==2023.3
+click==8.1.7
+
+# Тестирование
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-mock==3.12.0
+httpx==0.25.2
+
+# Дополнительные зависимости
+pillow==10.1.0
+matplotlib==3.8.2
