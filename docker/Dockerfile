@@ -1,5 +1,5 @@
 # Используем официальный образ Python slim на базе Debian Bookworm
-FROM python:3.13-slim-bookworm
+FROM python:3.11-slim-bullseye
 
 # Метаданные
 LABEL maintainer="akoodoy@capilot.ru"
@@ -7,6 +7,13 @@ LABEL repository="https://github.com/momentics/CallAnnotate"
 LABEL license="Apache-2.0"
 
 # Устанавливаем системные зависимости с обновлением списков пакетов
+RUN apt-get update && apt-get install -y \
+    libsndfile1-dev \
+    libffi-dev \
+    build-essential \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       ffmpeg \
