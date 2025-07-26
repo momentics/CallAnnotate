@@ -1,0 +1,31 @@
+# Apache-2.0 License
+# Author: akoodoy@capilot.ru  
+# Repository: https://github.com/momentics/CallAnnotate
+
+version: '3.8'
+
+services:
+  callannotate:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: callannotate
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../volume:/app/volume
+      - ../config:/app/config:ro
+    environment:
+      - PYTHONPATH=/app/src
+      - CONFIG_PATH=/app/config/default.yaml
+      - VOLUME_PATH=/app/volume
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  callannotate_volume:
+    driver: local

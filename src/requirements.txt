@@ -1,2 +1,38 @@
+# Существующие зависимости
 pytest
 pyannote.audio
+
+# FastAPI и веб-сервер  
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+websockets>=12.0
+
+# Аудио обработка и ASR
+openai-whisper>=20231117
+vosk>=0.3.45
+librosa>=0.10.1
+soundfile>=0.12.1
+
+# Машинное обучение
+torch>=2.1.0
+torchaudio>=2.1.0
+transformers>=4.35.0
+
+# CardDAV и сетевые протоколы
+pyCardDAV>=1.2.0
+requests>=2.31.0
+caldav>=1.3.6
+
+# Работа с данными
+pydantic>=2.4.0
+pyyaml>=6.0.1
+numpy>=1.24.0
+pandas>=2.1.0
+
+# Логирование и мониторинг
+loguru>=0.7.2
+structlog>=23.2.0
+
+# Утилиты
+python-dotenv>=1.0.0
+click>=8.1.7

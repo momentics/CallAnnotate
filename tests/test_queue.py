@@ -1,11 +1,11 @@
-# tests/test_placeholder.py
+# tests/test_queue.py
 
 """
 Apache-2.0 License
 Author: akoodoy@capilot.ru
 Repository: https://github.com/momentics/CallAnnotate"""
 
-def test_placeholder():
+def test_queue():
     """
     Пустой тест-заглушка для стартового шаблона.
     """
