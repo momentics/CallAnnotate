@@ -1,7 +1,7 @@
-# src/queue_manager.py
+# tests/test_queue_manager.py
 # Автор: akoodoy@capilot.ru
 # Ссылка: https://github.com/momentics/CallAnnotate
-# Лиция: Apache-2.0
+# Лицензия: Apache-2.0
 
 import os
 import json
@@ -9,6 +9,7 @@ import shutil
 import threading
 import time
 from enum import Enum
+from pathlib import Path
 
 class JobStatus(Enum):
     QUEUED = "queued"
@@ -17,22 +18,12 @@ class JobStatus(Enum):
     FAILED = "failed"
 
 class QueueManager:
-    """
-    Менеджер очереди задач для CallAnnotate.
-    Поддерживает асинхронную обработку одного файла за раз с переносом через директории:
-    incoming -> processing -> completed.
-    """
-
     def __init__(self, volume_path: str):
-        """
-        Инициализация менеджера очереди.
-
-        :param volume_path: корневая директория для хранения задач
-        """
         self.volume = volume_path
         self._lock = threading.Lock()
         self.jobs = {}  # job_id -> metadata dict
         self.start_time = time.time()
+        # Создать папки
         os.makedirs(self.volume, exist_ok=True)
 
     def incoming_dir(self, job_id: str) -> str:
@@ -48,9 +39,6 @@ class QueueManager:
         return os.path.join(self.completed_dir(job_id), "result.json")
 
     def enqueue(self, job_id: str, filepath: str):
-        """
-        Добавляет задачу в очередь и запускает фоновый воркер для обработки.
-        """
         with self._lock:
             self.jobs[job_id] = {
                 "job_id": job_id,
@@ -63,58 +51,49 @@ class QueueManager:
                 },
                 "progress": {"percentage": 0},
             }
+        # Запустить обработчик в фоне
         thread = threading.Thread(target=self._worker, args=(job_id, filepath), daemon=True)
         thread.start()
 
     def _worker(self, job_id: str, filepath: str):
-        """
-        Фоновая обработка задачи:
-        - Переносит файл из incoming в processing
-        - Выполняет обработку (stub)
-        - Записывает результат в completed/result.json
-        """
         try:
-            # Обновляем статус на PROCESSING, только если задача ещё существует
             with self._lock:
-                if job_id not in self.jobs:
-                    return
-                self.jobs[job_id]["status"] = JobStatus.PROCESSING.value
-                self.jobs[job_id]["updated_at"] = time.time()
-
-            # Перемещение файла в processing
+                if job_id in self.jobs:
+                    self.jobs[job_id]["status"] = JobStatus.PROCESSING.value
+                    self.jobs[job_id]["updated_at"] = time.time()
+                else:
+                    return  # Задача была удалена
+            
+            # Переместить файл в processing
             proc_dir = self.processing_dir(job_id)
             os.makedirs(proc_dir, exist_ok=True)
             dest = os.path.join(proc_dir, os.path.basename(filepath))
+            
             if os.path.exists(filepath):
                 shutil.move(filepath, dest)
-
-            # Здесь будут вызовы модулей diarization, transcription и т.д.
+            
+            # TODO: здесь будут вызовы diarization, transcription и т.д.
             time.sleep(2)  # заглушка обработки
-
-            # Формирование результирующего словаря
+            
             result = {
                 "job_id": job_id,
                 "speakers": [],
-                "metadata": {
-                    "processing_time": 2
-                },
+                "metadata": {"processing_time": 2},
             }
-
-            # Запись результата в файл
+            
+            # Запись результата
             comp_dir = self.completed_dir(job_id)
             os.makedirs(comp_dir, exist_ok=True)
             with open(self.result_file(job_id), "w", encoding="utf-8") as f:
                 json.dump(result, f, ensure_ascii=False, indent=2)
-
-            # Обновление статуса на COMPLETED
+            
             with self._lock:
                 if job_id in self.jobs:
                     self.jobs[job_id]["status"] = JobStatus.COMPLETED.value
                     self.jobs[job_id]["updated_at"] = time.time()
                     self.jobs[job_id]["result"] = result
-
+                    
         except Exception as e:
-            # В случае ошибки отмечаем задачу как FAILED, если она ещё существует
             with self._lock:
                 if job_id in self.jobs:
                     self.jobs[job_id]["status"] = JobStatus.FAILED.value
@@ -122,31 +101,21 @@ class QueueManager:
                     self.jobs[job_id]["error"] = str(e)
 
     def get(self, job_id: str):
-        """
-        Возвращает информацию о задаче по её идентификатору.
-        """
         with self._lock:
             return self.jobs.get(job_id)
 
     def delete(self, job_id: str) -> bool:
-        """
-        Удаляет задачу и все связанные файлы.
-
-        :return: True, если задача существовала и была удалена; False, если не найдена.
-        """
         with self._lock:
             if job_id not in self.jobs:
                 return False
             del self.jobs[job_id]
-
+        
+        # Удалить папку с файлами
         path = os.path.join(self.volume, job_id)
         if os.path.exists(path):
             shutil.rmtree(path, ignore_errors=True)
         return True
 
     def length(self) -> int:
-        """
-        Возвращает текущее число задач в очереди.
-        """
         with self._lock:
             return len(self.jobs)

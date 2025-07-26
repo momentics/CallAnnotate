@@ -6,7 +6,6 @@
 # Основа сервера
 fastapi>=0.116.0
 uvicorn[standard]>=0.30.0
-asyncio-mqtt>=0.16.0
 
 # Аудио обработка
 pyannote.audio>=3.3.1
@@ -14,22 +13,22 @@ openai-whisper>=20240930
 speechbrain>=1.0.3
 librosa>=0.11.0
 soundfile>=0.12.1
-einops>=0.6.0
 
 # Интеграция и утилиты
 pyCardDAV>=0.7.0
 PyYAML>=6.0
 requests>=2.32.0
 
-# Дополнудио
-torch>=2.0.0,<2.8.0
-torchaudio>=2.0.0,<2.8.0
+# Дополнительно для аудио
+torch>=2.0.0
+torchaudio>=2.0.0
 transformers>=4.40.0
 
 # Утилиты
 python-multipart>=0.0.7
 websockets>=12.0
-pydantic>=2.0.0
-
-# Тестирование
-pytest
+pydantic>=2.0
+httpx>=0.27.0
+pytest>=8.0.0
+pytest-cov>=4.0.0
+pytest-asyncio>=0.23.0

@@ -1,23 +1,20 @@
 # src/app.py
-"""
-Apache-2.0 License
-Author: akoodoy@capilot.ru
-Repository: https://github.com/momentics/CallAnnotate
-"""
+# Автор: akoodoy@ilot.ru
+# Ссылка: https://github.com/momentics/CallAnnotate
+# Лицензия: Apache-2.0
 
 import os
 import uuid
+import shutil
 import time
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from queue_manager import QueueManager, JobStatus
 from starlette.middleware.cors import CORSMiddleware
 
 # Константы из конфигурации
-
-VOLUME_PATH = os.getenv("VOLUME_PATH", "/volume")
-MAX_FILE_SIZE = int(os.getenv("MAX_FILE_SIZE", 1073741824))
+VOLUME_PATH = os.getenv("VOLUME_PATH", "/app/volume")
 SUPPORTED_FORMATS = {"wav", "mp3", "flac", "opus"}
 
 app = FastAPI(
@@ -27,7 +24,6 @@ app = FastAPI(
 )
 
 # CORS
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -51,7 +47,7 @@ async def health_check():
         "version": app.version,
         "uptime": time.time() - queue.start_time,
         "queue_length": queue.length(),
-}
+    }
 
 @app.get("/info")
 async def info():
@@ -59,19 +55,20 @@ async def info():
         "service": "CallAnnotate",
         "version": app.version,
         "supported_formats": list(SUPPORTED_FORMATS),
-        "max_file_size": MAX_FILE_SIZE,
+        "max_file_size": int(os.getenv("MAX_FILE_SIZE", "1073741824")),
         "processing_mode": "asynchronous",
         "api_endpoints": {
-        "rest": "/api/v1",
-    },
-}
+            "rest": "/api/v1",
+        },
+    }
 
 @app.post("/jobs", status_code=201, response_model=JobCreateResponse)
 async def create_job(file: UploadFile = File(...)):
-    # Проверка размера 
+    # Динамически считываем ограничение из окружения
+    max_size = int(os.getenv("MAX_FILE_SIZE", "1073741824"))
     contents = await file.read()
     size = len(contents)
-    if size > MAX_FILE_SIZE:
+    if size > max_size:
         raise HTTPException(status_code=413, detail="File too large")
     # Проверка формата
     ext = file.filename.split(".")[-1].lower()
@@ -84,15 +81,15 @@ async def create_job(file: UploadFile = File(...)):
     filepath = os.path.join(incoming_dir, file.filename)
     with open(filepath, "wb") as f:
         f.write(contents)
-        # Создание задания
-        queue.enqueue(job_id, filepath)
-        return JobCreateResponse(
-            job_id=job_id,
-            status=JobStatus.QUEUED.value,
-            created_at=queue.jobs[job_id]["created_at"],
-            progress_url=f"/api/v1/jobs/{job_id}",
-            result_url=f"/api/v1/jobs/{job_id}/result",
-)
+    # Создание задания
+    queue.enqueue(job_id, filepath)
+    return JobCreateResponse(
+        job_id=job_id,
+        status=JobStatus.QUEUED.value,
+        created_at=queue.jobs[job_id]["created_at"],
+        progress_url=f"/api/v1/jobs/{job_id}",
+        result_url=f"/api/v1/jobs/{job_id}/result",
+    )
 
 @app.get("/jobs/{job_id}")
 async def get_job(job_id: str):
@@ -118,7 +115,6 @@ async def get_result(job_id: str):
 async def delete_job(job_id: str):
     if not queue.delete(job_id):
         raise HTTPException(status_code=404, detail="Job not found")
-    return JSONResponse(status_code=204)
-
+    return Response(status_code=204)
 
 # запуск приложения: uvicorn src.app:app --host 0.0.0.0 --port 8000
