@@ -1,4 +1,41 @@
 CallAnnotate
-Copyright 2025 akozodoy@capilot.ru
+Copyright 2025 akoodoy@capilot.ru
+
 Licensed under the Apache License, Version 2.0
-See LICENSE for details.
+
+================================================================================
+
+This product includes software developed by third parties:
+
+pyannote.audio
+Copyright (c) 2017-2024 Hervé BREDIN
+Licensed under the MIT License
+https://github.com/pyannote/pyannote-audio
+
+PyTorch
+Copyright (c) 2016-2024 Facebook, Inc. (Adam Paszke)  
+Licensed under the BSD-3-Clause License
+https://github.com/pytorch/pytorch
+
+SpeechBrain
+Copyright (c) 2020-2024 Mila - Quebec AI Institute
+Licensed under the Apache License, Version 2.0
+https://github.com/speechbrain/speechbrain
+
+librosa
+Copyright (c) 2013-2024 librosa development team
+Licensed under the ISC License
+https://github.com/librosa/librosa
+
+soundfile
+Copyright (c) 2013-2024 Bastian Bechtold
+Licensed under the BSD-3-Clause License
+https://github.com/bastibe/python-soundfile
+
+asteroid-filterbanks  
+Copyright (c) 2020-2024 Manuel Pariente
+Licensed under the MIT License
+https://github.com/asteroid-team/asteroid-filterbanks
+
+For complete license texts, see the LICENSE file and individual 
+component documentation.

@@ -37,6 +37,11 @@ jobs:
       - name: Run tests
         run: pytest tests/
 
+      - name: Check NOTICE file completeness
+        run: |
+          python scripts/check_notice_completeness.py
+
+
 #  build-docker:
 #    name: Build Docker on Release
 #    runs-on: ubuntu-latest
