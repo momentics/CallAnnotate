@@ -76,10 +76,17 @@ def mock_queue_manager_and_deps():
     app.state.annotation_service = mock_annotation_service
     return app
 
+
 @pytest.fixture
-def client():
-    # Один set для текущего теста
+def client(tmp_path, monkeypatch):
+    """
+    Гарантирует:
+    - Все job_id реально живут в set для duration одного теста.
+    - app.state.queue_manager ссылается на нужный мок.
+    - tmp_path и monkeypatch доступны тесту.
+    """
     active_job_ids = set()
+
     mock_task_result = MagicMock()
     mock_task_result.status = "completed"
     mock_task_result.message = "Task completed successfully"
@@ -99,18 +106,15 @@ def client():
     }
 
     async def add_task(job_id, metadata):
-        print(f"[mock] add_task {job_id}")
         active_job_ids.add(job_id)
 
     async def cancel_task(job_id):
-        print(f"[mock] cancel_task {job_id} in {active_job_ids}")
         if job_id in active_job_ids:
             active_job_ids.remove(job_id)
             return True
         return False
 
     async def get_task_result(job_id):
-        print(f"[mock] get_task_result {job_id} in {active_job_ids}")
         if job_id in active_job_ids:
             return mock_task_result
         return None
@@ -134,10 +138,11 @@ def client():
     mock_annotation_service = AsyncMock()
     mock_annotation_service.process_audio.return_value = {"test": "annotation_result"}
 
-    # КРИТИЧЕСКОЕ МЕСТО: патчим состояние приложения до клиента!
+    # Подмена state — до клиента!
     app.state.queue_manager = mock_queue_manager
     app.state.annotation_service = mock_annotation_service
 
+    # tmp_path, monkeypatch доступны в тесте!
     return TestClient(app)
 
 
@@ -163,8 +168,6 @@ def setup_test_environment():
     import shutil
     if test_volume_path.exists():
         shutil.rmtree(test_volume_path, ignore_errors=True)
-
-
 
 
 @pytest.fixture
