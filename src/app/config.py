@@ -1,23 +1,22 @@
 # -*- coding: utf-8 -*-
-"""
-Конфигурация приложения CallAnnotate с использованием Pydantic
+#  Apache-2.0
+#  Автор: akoodoy@capilot.ru
+#  Ссылка: https://github.com/momentics/CallAnnotate
 
-Автор: akoodoy@capilot.ru
-Ссылка: https://github.com/momentics/CallAnnotate
-Лицензия: Apache-2.0
+"""
+Конфигурация приложения CallAnnotate с использованием Pydantic v2 и pydantic-settings.
 """
 
 import os
-from typing import Dict, Optional, List
-from pathlib import Path
-
-try:
-    from pydantic_settings import BaseSettings
-except ImportError:
-    from pydantic import BaseSettings
-
-from pydantic import BaseModel, Field, model_validator, validator
 import yaml
+from pathlib import Path
+from typing import Dict, List, Optional
+
+# BaseSettings берём из pydantic-settings
+from pydantic_settings import BaseSettings
+# Field и валидаторы — из pydantic
+from pydantic import BaseModel, Field, field_validator, validator
+
 
 class RecognitionConfig(BaseSettings):
     """Конфигурация этапа распознавания голосов"""
@@ -27,16 +26,13 @@ class RecognitionConfig(BaseSettings):
     embeddings_path: Optional[str] = Field(None, description="Путь к базе эмбеддингов")
     index_path: Optional[str] = Field(None, description="Путь к FAISS индексу")
 
-    @model_validator(mode="after")
-    def create_dirs(self) -> "RecognitionConfig":
-        """Гарантированно создать директории, если указаны."""
-        for attr in ("embeddings_path", "index_path"):
-            v = getattr(self, attr)
-            if v:
-                p = Path(v).expanduser().resolve()
-                p.mkdir(parents=True, exist_ok=True)
-                setattr(self, attr, str(p))
-        return self
+    @field_validator("embeddings_path", "index_path", mode="after")
+    def _ensure_dir(cls, v: Optional[str]) -> Optional[str]:
+        if v:
+            p = Path(v).expanduser().resolve()
+            p.mkdir(parents=True, exist_ok=True)
+            return str(p)
+        return v
 
     class Config:
         env_prefix = "RECOGNITION_"
@@ -64,19 +60,6 @@ class TranscriptionConfig(BaseSettings):
     class Config:
         env_prefix = "TRANSCRIPTION_"
 
-
-class RecognitionConfig(BaseSettings):
-    """Конфигурация этапа распознавания голосов"""
-    model: str = Field(
-        "speechbrain/spkrec-ecapa-voxceleb", 
-        description="Модель SpeechBrain"
-    )
-    device: str = Field("cpu", description="Устройство для вычислений")
-    threshold: float = Field(0.7, ge=0.0, le=1.0, description="Порог распознавания")
-    embeddings_path: Optional[str] = Field(None, description="Путь к базе эмбеддингов")
-    
-    class Config:
-        env_prefix = "RECOGNITION_"
 
 
 class CardDAVConfig(BaseSettings):
