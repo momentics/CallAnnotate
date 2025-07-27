@@ -2,10 +2,14 @@
 
 ## Метаданные документа
 
+```
 **Автор:** akoodoy@capilot.ru
-**Проект:** https://github.com/momentics/CallAnnotate
 **Лицензия:** Apache-2.0
 **Версия API:** 1.0.0
+
+**Проект:** https://github.com/momentics/CallAnnotate
+**План:** /docs/development-phases.md
+```
 
 ## 1. Обзор системы
 
