@@ -1,34 +1,56 @@
-# --- Web framework -------------------------------------------------
-fastapi==0.104.1          # тянет starlette 0.27.*
-starlette==0.27.0         # явная фиксация
-
-# --- HTTP-клиент, совместимый со Starlette 0.27 --------------------
-httpx==0.24.1             # последняя версия, где ещё есть параметр app=
-
-# --- ASGI-сервер и вспомогательное --------------------------------
+fastapi==0.104.1
+starlette==0.27.0
 uvicorn[standard]==0.24.0
-websockets==12.0
-aiofiles==23.2.1
 python-multipart==0.0.6
+websockets>=11.0.3,<12.0
+aiofiles==23.2.1
 
-# --- ML / DSP (не изменено) ---------------------------------------
+httpx==0.24.1
+anyio==3.7.1
+
+# ASR-модель Whisper
+openai-whisper>=20231117
+
+# SpeechBrain (спикер-рекогнишн)
+speechbrain>=1.0.0
+
+# Диаризация pyannote.audio
+pyannote.audio>=3.1.1
+
+# FAISS для эмбеддингов
+faiss-cpu>=1.7.4
+
+# PyTorch и сопутствующее
 torch>=2.2.0,<2.8.0
 torchaudio>=2.2.0,<2.8.0
+
+# Обработка аудио и сигналов
 librosa==0.10.1
 soundfile==0.12.1
-pyannote.audio>=3.1.1
-speechbrain>=1.0.0
-faiss-cpu>=1.7.4
 numpy>=1.24,<2.0
 scipy==1.11.4
-pandas>=2.1.3
-scikit-learn>=1.3.2
 
-# --- Прочие зависимости (сокращено для ясности) --------------------
+# Дополнительные ML-библиотеки
+transformers>=4.35.2
+pytorch-lightning>=2.5.2
+
+# CardDAV клиент
+caldav>=1.3.9
+vobject>=0.9.6.1
+requests>=2.32.4
+
+# Конфигурация и валидация
+pyyaml>=6.0.1
+python-dotenv>=1.0.0
 pydantic>=2.5.0
 pydantic-settings>=2.1.0
-pyyaml>=6.0.1
-pytest>=7.4
-pytest-asyncio>=0.21
-pytest-mock>=3.12
-anyio>=3.7
+
+# Утилиты
+python-dateutil>=2.8.2
+pytz>=2025.2
+click>=8.1.7
+
+# Тестирование
+pytest>=7.4.0
+pytest-asyncio>=0.21.1
+pytest-mock>=3.12.0
