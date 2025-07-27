@@ -10,16 +10,16 @@
 import numpy as np
 import torch
 import librosa
+import pickle
 from typing import Dict, Any, Optional, Callable
 from pathlib import Path
-import pickle
 
 try:
     import faiss
 except ImportError:
     faiss = None
 
-from speechbrain.pretrained import EncoderClassifier
+from speechbrain.inference.classifiers import EncoderClassifier
 
 from .base import BaseStage
 
@@ -33,10 +33,9 @@ class RecognitionStage(BaseStage):
     
     async def _initialize(self):
         """Инициализация модели распознавания"""
-        model_name = self.config.get("model_name", "speechbrain/spkrec-ecapa-voxceleb")
+        model_name = self.config.get("model", "speechbrain/spkrec-ecapa-voxceleb")
         device = self.config.get("device", "cpu")
         embeddings_path = self.config.get("embeddings_path")
-        index_path = self.config.get("index_path")
         
         self.logger.info(f"Загрузка модели распознавания: {model_name}")
         
@@ -55,71 +54,67 @@ class RecognitionStage(BaseStage):
                 run_opts={"device": device}
             )
         
-        # Загрузка индекса известных голосов
+        # Загрузка базы известных голосов
         self.index = None
         self.speaker_labels = {}
         
         if embeddings_path and Path(embeddings_path).exists():
             self._load_speaker_database(embeddings_path)
-        elif index_path and Path(index_path).exists():
-            self._load_faiss_index(index_path)
-        else:
-            self.logger.warning("Не найдена база известных голосов")
         
         self.model_name = model_name
         self.device = device
-        self.threshold = self.config.get("threshold", 0.8)
+        self.threshold = self.config.get("threshold", 0.7)
         
         self.logger.info("Модель распознавания загружена успешно")
     
     def _load_speaker_database(self, embeddings_path: str):
         """Загрузка базы данных голосовых эмбеддингов"""
         try:
-            embeddings_file = Path(embeddings_path)
+            embeddings_dir = Path(embeddings_path)
             
-            if embeddings_file.suffix == '.pkl':
-                with open(embeddings_file, 'rb') as f:
-                    speaker_data = pickle.load(f)
-                
-                embeddings = []
-                labels = []
-                
-                for speaker_id, embedding in speaker_data.items():
+            # Поиск файлов эмбеддингов
+            embedding_files = list(embeddings_dir.glob("*.vec")) + list(embeddings_dir.glob("*.pkl"))
+            
+            if not embedding_files:
+                self.logger.warning(f"Не найдены файлы эмбеддингов в {embeddings_path}")
+                return
+            
+            embeddings = []
+            labels = []
+            
+            for emb_file in embedding_files:
+                try:
+                    if emb_file.suffix == '.pkl':
+                        with open(emb_file, 'rb') as f:
+                            embedding = pickle.load(f)
+                    else:  # .vec файл
+                        embedding = np.loadtxt(emb_file)
+                    
+                    # Имя спикера из имени файла
+                    speaker_name = emb_file.stem
+                    
                     embeddings.append(embedding)
-                    labels.append(speaker_id)
-                    self.speaker_labels[len(labels) - 1] = speaker_id
+                    labels.append(speaker_name)
+                    self.speaker_labels[len(labels) - 1] = speaker_name
+                    
+                except Exception as e:
+                    self.logger.error(f"Ошибка загрузки эмбеддинга {emb_file}: {e}")
+            
+            # Создание FAISS индекса
+            if faiss and embeddings:
+                embeddings_matrix = np.vstack(embeddings).astype('float32')
+                dimension = embeddings_matrix.shape[1]
                 
-                # Создание FAISS индекса
-                if faiss and embeddings:
-                    embeddings_matrix = np.vstack(embeddings).astype('float32')
-                    dimension = embeddings_matrix.shape[1]
-                    
-                    self.index = faiss.IndexFlatIP(dimension)  # Cosine similarity
-                    faiss.normalize_L2(embeddings_matrix)
-                    self.index.add(embeddings_matrix)
-                    
-                    self.logger.info(f"Загружено {len(embeddings)} эмбеддингов голосов")
+                self.index = faiss.IndexFlatIP(dimension)  # Cosine similarity
+                faiss.normalize_L2(embeddings_matrix)
+                self.index.add(embeddings_matrix)
+                
+                self.logger.info(f"Загружено {len(embeddings)} эмбеддингов голосов")
+            else:
+                self.logger.warning("FAISS не доступен или нет эмбеддингов")
                 
         except Exception as e:
             self.logger.error(f"Ошибка загрузки базы голосов: {e}")
-    
-    def _load_faiss_index(self, index_path: str):
-        """Загрузка готового FAISS индекса"""
-        try:
-            if faiss:
-                self.index = faiss.read_index(index_path)
-                
-                # Попытка загрузить соответствующие метки
-                labels_path = Path(index_path).with_suffix('.labels')
-                if labels_path.exists():
-                    with open(labels_path, 'r', encoding='utf-8') as f:
-                        for i, line in enumerate(f):
-                            self.speaker_labels[i] = line.strip()
-                
-                self.logger.info(f"Загружен FAISS индекс с {self.index.ntotal} эмбеддингами")
-            
-        except Exception as e:
-            self.logger.error(f"Ошибка загрузки FAISS индекса: {e}")
     
     async def _process_impl(
         self, 
@@ -276,7 +271,7 @@ class RecognitionStage(BaseStage):
             "stage": self.stage_name,
             "model_name": getattr(self, 'model_name', 'unknown'),
             "device": getattr(self, 'device', 'unknown'),
-            "threshold": getattr(self, 'threshold', 0.8),
+            "threshold": getattr(self, 'threshold', 0.7),
             "database_size": self.index.ntotal if self.index else 0,
             "framework": "SpeechBrain + FAISS"
         }

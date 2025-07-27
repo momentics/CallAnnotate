@@ -22,7 +22,13 @@ class TranscriptionStage(BaseStage):
     
     async def _initialize(self):
         """Инициализация модели транскрипции"""
-        model_size = self.config.get("model_size", "base")
+        model_name = self.config.get("model", "openai/whisper-base")
+        # Извлекаем размер модели из названия (base, small, medium, large)
+        if "whisper-" in model_name:
+            model_size = model_name.split("whisper-")[-1]
+        else:
+            model_size = "base"
+            
         device = self.config.get("device", "cpu")
         
         self.logger.info(f"Загрузка модели Whisper: {model_size}")
@@ -53,14 +59,15 @@ class TranscriptionStage(BaseStage):
         if progress_callback:
             await progress_callback(10, "Начало транскрипции")
         
-        # Настройки транскрипции
-        options_config = self.config.get("options", {})
+        # Настройки транскрипции из конфигурации
+        language = self.config.get("language")
+        if language == "auto":
+            language = None  # Автоопределение
+            
         transcribe_options = {
-            "language": options_config.get("language"),  # None для автоопределения
-            "task": options_config.get("task", "transcribe"),
-            "temperature": options_config.get("temperature", 0.0),
-            "best_of": options_config.get("best_of", 5),
-            "beam_size": options_config.get("beam_size", 5),
+            "language": language,
+            "task": self.config.get("task", "transcribe"),
+            "temperature": 0.0,
             "word_timestamps": True,  # Всегда включаем временные метки слов
             "verbose": False
         }

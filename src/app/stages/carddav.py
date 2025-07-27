@@ -26,16 +26,16 @@ class CardDAVStage(BaseStage):
     
     async def _initialize(self):
         """Инициализация CardDAV клиента"""
-        self.server_url = self.config.get("server_url")
+        self.server_url = self.config.get("url")
         self.username = self.config.get("username")
         self.password = self.config.get("password")
-        self.timeout = self.config.get("timeout", 10)
+        self.timeout = self.config.get("timeout", 30)
         
         if not all([self.server_url, self.username, self.password]):
             self.logger.warning("CardDAV конфигурация неполная, этап будет пропущен")
             self.enabled = False
         else:
-            self.enabled = True
+            self.enabled = self.config.get("enabled", True)
             self.auth = HTTPBasicAuth(self.username, self.password)
             self.logger.info("CardDAV клиент инициализирован")
     

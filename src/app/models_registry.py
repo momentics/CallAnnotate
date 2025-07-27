@@ -8,8 +8,8 @@
 """
 
 import logging
-from typing import Dict, Any, Callable, Optional
 import threading
+from typing import Dict, Any, Callable
 import torch
 
 
@@ -57,7 +57,6 @@ class ModelRegistry:
                     model = loader()
                     self._models[key] = model
                     self._model_info[key] = {
-                        "loaded_at": torch.utils.data.get_worker_info(),
                         "memory_usage": self._estimate_model_memory(model),
                         **metadata
                     }
@@ -128,8 +127,7 @@ class ModelRegistry:
         for key, info in self._model_info.items():
             model_memory = info.get("memory_usage", 0)
             memory_info["models"][key] = {
-                "memory_mb": model_memory,
-                "loaded_at": info.get("loaded_at")
+                "memory_mb": model_memory
             }
             total_memory += model_memory
         
@@ -162,113 +160,7 @@ class ModelRegistry:
                 
         except Exception:
             return 0.0
-    
-    def preload_models(self, model_configs: Dict[str, Dict[str, Any]]):
-        """
-        Предварительная загрузка моделей
-        
-        Args:
-            model_configs: Словарь конфигураций моделей
-        """
-        for key, config in model_configs.items():
-            loader_func = config.get('loader')
-            if loader_func:
-                try:
-                    self.get_model(key, loader_func, **config.get('metadata', {}))
-                except Exception as e:
-                    self.logger.error(f"Ошибка предзагрузки модели {key}: {e}")
 
 
 # Глобальный экземпляр реестра
 models_registry = ModelRegistry()
-
-
-# Фабрики для создания стандартных загрузчиков моделей
-class ModelLoaders:
-    """Фабрики для создания загрузчиков моделей"""
-    
-    @staticmethod
-    def whisper_loader(model_size: str = "base", device: str = "cpu"):
-        """Создание загрузчика для Whisper модели"""
-        def loader():
-            import whisper
-            return whisper.load_model(model_size, device=device)
-        return loader
-    
-    @staticmethod
-    def pyannote_pipeline_loader(model_name: str, auth_token: Optional[str] = None, device: str = "cpu"):
-        """Создание загрузчика для pyannote pipeline"""
-        def loader():
-            from pyannote.audio import Pipeline
-            import torch
-            
-            pipeline = Pipeline.from_pretrained(model_name, use_auth_token=auth_token)
-            pipeline.to(torch.device(device))
-            return pipeline
-        return loader
-    
-    @staticmethod
-    def speechbrain_encoder_loader(model_name: str, device: str = "cpu"):
-        """Создание загрузчика для SpeechBrain encoder"""
-        def loader():
-            from speechbrain.pretrained import EncoderClassifier
-            return EncoderClassifier.from_hparams(
-                source=model_name,
-                run_opts={"device": device}
-            )
-        return loader
-
-
-def configure_models_from_config(config: 'AppSettings') -> ModelRegistry:
-    """
-    Конфигурирование реестра моделей из настроек приложения
-    
-    Args:
-        config: Настройки приложения
-        
-    Returns:
-        Сконфигурированный реестр моделей
-    """
-    registry = ModelRegistry()
-    
-    # Подготовка конфигураций для предзагрузки (опционально)
-    preload_configs = {}
-    
-    # Whisper модель
-    if hasattr(config, 'transcription'):
-        whisper_key = f"whisper_{config.transcription.model_size}_{config.transcription.device}"
-        preload_configs[whisper_key] = {
-            'loader': ModelLoaders.whisper_loader(
-                config.transcription.model_size, 
-                config.transcription.device
-            ),
-            'metadata': {'type': 'whisper', 'size': config.transcription.model_size}
-        }
-    
-    # pyannote.audio модель
-    if hasattr(config, 'diarization'):
-        diarization_key = f"diarization_{config.diarization.model_name}_{config.diarization.device}"
-        preload_configs[diarization_key] = {
-            'loader': ModelLoaders.pyannote_pipeline_loader(
-                config.diarization.model_name,
-                config.diarization.auth_token,
-                config.diarization.device
-            ),
-            'metadata': {'type': 'diarization', 'model': config.diarization.model_name}
-        }
-    
-    # SpeechBrain модель
-    if hasattr(config, 'recognition'):
-        recognition_key = f"speaker_recognition_{config.recognition.model_name}_{config.recognition.device}"
-        preload_configs[recognition_key] = {
-            'loader': ModelLoaders.speechbrain_encoder_loader(
-                config.recognition.model_name,
-                config.recognition.device
-            ),
-            'metadata': {'type': 'speaker_recognition', 'model': config.recognition.model_name}
-        }
-    
-    # Возможность предзагрузки моделей в фоне (опционально)
-    # registry.preload_models(preload_configs)
-    
-    return registry

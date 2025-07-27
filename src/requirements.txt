@@ -3,9 +3,6 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 websockets==12.0
-
-# Асинхронность и concurrent processing
-asyncio-mqtt==0.11.1
 aiofiles==23.2.1
 
 # Обработка аудио
@@ -14,41 +11,40 @@ soundfile==0.12.1
 pydub==0.25.1
 scipy==1.11.4
 
-# ML и AI модели
-torch==2.1.1
-torchaudio==2.1.1
-transformers==4.35.2
-pyannote.audio==3.1.1
-speechbrain==0.5.16
-openai-whisper==20231117
+# ML и AI модели - обновленные версии
+torch>=2.2.0,<=2.7.1
+torchaudio>=2.2.0,<=2.7.1
+transformers>=4.35.2
+pyannote.audio>=3.1.1
+speechbrain>=0.5.16
+openai-whisper>=20231117
+
+# FAISS для поиска по эмбеддингам
+faiss-cpu>=1.7.4
 
 # Обработка данных
-numpy==1.24.4
-pandas==2.1.3
-scikit-learn==1.3.2
+numpy>=1.24.0,<2.0.0
+pandas>=2.1.3
+scikit-learn>=1.3.2
 
 # CardDAV клиент
-caldav==1.3.9
-vobject==0.9.6.1
-requests==2.31.0
+caldav>=1.3.9
+vobject>=0.9.6.1
+requests>=2.31.0
 
 # Конфигурация и логирование
-pyyaml==6.0.1
-python-dotenv==1.0.0
-structlog==23.2.0
+pyyaml>=6.0.1
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
 
 # Утилиты
-pathlib2==2.3.7
-python-dateutil==2.8.2
-pytz==2023.3
-click==8.1.7
+python-dateutil>=2.8.2
+pytz>=2023.3
+click>=8.1.7
 
 # Тестирование
-pytest==7.4.3
-pytest-asyncio==0.21.1
-pytest-mock==3.12.0
-httpx==0.25.2
-
-# Дополнительные зависимости
-pillow==10.1.0
-matplotlib==3.8.2
+pytest>=7.4.3
+pytest-asyncio>=0.21.1
+pytest-mock>=3.12.0
+httpx>=0.25.2

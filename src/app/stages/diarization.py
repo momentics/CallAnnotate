@@ -25,8 +25,8 @@ class DiarizationStage(BaseStage):
     
     async def _initialize(self):
         """Инициализация модели диаризации"""
-        model_name = self.config.get("model_name", "pyannote/speaker-diarization-3.1")
-        auth_token = self.config.get("auth_token")
+        model_name = self.config.get("model", "pyannote/speaker-diarization-3.1")
+        auth_token = self.config.get("use_auth_token")
         device = self.config.get("device", "cpu")
         
         self.logger.info(f"Загрузка модели диаризации: {model_name}")
