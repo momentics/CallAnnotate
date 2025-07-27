@@ -7,35 +7,41 @@
 Лицензия: Apache-2.0
 """
 
-import json
 import logging
 from datetime import datetime
-from pathlib import Path
 from typing import Dict, Any, Callable, Optional
 
-from .diarization import DiarizationService
-from .transcription import TranscriptionService
-from .recognition import RecognitionService
-from .carddav_client import CardDAVClient
-from .utils import AudioMetadata, extract_audio_metadata
+from .stages import DiarizationStage, TranscriptionStage, RecognitionStage, CardDAVStage
+from .schemas import (
+    AnnotationResult, AudioMetadata, ProcessingInfo, FinalSpeaker, 
+    FinalSegment, FinalTranscription, Statistics, TranscriptionWord
+)
+from .models_registry import models_registry
+from .utils import extract_audio_metadata
 
 
 class AnnotationService:
-    """Основной сервис аннотации аудиофайлов"""
+    """Основной сервис аннотации аудиофайлов с использованием этапной архитектуры"""
     
     def __init__(self, config: Dict[str, Any]):
-        self.config = config
         self.logger = logging.getLogger(__name__)
         
-        # Инициализация сервисов
-        self.diarization_service = DiarizationService(config.get('diarization', {}))
-        self.transcription_service = TranscriptionService(config.get('transcription', {}))
-        self.recognition_service = RecognitionService(config.get('recognition', {}))
-        self.carddav_client = CardDAVClient(config.get('carddav', {}))
+        # Преобразование конфигурации в Pydantic модель
+        if isinstance(config, dict):
+            from .config import AppSettings
+            self.config = AppSettings(**config)
+        else:
+            self.config = config
         
-        # Пути для промежуточных результатов
-        self.volume_path = Path(config.get('volume_path', '/volume'))
-        self.intermediate_path = self.volume_path / 'intermediate'
+        # Инициализация этапов обработки
+        self.stages = [
+            DiarizationStage(self.config.diarization.dict(), models_registry),
+            TranscriptionStage(self.config.transcription.dict(), models_registry),
+            RecognitionStage(self.config.recognition.dict(), models_registry),
+            CardDAVStage(self.config.carddav.dict(), models_registry)
+        ]
+        
+        self.logger.info("AnnotationService инициализирован с новой архитектурой этапов")
     
     async def process_audio(
         self,
@@ -62,44 +68,54 @@ class AnnotationService:
             audio_metadata = extract_audio_metadata(file_path)
             await self._update_progress(progress_callback, 5, "Метаданные аудио извлечены")
             
-            # Этап 1: Диаризация говорящих
-            await self._update_progress(progress_callback, 10, "Начало диаризации")
-            diarization_result = await self.diarization_service.process(file_path, task_id)
-            await self._save_intermediate_result('diarization', task_id, diarization_result)
-            await self._update_progress(progress_callback, 30, "Диаризация завершена")
+            # Последовательное выполнение этапов
+            context = {}
+            stage_progress = [10, 35, 65, 85]  # Прогресс по этапам
             
-            # Этап 2: Транскрипция
-            await self._update_progress(progress_callback, 35, "Начало транскрипции")
-            transcription_result = await self.transcription_service.process(
-                file_path, task_id, diarization_result
-            )
-            await self._save_intermediate_result('transcription', task_id, transcription_result)
-            await self._update_progress(progress_callback, 60, "Транскрипция завершена")
+            for i, stage in enumerate(self.stages):
+                start_progress = stage_progress[i]
+                end_progress = stage_progress[i+1] if i+1 < len(stage_progress) else 90
+                
+                await self._update_progress(
+                    progress_callback, 
+                    start_progress, 
+                    f"Начало этапа {stage.stage_name}"
+                )
+                
+                # Создание callback для прогресса этапа
+                async def stage_progress_callback(stage_progress_pct: int, message: str):
+                    overall_progress = start_progress + int(
+                        (end_progress - start_progress) * stage_progress_pct / 100
+                    )
+                    await self._update_progress(progress_callback, overall_progress, message)
+                
+                # Выполнение этапа
+                stage_result = await stage.process(
+                    file_path, task_id, context, stage_progress_callback
+                )
+                
+                # Сохранение результата в контексте
+                context[stage.stage_name] = stage_result
+                
+                if not stage_result.success:
+                    self.logger.error(f"Этап {stage.stage_name} завершился с ошибкой: {stage_result.error}")
+                    # Продолжаем обработку даже при ошибке одного этапа
+                
+                await self._update_progress(
+                    progress_callback, 
+                    end_progress, 
+                    f"Этап {stage.stage_name} завершен"
+                )
             
-            # Этап 3: Распознавание голосов
-            await self._update_progress(progress_callback, 65, "Начало распознавания голосов")
-            recognition_result = await self.recognition_service.process(
-                file_path, task_id, diarization_result
-            )
-            await self._save_intermediate_result('recognition', task_id, recognition_result)
-            await self._update_progress(progress_callback, 80, "Распознавание голосов завершено")
-            
-            # Этап 4: Связывание с CardDAV
-            await self._update_progress(progress_callback, 85, "Поиск контактов в CardDAV")
-            carddav_result = await self.carddav_client.link_contacts(recognition_result)
-            await self._save_intermediate_result('carddav', task_id, carddav_result)
-            await self._update_progress(progress_callback, 90, "Связывание контактов завершено")
-            
-            # Этап 5: Сборка финального результата
+            # Сборка финального результата
             await self._update_progress(progress_callback, 95, "Сборка финального результата")
-            final_result = await self._build_final_annotation(
-                task_id, audio_metadata, diarization_result,
-                transcription_result, recognition_result, carddav_result
+            final_result = self._build_final_annotation(
+                task_id, audio_metadata, context
             )
             
             await self._update_progress(progress_callback, 100, "Аннотация завершена")
             
-            return final_result
+            return final_result.dict()
             
         except Exception as e:
             self.logger.error(f"Ошибка при обработке аудио {file_path}: {e}")
@@ -116,191 +132,165 @@ class AnnotationService:
             await callback(progress, message)
         self.logger.info(f"Прогресс {progress}%: {message}")
     
-    async def _save_intermediate_result(
-        self,
-        stage: str,
-        task_id: str,
-        result: Dict[str, Any]
-    ):
-        """Сохранение промежуточного результата"""
-        try:
-            stage_path = self.intermediate_path / stage
-            stage_path.mkdir(parents=True, exist_ok=True)
-            
-            result_file = stage_path / f"{task_id}.json"
-            with open(result_file, 'w', encoding='utf-8') as f:
-                json.dump(result, f, ensure_ascii=False, indent=2)
-            
-            self.logger.debug(f"Промежуточный результат {stage} сохранен для задачи {task_id}")
-            
-        except Exception as e:
-            self.logger.error(f"Ошибка при сохранении промежуточного результата {stage}: {e}")
-    
-    async def _build_final_annotation(
+    def _build_final_annotation(
         self,
         task_id: str,
         audio_metadata: AudioMetadata,
-        diarization_result: Dict[str, Any],
-        transcription_result: Dict[str, Any],
-        recognition_result: Dict[str, Any],
-        carddav_result: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        context: Dict[str, Any]
+    ) -> AnnotationResult:
         """Сборка финального JSON с аннотацией"""
         
-        # Основная структура результата
-        final_annotation = {
-            "task_id": task_id,
-            "version": "1.0.0",
-            "created_at": datetime.now().isoformat(),
-            "audio_metadata": {
-                "filename": audio_metadata.filename,
-                "duration": audio_metadata.duration,
-                "sample_rate": audio_metadata.sample_rate,
-                "channels": audio_metadata.channels,
-                "format": audio_metadata.format,
-                "bitrate": audio_metadata.bitrate,
-                "size_bytes": audio_metadata.size_bytes
-            },
-            "processing_info": {
-                "diarization_model": diarization_result.get("model_info", {}),
-                "transcription_model": transcription_result.get("model_info", {}),
-                "recognition_model": recognition_result.get("model_info", {}),
-                "processing_time": {
-                    "diarization": diarization_result.get("processing_time", 0),
-                    "transcription": transcription_result.get("processing_time", 0),
-                    "recognition": recognition_result.get("processing_time", 0),
-                    "carddav": carddav_result.get("processing_time", 0)
-                }
-            },
-            "speakers": [],
-            "segments": [],
-            "transcription": {
-                "full_text": "",
-                "confidence": 0.0,
-                "language": transcription_result.get("language", "unknown"),
-                "words": []
-            },
-            "statistics": {
-                "total_speakers": 0,
-                "identified_speakers": 0,
-                "unknown_speakers": 0,
-                "total_segments": 0,
-                "total_words": 0,
-                "speech_duration": 0.0,
-                "silence_duration": 0.0
+        # Извлечение результатов этапов
+        diarization_result = context.get("diarization")
+        transcription_result = context.get("transcription")
+        recognition_result = context.get("recognition")
+        carddav_result = context.get("carddav")
+        
+        # Создание информации о процессе
+        processing_info = ProcessingInfo(
+            diarization_model=diarization_result.model_info if diarization_result else {},
+            transcription_model=transcription_result.model_info if transcription_result else {},
+            recognition_model=recognition_result.model_info if recognition_result else {},
+            processing_time={
+                "diarization": diarization_result.processing_time if diarization_result else 0.0,
+                "transcription": transcription_result.processing_time if transcription_result else 0.0,
+                "recognition": recognition_result.processing_time if recognition_result else 0.0,
+                "carddav": carddav_result.processing_time if carddav_result else 0.0
             }
-        }
+        )
         
         # Обработка спикеров
         speakers_map = {}
         speaker_id = 0
         
-        for segment in diarization_result.get("segments", []):
+        diarization_segments = diarization_result.payload.get("segments", []) if diarization_result else []
+        recognition_speakers = recognition_result.payload.get("speakers", {}) if recognition_result else {}
+        carddav_speakers = carddav_result.payload.get("speakers", {}) if carddav_result else {}
+        
+        for segment in diarization_segments:
             speaker_label = segment.get("speaker", "unknown")
             
             if speaker_label not in speakers_map:
                 speaker_id += 1
-                speaker_info = {
-                    "id": f"speaker_{speaker_id:02d}",
-                    "label": speaker_label,
-                    "segments_count": 0,
-                    "total_duration": 0.0,
-                    "identified": False,
-                    "name": None,
-                    "contact_info": None,
-                    "voice_embedding": None,
-                    "confidence": 0.0
-                }
+                speaker_info = FinalSpeaker(
+                    id=f"speaker_{speaker_id:02d}",
+                    label=speaker_label,
+                    segments_count=0,
+                    total_duration=0.0
+                )
                 
                 # Добавление информации о распознавании
-                recognition_info = recognition_result.get("speakers", {}).get(speaker_label, {})
+                recognition_info = recognition_speakers.get(speaker_label, {})
                 if recognition_info:
-                    speaker_info.update({
-                        "identified": recognition_info.get("identified", False),
-                        "name": recognition_info.get("name"),
-                        "confidence": recognition_info.get("confidence", 0.0),
-                        "voice_embedding": recognition_info.get("embedding_path")
-                    })
+                    speaker_info.identified = recognition_info.get("identified", False)
+                    speaker_info.name = recognition_info.get("name")
+                    speaker_info.confidence = recognition_info.get("confidence", 0.0)
                 
                 # Добавление информации из CardDAV
-                carddav_info = carddav_result.get("speakers", {}).get(speaker_label, {})
-                if carddav_info:
-                    speaker_info["contact_info"] = carddav_info
+                carddav_info = carddav_speakers.get(speaker_label, {})
+                if carddav_info and carddav_info.get("contact"):
+                    speaker_info.contact_info = carddav_info["contact"]
                 
                 speakers_map[speaker_label] = speaker_info
-                final_annotation["speakers"].append(speaker_info)
         
         # Обработка сегментов и транскрипции
+        final_segments = []
         full_text_parts = []
         total_words = 0
         speech_duration = 0.0
         
-        for segment in diarization_result.get("segments", []):
+        transcription_segments = transcription_result.payload.get("segments", []) if transcription_result else []
+        transcription_words = transcription_result.payload.get("words", []) if transcription_result else []
+        
+        for segment in diarization_segments:
             speaker_label = segment.get("speaker", "unknown")
             start_time = segment.get("start", 0.0)
             end_time = segment.get("end", 0.0)
             duration = end_time - start_time
             
             # Обновление статистики спикера
-            speaker_info = speakers_map[speaker_label]
-            speaker_info["segments_count"] += 1
-            speaker_info["total_duration"] += duration
+            if speaker_label in speakers_map:
+                speaker_info = speakers_map[speaker_label]
+                speaker_info.segments_count += 1
+                speaker_info.total_duration += duration
             
             # Поиск соответствующих слов из транскрипции
             segment_words = []
             segment_text = ""
             
-            for word_info in transcription_result.get("words", []):
+            for word_info in transcription_words:
                 word_start = word_info.get("start", 0.0)
                 word_end = word_info.get("end", 0.0)
                 
                 # Проверка пересечения временных интервалов
                 if self._intervals_overlap(start_time, end_time, word_start, word_end):
-                    segment_words.append(word_info)
+                    segment_words.append(TranscriptionWord(**word_info))
                     segment_text += word_info.get("word", "") + " "
                     total_words += 1
             
             segment_text = segment_text.strip()
-            full_text_parts.append(f"[{speaker_info['id']}]: {segment_text}")
+            
+            if speaker_label in speakers_map:
+                speaker_id_str = speakers_map[speaker_label].id
+                full_text_parts.append(f"[{speaker_id_str}]: {segment_text}")
             
             # Создание сегмента
-            annotation_segment = {
-                "id": len(final_annotation["segments"]) + 1,
-                "start": start_time,
-                "end": end_time,
-                "duration": duration,
-                "speaker": speaker_info["id"],
-                "speaker_label": speaker_label,
-                "text": segment_text,
-                "words": segment_words,
-                "confidence": segment.get("confidence", 0.0)
-            }
+            final_segment = FinalSegment(
+                id=len(final_segments) + 1,
+                start=start_time,
+                end=end_time,
+                duration=duration,
+                speaker=speakers_map[speaker_label].id if speaker_label in speakers_map else "unknown",
+                speaker_label=speaker_label,
+                text=segment_text,
+                words=segment_words,
+                confidence=segment.get("confidence", 0.0)
+            )
             
-            final_annotation["segments"].append(annotation_segment)
+            final_segments.append(final_segment)
             speech_duration += duration
         
         # Финализация транскрипции
-        final_annotation["transcription"]["full_text"] = "\n".join(full_text_parts)
-        final_annotation["transcription"]["words"] = transcription_result.get("words", [])
-        final_annotation["transcription"]["confidence"] = transcription_result.get("confidence", 0.0)
+        final_transcription = FinalTranscription(
+            full_text="\n".join(full_text_parts),
+            words=[TranscriptionWord(**word) for word in transcription_words],
+            confidence=transcription_result.payload.get("confidence", 0.0) if transcription_result else 0.0,
+            language=transcription_result.payload.get("language", "unknown") if transcription_result else "unknown"
+        )
         
         # Вычисление статистики
-        total_speakers = len(final_annotation["speakers"])
-        identified_speakers = sum(1 for s in final_annotation["speakers"] if s["identified"])
-        unknown_speakers = total_speakers - identified_speakers
+        speakers_list = list(speakers_map.values())
+        identified_speakers = sum(1 for s in speakers_list if s.identified)
         
-        final_annotation["statistics"] = {
-            "total_speakers": total_speakers,
-            "identified_speakers": identified_speakers,
-            "unknown_speakers": unknown_speakers,
-            "total_segments": len(final_annotation["segments"]),
-            "total_words": total_words,
-            "speech_duration": speech_duration,
-            "silence_duration": max(0, audio_metadata.duration - speech_duration)
-        }
+        statistics = Statistics(
+            total_speakers=len(speakers_list),
+            identified_speakers=identified_speakers,
+            unknown_speakers=len(speakers_list) - identified_speakers,
+            total_segments=len(final_segments),
+            total_words=total_words,
+            speech_duration=speech_duration,
+            silence_duration=max(0, audio_metadata.duration - speech_duration)
+        )
         
-        return final_annotation
+        return AnnotationResult(
+            task_id=task_id,
+            created_at=datetime.now(),
+            audio_metadata=audio_metadata,
+            processing_info=processing_info,
+            speakers=speakers_list,
+            segments=final_segments,
+            transcription=final_transcription,
+            statistics=statistics
+        )
     
     def _intervals_overlap(self, start1: float, end1: float, start2: float, end2: float) -> bool:
         """Проверка пересечения временных интервалов"""
         return max(start1, start2) < min(end1, end2)
+    
+    async def cleanup(self):
+        """Очистка ресурсов всех этапов"""
+        for stage in self.stages:
+            try:
+                await stage.cleanup()
+            except Exception as e:
+                self.logger.error(f"Ошибка очистки этапа {stage.stage_name}: {e}")
