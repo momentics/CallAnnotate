@@ -7,6 +7,11 @@
 
 [![Latest Release](https://img.shields.io/github/v/release/momentics/CallAnnotate?style=for-the-badge)](https://github.com/momentics/CallAnnotate/releases)   [![Last Commit](https://img.shields.io/github/last-commit/momentics/CallAnnotate?style=for-the-badge)](https://github.com/momentics/CallAnnotate/commits/main)  
 
+## Требования
+
+1. Требуемая версия Python: 3.11
+
+
 
 ## Основные возможности
 
