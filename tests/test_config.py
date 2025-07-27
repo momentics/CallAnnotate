@@ -3,7 +3,7 @@
 # Ссылка: https://github.com/momentics/CallAnnotate
 # Лицензия: Apache-2.0
 
-from fastapi import Path
+import pathlib
 import yaml
 
 from app.config import (
@@ -19,10 +19,9 @@ def test_recognition_validator(tmp_path):
     """
     emb = tmp_path / "emb"
     cfg = RecognitionConfig(embeddings_path=str(emb))
-    # Проверяем, что значение действительно было создано и путь корректен
+    # Директория должна быть создана валидатором
     assert cfg.embeddings_path is not None
-    assert Path(cfg.embeddings_path).exists()
-
+    assert pathlib.Path(cfg.embeddings_path).exists()
     
 def write_yaml(tmp_path, data):
     f = tmp_path / "cfg.yaml"
