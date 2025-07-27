@@ -4,7 +4,6 @@
 # Лицензия: Apache-2.0
 
 import os
-import json
 import time
 from fastapi import status
 

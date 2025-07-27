@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-Интеграционные тесты WebSocket функциональности CallAnnotate
-
-Автор: akoodoy@capilot.ru
-Ссылка: https://github.com
-Лицензия: Apache-2.0
-"""
+# Автор: akoodoy@capilot.ru
+# Ссылка: https://github.com/momentics/CallAnnotate
+# Лицензия: Apache-2.0
 
 import json
 import pytest

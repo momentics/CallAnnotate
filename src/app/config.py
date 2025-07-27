@@ -16,8 +16,26 @@ try:
 except ImportError:
     from pydantic import BaseSettings
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, model_validator, validator
 import yaml
+
+class RecognitionConfig(BaseSettings):
+    model: str = Field("speechbrain/spkrec-ecapa-voxceleb")
+    device: str = Field("cpu")
+    threshold: float = Field(0.7, ge=0.0, le=1.0)
+    embeddings_path: str | None = None
+    index_path: str | None = None
+
+    @model_validator(mode="after")
+    def create_dirs(self):
+        for attr in ("embeddings_path", "index_path"):
+            v = getattr(self, attr)
+            if v:
+                p = Path(v)
+                p.mkdir(parents=True, exist_ok=True)
+                setattr(self, attr, str(p))
+        return self
+    
 
 
 class DiarizationConfig(BaseSettings):
