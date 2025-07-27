@@ -1,85 +1,88 @@
+# src/app/queue_manager.py
 # -*- coding: utf-8 -*-
 """
 Менеджер очереди задач для CallAnnotate
 
-Автор: akoodoy@capilot.ru
+Автор: akoodoy@capitol.ru
 Ссылка: https://github.com/momentics/CallAnnotate
 Лицензия: Apache-2.0
 """
 
 import asyncio
+from dataclasses import asdict
 import json
 import logging
+import threading
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Callable
-from dataclasses import dataclass, asdict
 from concurrent.futures import ThreadPoolExecutor
-import threading
+from typing import Callable, Dict, List, Optional, Any
 
 from .annotation import AnnotationService
 
-
 class TaskStatus(str, Enum):
-    """Статусы задач в очереди"""
     QUEUED = "queued"
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
 
-
-@dataclass
 class TaskResult:
     """Результат выполнения задачи"""
-    task_id: str
-    status: TaskStatus
-    message: str
-    created_at: str
-    updated_at: Optional[str] = None
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-    progress: int = 0
-    metadata: Optional[Dict[str, Any]] = None
-
+    def __init__(
+        self,
+        task_id: str,
+        status: TaskStatus,
+        message: str,
+        created_at: str,
+        metadata: Optional[Dict[str, Any]] = None,
+    ):
+        self.task_id = task_id
+        self.status = status
+        self.message = message
+        self.created_at = created_at
+        self.updated_at: Optional[str] = None
+        self.started_at: Optional[str] = None
+        self.completed_at: Optional[str] = None
+        self.result: Optional[Dict[str, Any]] = None
+        self.error: Optional[str] = None
+        self.progress: int = 0
+        self.metadata: Optional[Dict[str, Any]] = metadata
 
 class QueueManager:
-    """Менеджер очереди задач для обработки аудиофайлов"""
-
     def __init__(
         self,
         config: Dict[str, Any] = None,
         *,
         volume_path: str = None,
-        max_queue_size: int = None , max_concurrent_tasks: int = None,
+        max_queue_size: int = None,
+        max_concurrent_tasks: int = None,
         task_timeout: int = None,
         cleanup_interval: int = None
-        ):
+    ):
         """
-        Менеджер очереди задач.
-        
+        Инициализация менеджера очереди.
+
         Args:
-            config: словарь конфигурации (из YAML). Если не передан, читаем из env.
-            volume_path: путь к корню volume, переопределяет config['volume_path'].
-            max_queue_size: максимальный размер очереди, переопределяет config['max_queue_size'].
-            max_concurrent_tasks: количество параллельных задач, переопределяет config['max_concurrent_tasks'].
-            task_timeout: таймаут задачи, переопределяет config['task_timeout'].
-            cleanup_interval: интервал очистки, переопределяет config['cleanup_interval'].
+            config: словарь конфигурации раздела 'queue' из default.yaml.
+            volume_path: путь к корневой папке volume, переопределяет config['volume_path'].
+            max_queue_size: максимальный размер очереди (переопределяет config).
+            max_concurrent_tasks: максимальное число параллельных задач (переопределяет config).
+            task_timeout: таймаут выполнения задачи в секундах (переопределяет config).
+            cleanup_interval: интервал фоновой очистки в секундах (переопределяет config).
         """
         import yaml
-        from pathlib import Path
 
-        # Загружаем базовый config из переданного словаря или из YAML по env
+        # Загрузка конфигурации из YAML, если не передан явный словарь
         if config is None:
-            base_dir = Path(__file__).resolve().parent.parent.parent
-            config_file = base_dir / "config" / "default.yaml"
-            with open(config_file, 'r', encoding='utf-8') as f:
-                config = yaml.safe_load(f).get('queue', {})
+            base_dir = Path(__file__).resolve().parent.parent
+            cfg_file = base_dir.parent / "config" / "default.yaml"
+            with open(cfg_file, 'r', encoding='utf-8') as f:
+                full_conf = yaml.safe_load(f)
+            config = full_conf.get('queue', {})
 
-        # Переопределяем параметры, если они переданы явно
+        # Переопределение конфигурационных параметров, если заданы
         if volume_path is not None:
             config['volume_path'] = volume_path
         if max_queue_size is not None:
@@ -95,15 +98,15 @@ class QueueManager:
         self.logger = logging.getLogger(__name__)
 
         # Параметры очереди
-        self.max_concurrent_tasks = config.get('max_concurrent_tasks', 2)
-        self.max_queue_size = config.get('max_queue_size', 100)
-        self.task_timeout = config.get('task_timeout', 3600)  # сек
-        self.cleanup_interval = config.get('cleanup_interval', 300)  # сек
+        self.max_concurrent_tasks: int = config.get('max_concurrent_tasks', 2)
+        self.max_queue_size: int = config.get('max_queue_size', 100)
+        self.task_timeout: int = config.get('task_timeout', 3600)
+        self.cleanup_interval: int = config.get('cleanup_interval', 300)
 
-        # Пути для файловой системы
-        self.volume_path = Path(config.get('volume_path', '/app/volume'))
-        self.queue_path = self.volume_path / 'queue'
-        self.logs_path = self.volume_path / 'logs'
+        # Пути для работы с файловой системой
+        self.volume_path: Path = Path(config.get('volume_path', '/app/volume'))
+        self.queue_path: Path = self.volume_path / 'queue'
+        self.logs_path: Path = self.volume_path / 'logs'
 
         # Создание необходимых директорий
         self._create_directories()
@@ -116,16 +119,15 @@ class QueueManager:
 
         # Воркеры и управление
         self.workers: List[asyncio.Task] = []
-        self.is_running = False
-        self.shutdown_event = asyncio.Event()
+        self.is_running: bool = False
+        self.shutdown_event: asyncio.Event = asyncio.Event()
 
         # Thread pool для CPU-интенсивных задач
-        self.executor = ThreadPoolExecutor(max_workers=self.max_concurrent_tasks)
+        self.executor: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=self.max_concurrent_tasks)
 
         # Блокировка для thread-safe операций
-        self.lock = threading.RLock()
+        self.lock: threading.RLock = threading.RLock()
 
-    
     def _create_directories(self):
         """Создание необходимых директорий"""
         directories = [
