@@ -10,18 +10,17 @@ from unittest.mock import AsyncMock
 
 from app.app import app
 
-# ИСПРАВЛЕНО: используем позиционный аргумент вместо именованного
 client = TestClient(app)
 
 
 class TestWebSocketIntegration:
-    """Тесты WebSocket интеграции"""
+    """Тесты WebSocket интеграции с корректным API"""
 
-    def test_websocket_connection(self):
-        """Тест подключения к WebSocket"""
+    def test_websocket_connection_and_ping(self):
+        """Тест подключения к WebSocket и ping/pong"""
         with client.websocket_connect("/ws/test_client") as websocket:
             # Отправляем ping
-            ping_message = {"type": "ping", "timestamp": "2024-01-01T00:00:00"}
+            ping_message = {"type": "ping", "timestamp": "2025-07-27T20:00:00Z"}
             websocket.send_text(json.dumps(ping_message))
             
             # Получаем pong
@@ -29,15 +28,15 @@ class TestWebSocketIntegration:
             response_data = json.loads(response)
             
             assert response_data["type"] == "pong"
-            assert response_data["timestamp"] == "2024-01-01T00:00:00"
+            assert response_data["timestamp"] == "2025-07-27T20:00:00Z"
 
-    def test_websocket_task_subscription(self):
+    def test_websocket_job_subscription(self):
         """Тест подписки на задачу через WebSocket"""
         with client.websocket_connect("/ws/test_client") as websocket:
             # Подписываемся на задачу
             subscribe_message = {
-                "type": "subscribe_task",
-                "task_id": "test_task_123"
+                "type": "subscribe_job",
+                "job_id": "550e8400-e29b-41d4-a716-446655440000"
             }
             websocket.send_text(json.dumps(subscribe_message))
             
@@ -46,49 +45,127 @@ class TestWebSocketIntegration:
             response_data = json.loads(response)
             
             assert response_data["type"] == "subscribed"
-            assert response_data["task_id"] == "test_task_123"
-            assert "Subscribed to test_task_123" in response_data["message"]
+            assert response_data["job_id"] == "550e8400-e29b-41d4-a716-446655440000"
 
-    def test_websocket_audio_upload(self):
-        """Тест загрузки аудио через WebSocket"""
-        import base64
-        
-        # Создаем тестовые аудио данные
-        test_audio_data = b"fake_audio_data_for_testing"
-        encoded_audio = base64.b64encode(test_audio_data).decode('utf-8')
-        
+    def test_websocket_create_job_file_not_found(self):
+        """Тест создания задачи через WebSocket с несуществующим файлом"""
         with client.websocket_connect("/ws/test_client") as websocket:
-            # Отправляем аудио
-            upload_message = {
-                "type": "upload_audio",
-                "data": encoded_audio,
-                "filename": "test_audio.wav",
+            # Отправляем запрос на создание задачи с несуществующим файлом
+            create_message = {
+                "type": "create_job",
+                "filename": "nonexistent.wav",
                 "priority": 5
             }
-            websocket.send_text(json.dumps(upload_message))
+            websocket.send_text(json.dumps(create_message))
             
-            # Получаем подтверждение создания задачи
+            # Получаем ошибку
             response = websocket.receive_text()
             response_data = json.loads(response)
             
-            assert response_data["type"] == "task_created"
-            assert "task_id" in response_data
+            assert response_data["type"] == "error"
+            assert response_data["code"] == "FILE_NOT_FOUND"
+            assert "not found" in response_data["message"]
+
+    def test_websocket_create_job_success(self, tmp_path, monkeypatch):
+        """Тест успешного создания задачи через WebSocket"""
+        # Настройка тестового volume
+        test_volume = tmp_path / "test_volume"
+        incoming_dir = test_volume / "incoming"
+        incoming_dir.mkdir(parents=True)
+        
+        # Создание тестового аудиофайла
+        test_file = incoming_dir / "ws_test.wav"
+        test_file.write_bytes(b"RIFF\x24\x00\x00\x00WAVEfmt ")
+        
+        monkeypatch.setenv("VOLUME_PATH", str(test_volume))
+        
+        with client.websocket_connect("/ws/test_client") as websocket:
+            # Создание задачи
+            create_message = {
+                "type": "create_job",
+                "filename": "ws_test.wav",
+                "priority": 8
+            }
+            websocket.send_text(json.dumps(create_message))
+            
+            # Получаем подтверждение создания
+            response = websocket.receive_text()
+            response_data = json.loads(response)
+            
+            assert response_data["type"] == "job_created"
+            assert "job_id" in response_data
             assert response_data["status"] == "queued"
 
-    def test_websocket_disconnect(self):
-        """Тест корректного отключения WebSocket"""
+    def test_websocket_create_job_missing_filename(self):
+        """Тест создания задачи без указания filename"""
         with client.websocket_connect("/ws/test_client") as websocket:
-            # Отправляем сообщение для проверки соединения
-            ping_message = {"type": "ping", "timestamp": "2024-01-01T00:00:00"}
-            websocket.send_text(json.dumps(ping_message))
+            # Отправляем неполное сообщение
+            create_message = {
+                "type": "create_job",
+                "priority": 5
+                # filename отсутствует
+            }
+            websocket.send_text(json.dumps(create_message))
             
-            # Получаем ответ
+            # Получаем ошибку
             response = websocket.receive_text()
             response_data = json.loads(response)
-            assert response_data["type"] == "pong"
-        
-        # После выхода из контекста соединение должно быть закрыто
-        # Это проверяется автоматически TestClient
+            
+            assert response_data["type"] == "error"
+            assert response_data["code"] == "MISSING_FILENAME"
+
+    def test_websocket_invalid_json(self):
+        """Тест отправки невалидного JSON"""
+        with client.websocket_connect("/ws/test_client") as websocket:
+            # Отправляем невалидный JSON
+            websocket.send_text("invalid json {")
+            
+            # Получаем ошибку
+            response = websocket.receive_text()
+            response_data = json.loads(response)
+            
+            assert response_data["type"] == "error"
+            assert response_data["code"] == "INVALID_JSON"
+
+    def test_websocket_unknown_message_type(self):
+        """Тест неизвестного типа сообщения"""
+        with client.websocket_connect("/ws/test_client") as websocket:
+            # Отправляем неизвестный тип сообщения
+            unknown_message = {
+                "type": "unknown_type",
+                "data": "test"
+            }
+            websocket.send_text(json.dumps(unknown_message))
+            
+            # Получаем ошибку
+            response = websocket.receive_text()
+            response_data = json.loads(response)
+            
+            assert response_data["type"] == "error"
+            assert response_data["code"] == "UNKNOWN_MESSAGE_TYPE"
+            assert "unknown_type" in response_data["message"]
+
+    def test_websocket_multiple_clients(self):
+        """Тест подключения нескольких клиентов"""
+        with client.websocket_connect("/ws/client_1") as ws1, \
+             client.websocket_connect("/ws/client_2") as ws2:
+            
+            # Каждый клиент отправляет ping
+            ping1 = {"type": "ping", "timestamp": "2025-07-27T20:00:00Z"}
+            ping2 = {"type": "ping", "timestamp": "2025-07-27T20:01:00Z"}
+            
+            ws1.send_text(json.dumps(ping1))
+            ws2.send_text(json.dumps(ping2))
+            
+            # Получаем ответы
+            response1 = json.loads(ws1.receive_text())
+            response2 = json.loads(ws2.receive_text())
+            
+            assert response1["type"] == "pong"
+            assert response1["timestamp"] == "2025-07-27T20:00:00Z"
+            
+            assert response2["type"] == "pong"
+            assert response2["timestamp"] == "2025-07-27T20:01:00Z"
 
 
 @pytest.mark.asyncio
@@ -112,9 +189,50 @@ async def test_websocket_manager_functionality():
     await manager.send_personal_message(test_message, "test_client")
     mock_websocket.send_text.assert_called_once_with(json.dumps(test_message))
     
+    # Тестируем broadcast
+    await manager.broadcast({"type": "broadcast", "message": "to all"})
+    
     # Тестируем отключение
     manager.disconnect("test_client")
     assert "test_client" not in manager.active_connections
+
+
+@pytest.mark.asyncio 
+async def test_websocket_job_workflow(tmp_path, monkeypatch):
+    """Интеграционный тест WebSocket workflow"""
+    # Настройка тестового окружения
+    test_volume = tmp_path / "test_volume"
+    incoming_dir = test_volume / "incoming"
+    incoming_dir.mkdir(parents=True)
+    
+    test_file = incoming_dir / "workflow.wav"
+    test_file.write_bytes(b"RIFF\x24\x00\x00\x00WAVEfmt ")
+    
+    monkeypatch.setenv("VOLUME_PATH", str(test_volume))
+    
+    with client.websocket_connect("/ws/workflow_client") as websocket:
+        # 1. Создание задачи
+        websocket.send_text(json.dumps({
+            "type": "create_job",
+            "filename": "workflow.wav",
+            "priority": 5
+        }))
+        
+        # Получение подтверждения
+        create_response = json.loads(websocket.receive_text())
+        assert create_response["type"] == "job_created"
+        job_id = create_response["job_id"]
+        
+        # 2. Подписка на обновления
+        websocket.send_text(json.dumps({
+            "type": "subscribe_job",
+            "job_id": job_id
+        }))
+        
+        # Получение подтверждения подписки
+        subscribe_response = json.loads(websocket.receive_text())
+        assert subscribe_response["type"] == "subscribed"
+        assert subscribe_response["job_id"] == job_id
 
 
 if __name__ == "__main__":

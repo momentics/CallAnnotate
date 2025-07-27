@@ -10,6 +10,7 @@
 import logging
 import logging.config
 from datetime import datetime
+import os
 from pathlib import Path
 from typing import Dict, Any, NamedTuple
 
@@ -20,10 +21,30 @@ from fastapi import UploadFile
 from .schemas import AudioMetadata
 
 
-class ValidationResult(NamedTuple):
-    is_valid: bool
-    error: str = ""
 
+class ValidationResult:
+    def __init__(self, is_valid: bool, error: str = None):
+        self.is_valid = is_valid
+        self.error = error
+
+def validate_audio_file_path(file_path: str) -> ValidationResult:
+    """
+    Примитивная проверка валидности аудиофайла для CallAnnotate
+    - Существование файла
+    - Проверка расширения на допустимые (['.wav', '.mp3', '.ogg', '.flac'])
+    - Файл не пустой
+    """
+    if not os.path.exists(file_path):
+        return ValidationResult(False, f"Файл '{file_path}' не существует")
+    if not os.path.isfile(file_path):
+        return ValidationResult(False, f"Путь '{file_path}' не является файлом")
+    ext = Path(file_path).suffix.lower()
+    allowed = {".wav", ".mp3", ".ogg", ".flac"}
+    if ext not in allowed:
+        return ValidationResult(False, f"Формат '{ext}' не поддерживается")
+    if os.path.getsize(file_path) == 0:
+        return ValidationResult(False, f"Файл '{file_path}' пустой")
+    return ValidationResult(True)
 
 def setup_logging(config: Dict[str, Any]):
     """Настройка системы логирования"""

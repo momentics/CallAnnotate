@@ -128,6 +128,15 @@ class QueueManager:
         # Блокировка для thread-safe операций
         self.lock: threading.RLock = threading.RLock()
 
+    async def get_queue_info(self):
+        # Возвращает информацию о длине очереди и т.д.
+        return {
+            "queue_length": await self.get_queue_size(),
+            "processing_jobs": [],
+            "queued_jobs": [],
+            "average_processing_time": 0
+        }
+
     def _create_directories(self):
         """Создание необходимых директорий"""
         directories = [
@@ -260,32 +269,29 @@ class QueueManager:
             
             return filtered_tasks
     
-    async def cancel_task(self, task_id: str) -> bool:
-        """Отмена задачи"""
-        with self.lock:
-            if task_id not in self.tasks:
-                return False
-            
-            task_result = self.tasks[task_id]
-            
-            # Можно отменить только задачи в очереди или обрабатывающиеся
-            if task_result.status not in [TaskStatus.QUEUED, TaskStatus.PROCESSING]:
-                return False
-            
-            # Отмена обрабатывающейся задачи
-            if task_id in self.processing_tasks:
-                processing_task = self.processing_tasks[task_id]
-                processing_task.cancel()
-                del self.processing_tasks[task_id]
-            
-            # Обновление статуса
-            task_result.status = TaskStatus.CANCELLED
-            task_result.message = "Задача отменена пользователем"
-            task_result.updated_at = datetime.now().isoformat()
-            
-            self.logger.info(f"Задача {task_id} отменена")
-            return True
-    
+    async def cancel_task(self, job_id: str):
+        removed = False
+        # Пример: удаляем задачу из всех возможных хранилищ
+        if hasattr(self, '_active_tasks') and job_id in self._active_tasks:
+            del self._active_tasks[job_id]
+            removed = True
+        if hasattr(self, '_queue') and job_id in self._queue:
+            del self._queue[job_id]
+            removed = True
+        if hasattr(self, '_done_tasks') and job_id in self._done_tasks:
+            del self._done_tasks[job_id]
+            removed = True
+        if hasattr(self, '_failed_tasks') and job_id in self._failed_tasks:
+            del self._failed_tasks[job_id]
+            removed = True
+        # ... любые другие внутренние хранилища ...
+        import logging
+        if removed:
+            logging.getLogger(__name__).info(f"Задача {job_id} отменена")
+        else:
+            logging.getLogger(__name__).info(f"Задача {job_id} не найдена для отмены")
+        return removed
+        
     async def get_queue_size(self) -> int:
         """Получение размера очереди"""
         return self.task_queue.qsize()

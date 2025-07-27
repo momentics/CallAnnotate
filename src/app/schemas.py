@@ -7,7 +7,7 @@ Pydantic схемы для CallAnnotate API и внутренних структ
 Лицензия: Apache-2.0
 """
 
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 from enum import Enum
 
@@ -23,6 +23,61 @@ class TaskStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
+# API Request/Response схемы
+class CreateJobRequest(BaseModel):
+    """Запрос на создание задачи"""
+    filename: str = Field(..., description="Имя файла в /volume/incoming/")
+    priority: int = Field(5, ge=1, le=10, description="Приоритет задачи (1-10)")
+
+
+class FileInfo(BaseModel):
+    """Информация о файле"""
+    filename: str
+    path: str
+    size_bytes: Optional[int] = None
+
+
+class CreateJobResponse(BaseModel):
+    """Ответ на создание задачи"""
+    job_id: str
+    status: TaskStatus
+    message: str
+    created_at: datetime
+    file_info: FileInfo
+    progress_url: str
+    result_url: str
+
+
+class ProgressInfo(BaseModel):
+    """Информация о прогрессе"""
+    percentage: int = Field(..., ge=0, le=100)
+    current_stage: str
+    stage_progress: Optional[int] = Field(None, ge=0, le=100)
+    stages_completed: List[str] = Field(default_factory=list)
+    stages_remaining: List[str] = Field(default_factory=list)
+    estimated_completion: Optional[datetime] = None
+
+
+class JobTimestamps(BaseModel):
+    """Временные метки задачи"""
+    created_at: Optional[datetime] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+
+
+class JobStatusResponse(BaseModel):
+    """Ответ статуса задачи"""
+    job_id: str
+    status: TaskStatus
+    message: str
+    progress: Optional[ProgressInfo] = None
+    timestamps: JobTimestamps
+    file_info: Optional[FileInfo] = None
+    result: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+
+
+# Аудио метаданные и обработка
 class AudioMetadata(BaseModel):
     """Метаданные аудиофайла"""
     filename: str
@@ -43,6 +98,7 @@ class BaseStageResult(BaseModel):
     error: Optional[str] = None
 
 
+# Результаты этапов обработки
 class DiarizationSegment(BaseModel):
     """Сегмент диаризации"""
     start: float = Field(..., ge=0, description="Начало сегмента в секундах")
@@ -66,16 +122,6 @@ class DiarizationSegment(BaseModel):
         return v
 
 
-class DiarizationResult(BaseStageResult):
-    """Результат диаризации"""
-    stage_name: str = "diarization"
-    segments: List[DiarizationSegment] = Field(default_factory=list)
-    speakers: List[str] = Field(default_factory=list)
-    speaker_stats: Dict[str, Dict[str, Union[float, int]]] = Field(default_factory=dict)
-    total_segments: int = Field(0, ge=0)
-    total_speakers: int = Field(0, ge=0)
-
-
 class TranscriptionWord(BaseModel):
     """Слово с временными метками"""
     start: float = Field(..., ge=0, description="Начало слова в секундах")
@@ -95,31 +141,12 @@ class TranscriptionSegment(BaseModel):
     speaker_confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
 
 
-class TranscriptionResult(BaseStageResult):
-    """Результат транскрипции"""
-    stage_name: str = "transcription"
-    text: str = Field("", description="Полный текст")
-    language: str = Field("unknown", description="Определенный язык")
-    segments: List[TranscriptionSegment] = Field(default_factory=list)
-    words: List[TranscriptionWord] = Field(default_factory=list)
-    total_words: int = Field(0, ge=0)
-    confidence: float = Field(0.0, ge=0.0, le=1.0, description="Средняя уверенность")
-
-
 class SpeakerRecognition(BaseModel):
     """Результат распознавания спикера"""
     identified: bool = Field(False, description="Спикер идентифицирован")
     name: Optional[str] = Field(None, description="Имя спикера")
     confidence: float = Field(0.0, ge=0.0, le=1.0, description="Уверенность распознавания")
     reason: Optional[str] = Field(None, description="Причина не распознавания")
-
-
-class RecognitionResult(BaseStageResult):
-    """Результат распознавания голосов"""
-    stage_name: str = "recognition"
-    speakers: Dict[str, SpeakerRecognition] = Field(default_factory=dict)
-    total_processed: int = Field(0, ge=0)
-    identified_count: int = Field(0, ge=0)
 
 
 class ContactInfo(BaseModel):
@@ -130,19 +157,6 @@ class ContactInfo(BaseModel):
     phones: List[str] = Field(default_factory=list)
     emails: List[str] = Field(default_factory=list)
     organization: Optional[str] = None
-
-
-class EnhancedSpeakerInfo(SpeakerRecognition):
-    """Расширенная информация о спикере с контактными данными"""
-    contact: Optional[ContactInfo] = None
-
-
-class CardDAVResult(BaseStageResult):
-    """Результат связывания с CardDAV"""
-    stage_name: str = "carddav"
-    speakers: Dict[str, EnhancedSpeakerInfo] = Field(default_factory=dict)
-    contacts_found: int = Field(0, ge=0)
-    total_searched: int = Field(0, ge=0)
 
 
 class ProcessingInfo(BaseModel):
@@ -216,31 +230,46 @@ class AnnotationResult(BaseModel):
         }
 
 
-# API схемы
-class TaskCreateResponse(BaseModel):
-    """Ответ на создание задачи"""
+# WebSocket схемы
+class WebSocketMessage(BaseModel):
+    """Базовое WebSocket сообщение"""
+    type: str
+    timestamp: Optional[datetime] = None
+
+
+class JobProgressMessage(WebSocketMessage):
+    """Сообщение о прогрессе задачи"""
+    type: str = "job_progress"
+    job_id: str
+    progress: ProgressInfo
+    status: TaskStatus
+
+
+class JobCompletedMessage(WebSocketMessage):
+    """Сообщение о завершении задачи"""
+    type: str = "job_completed"
     job_id: str
     status: TaskStatus
-    message: str
-    progress_url: str
     result_url: str
 
 
-class TaskStatusResponse(BaseModel):
-    """Ответ статуса задачи"""
+class JobFailedMessage(WebSocketMessage):
+    """Сообщение об ошибке задачи"""
+    type: str = "job_failed"
     job_id: str
     status: TaskStatus
-    message: str
-    result: Optional[AnnotationResult] = None
-    error: Optional[str] = None
+    error: Dict[str, str]
 
 
+# Health Check схемы
 class HealthResponse(BaseModel):
     """Ответ health check"""
     status: str
     version: str
+    uptime: int = Field(0, ge=0)
     queue_length: int = Field(0, ge=0)
     active_tasks: int = Field(0, ge=0)
+    components: Dict[str, str] = Field(default_factory=dict)
 
 
 class InfoResponse(BaseModel):
@@ -249,36 +278,31 @@ class InfoResponse(BaseModel):
     version: str
     description: str
     max_file_size: int = Field(..., gt=0)
+    supported_formats: List[str] = Field(default_factory=list)
+    processing_mode: str
+    volume_paths: Dict[str, str] = Field(default_factory=dict)
+    api_endpoints: Dict[str, str] = Field(default_factory=dict)
 
 
-# WebSocket схемы
-class WebSocketMessage(BaseModel):
-    """Базовое WebSocket сообщение"""
-    type: str
-    timestamp: Optional[datetime] = None
+class QueueStatusResponse(BaseModel):
+    """Статус очереди"""
+    queue_length: int = Field(0, ge=0)
+    processing_jobs: List[Dict[str, Any]] = Field(default_factory=list)
+    queued_jobs: List[Dict[str, Any]] = Field(default_factory=list)
+    average_processing_time: float = Field(0.0, ge=0.0)
+    system_load: Dict[str, float] = Field(default_factory=dict)
 
 
-class TaskProgressMessage(WebSocketMessage):
-    """Сообщение о прогрессе задачи"""
-    type: str = "task_progress"
-    task_id: str
-    progress: int = Field(..., ge=0, le=100)
+# Схемы ошибок
+class ErrorDetail(BaseModel):
+    """Детали ошибки"""
+    code: str
     message: str
+    details: Dict[str, Any] = Field(default_factory=dict)
+    timestamp: datetime
+    request_id: Optional[str] = None
 
 
-class TaskCompletedMessage(WebSocketMessage):
-    """Сообщение о завершении задачи"""
-    type: str = "task_completed"
-    task_id: str
-    status: TaskStatus
-    message: str
-    result: Optional[AnnotationResult] = None
-
-
-class TaskFailedMessage(WebSocketMessage):
-    """Сообщение об ошибке задачи"""
-    type: str = "task_failed"
-    task_id: str
-    status: TaskStatus
-    message: str
-    error: str
+class ErrorResponse(BaseModel):
+    """Ответ с ошибкой"""
+    error: ErrorDetail
