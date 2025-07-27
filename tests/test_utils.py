@@ -18,18 +18,27 @@ from app.utils import (
 )
 
 
-def make_upload(filename, content_type):
-    u = UploadFile(file=BytesIO(b"x"*10), filename=filename)
-    object.__setattr__(u, "content_type", content_type)
-    return u
+def make_upload(filename: str, content_type: str) -> UploadFile:
+    """
+    Создаёт UploadFile с указанием заголовков, чтобы content_type 
+    был корректно рассчитан из headers.
+    """
+    # Параметр headers ожидает list of tuples или Mapping
+    headers = {"content-type": content_type}
+    return UploadFile(file=BytesIO(b"data"), filename=filename, headers=headers)
+
 
 def test_validate_audio_file_ok():
-    assert validate_audio_file(make_upload("ok.wav", "audio/wav")).is_valid
+    upload = make_upload("test.wav", "audio/wav")
+    result = validate_audio_file(upload)
+    assert result.is_valid
+
 
 def test_validate_audio_file_bad_ext():
-    res = validate_audio_file(make_upload("bad.txt", "text/plain"))
-    assert not res.is_valid
-    assert "Unsupported" in res.error or "неподдерж" in res.error.lower()
+    upload = make_upload("test.txt", "text/plain")
+    result = validate_audio_file(upload)
+    assert not result.is_valid
+    assert "unsupported" in result.error.lower() or "неподдерж" in result.error.lower()
 
 
 def test_extract_audio_metadata(tmp_path, monkeypatch):

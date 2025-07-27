@@ -20,22 +20,26 @@ from pydantic import BaseModel, Field, model_validator, validator
 import yaml
 
 class RecognitionConfig(BaseSettings):
-    model: str = Field("speechbrain/spkrec-ecapa-voxceleb")
-    device: str = Field("cpu")
-    threshold: float = Field(0.7, ge=0.0, le=1.0)
-    embeddings_path: str | None = None
-    index_path: str | None = None
+    """Конфигурация этапа распознавания голосов"""
+    model: str = Field("speechbrain/spkrec-ecapa-voxceleb", description="Модель SpeechBrain")
+    device: str = Field("cpu", description="Устройство для вычислений")
+    threshold: float = Field(0.7, ge=0.0, le=1.0, description="Порог распознавания")
+    embeddings_path: Optional[str] = Field(None, description="Путь к базе эмбеддингов")
+    index_path: Optional[str] = Field(None, description="Путь к FAISS индексу")
 
     @model_validator(mode="after")
-    def create_dirs(self):
+    def create_dirs(self) -> "RecognitionConfig":
+        """Гарантированно создать директории, если указаны."""
         for attr in ("embeddings_path", "index_path"):
             v = getattr(self, attr)
             if v:
-                p = Path(v)
+                p = Path(v).expanduser().resolve()
                 p.mkdir(parents=True, exist_ok=True)
                 setattr(self, attr, str(p))
         return self
-    
+
+    class Config:
+        env_prefix = "RECOGNITION_"
 
 
 class DiarizationConfig(BaseSettings):

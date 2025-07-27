@@ -14,9 +14,13 @@ from app.config import (
 )
 
 def test_recognition_validator(tmp_path):
-    d = tmp_path / "emb"
-    cfg = RecognitionConfig(embeddings_path=str(d))
-    # теперь dir точно создан
+    """
+    Убедиться, что модель валидатор создаёт директорию embeddings_path.
+    """
+    emb = tmp_path / "emb"
+    cfg = RecognitionConfig(embeddings_path=str(emb))
+    # Проверяем, что значение действительно было создано и путь корректен
+    assert cfg.embeddings_path is not None
     assert Path(cfg.embeddings_path).exists()
 
     
