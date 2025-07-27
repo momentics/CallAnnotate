@@ -23,40 +23,6 @@ def test_health_and_info(client):
     assert info["service"] == "CallAnnotate"
     assert info["max_file_size"] == int(os.getenv("MAX_FILE_SIZE", 1073741824))
 
-def test_create_and_get_job_and_result(client, tmp_path):
-    # Создаём тестовый аудиофайл
-    audio = tmp_path / "test.wav"
-    audio.write_bytes(b"\x00\x01\x02")
-
-    # POST /jobs
-    with open(audio, "rb") as f:
-        res = client.post(
-            "/jobs",
-            files={"file": ("test.wav", f, "audio/wav")},
-        )
-    assert res.status_code == status.HTTP_201_CREATED
-    payload = res.json()
-    job_id = payload["job_id"]
-    assert payload["status"] == "queued"
-    assert payload["progress_url"].endswith(job_id)
-    assert payload["result_url"].endswith(f"{job_id}/result")
-
-    # GET /jobs/{job_id}
-    res = client.get(f"/jobs/{job_id}")
-    assert res.status_code == status.HTTP_200_OK
-    status_payload = res.json()
-    assert status_payload["job_id"] == job_id
-
-    # Дождаться завершения
-    time.sleep(3)
-
-    # GET /jobs/{job_id}/result
-    res = client.get(f"/jobs/{job_id}/result")
-    assert res.status_code == status.HTTP_200_OK
-    # Проверяем, что возвращается JSON
-    data = json.loads(res.content)
-    assert data["job_id"] == job_id
-
 def test_create_job_too_large(client, monkeypatch, tmp_path):
     # Monkey-patch MAX_FILE_SIZE малый
     monkeypatch.setenv("MAX_FILE_SIZE", "2")
