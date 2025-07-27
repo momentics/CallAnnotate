@@ -16,7 +16,7 @@ try:
 except ImportError:
     from pydantic import BaseSettings
 
-from pydantic import Field, validator
+from pydantic import BaseModel, Field, validator
 import yaml
 
 
@@ -139,6 +139,81 @@ class CORSConfig(BaseSettings):
         env_prefix = "CORS_"
 
 
+# НОВЫЕ КОНФИГУРАЦИОННЫЕ КЛАССЫ
+
+class VoiceInfo(BaseModel):
+    """Информация о голосе"""
+    name: str = Field(..., description="Имя владельца голоса")
+    embedding: str = Field(..., description="Путь к файлу эмбеддинга")
+    phone: Optional[str] = Field(None, description="Номер телефона")
+    description: Optional[str] = Field(None, description="Описание")
+
+
+class WebhookConfig(BaseModel):
+    """Конфигурация веб-хуков"""
+    enabled: bool = Field(True, description="Включить веб-хуки")
+    timeout: int = Field(30, gt=0, description="Таймаут запроса")
+    retry_count: int = Field(3, ge=0, description="Количество повторов")
+    retry_delay: int = Field(5, gt=0, description="Задержка между повторами")
+
+
+class WebSocketConfig(BaseModel):
+    """Конфигурация WebSocket"""
+    ping_interval: int = Field(30, gt=0, description="Интервал пинга")
+    ping_timeout: int = Field(10, gt=0, description="Таймаут пинга")
+    close_timeout: int = Field(10, gt=0, description="Таймаут закрытия")
+
+
+class NotificationsConfig(BaseModel):
+    """Конфигурация уведомлений"""
+    webhooks: WebhookConfig = Field(default_factory=WebhookConfig)
+    websocket: WebSocketConfig = Field(default_factory=WebSocketConfig)
+
+
+class PerformanceConfig(BaseModel):
+    """Конфигурация производительности"""
+    cpu_cores: int = Field(4, gt=0, description="Количество ядер CPU")
+    memory_limit: str = Field("3GB", description="Лимит памяти")
+    temp_dir: str = Field("/tmp/callannotate", description="Временная директория")
+    parallel_processing: bool = Field(True, description="Параллельная обработка")
+
+
+class RateLimitingConfig(BaseModel):
+    """Конфигурация ограничения скорости"""
+    enabled: bool = Field(True, description="Включить ограничение скорости")
+    requests_per_minute: int = Field(60, gt=0, description="Запросов в минуту")
+
+
+class FileUploadConfig(BaseModel):
+    """Конфигурация загрузки файлов"""
+    virus_scan: bool = Field(False, description="Проверка на вирусы")
+    content_validation: bool = Field(True, description="Валидация содержимого")
+
+
+class SecurityConfig(BaseModel):
+    """Конфигурация безопасности"""
+    api_key_required: bool = Field(False, description="Требовать API ключ")
+    rate_limiting: RateLimitingConfig = Field(default_factory=RateLimitingConfig)
+    file_upload: FileUploadConfig = Field(default_factory=FileUploadConfig)
+
+
+class MonitoringConfig(BaseModel):
+    """Конфигурация мониторинга"""
+    metrics_enabled: bool = Field(True, description="Включить метрики")
+    health_check_interval: int = Field(60, gt=0, description="Интервал проверки здоровья")
+    performance_logging: bool = Field(True, description="Логирование производительности")
+
+
+class FeaturesConfig(BaseModel):
+    """Конфигурация функций"""
+    real_time_processing: bool = Field(True, description="Обработка в реальном времени")
+    batch_processing: bool = Field(True, description="Пакетная обработка")
+    webhook_callbacks: bool = Field(True, description="Колбеки через веб-хуки")
+    file_download: bool = Field(True, description="Скачивание файлов")
+    task_cancellation: bool = Field(True, description="Отмена задач")
+    progress_tracking: bool = Field(True, description="Отслеживание прогресса")
+
+
 class AppSettings(BaseSettings):
     """Основные настройки приложения"""
     
@@ -153,11 +228,19 @@ class AppSettings(BaseSettings):
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     cors: CORSConfig = Field(default_factory=CORSConfig)
     
+    # НОВЫЕ СЕКЦИИ
+    voices: List[VoiceInfo] = Field(default_factory=list, description="Известные голоса")
+    notifications: NotificationsConfig = Field(default_factory=NotificationsConfig)
+    performance: PerformanceConfig = Field(default_factory=PerformanceConfig)
+    security: SecurityConfig = Field(default_factory=SecurityConfig)
+    monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
+    features: FeaturesConfig = Field(default_factory=FeaturesConfig)
+    
     @validator('recognition')
     def validate_recognition_paths(cls, v):
         """Валидация путей для распознавания"""
         if v.embeddings_path and not Path(v.embeddings_path).exists():
-            # Создаем директорию если её нет
+            # Создаем директорию если её нет  
             Path(v.embeddings_path).mkdir(parents=True, exist_ok=True)
         return v
     
