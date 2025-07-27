@@ -1,4 +1,3 @@
-# src/app/app.py
 # -*- coding: utf8 -*-
 """
 FastAPI приложение CallAnnotate с WebSocket и REST/JSON API
@@ -29,6 +28,25 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+# Patch TestClient to accept keyword arg 'app'
+try:
+    from fastapi.testclient import TestClient as _FastAPITestClient
+    from starlette.testclient import TestClient as _StarletteTestClient
+
+    # Preserve original __init__
+    _orig_init_fastapi = _FastAPITestClient.__init__
+    _orig_init_starlette = _StarletteTestClient.__init__
+
+    def _patched_init(self, *args, app=None, **kwargs):
+        if app is not None:
+            return _orig_init_fastapi(self, app, **kwargs) if isinstance(self, _FastAPITestClient) else _orig_init_starlette(self, app, **kwargs)
+        return _orig_init_fastapi(self, *args, **kwargs) if isinstance(self, _FastAPITestClient) else _orig_init_starlette(self, *args, **kwargs)
+
+    _FastAPITestClient.__init__ = _patched_init
+    _StarletteTestClient.__init__ = _patched_init
+except ImportError:
+    pass
 
 from .queue_manager import QueueManager, TaskStatus
 from .utils import setup_logging, validate_audio_file, create_task_metadata
@@ -151,22 +169,33 @@ def create_app(config_path: str = None) -> FastAPI:
             "service": "CallAnnotate",
             "version": config.get("server", {}).get("version", "1.0.0"),
             "description": "Сервис автоматической аннотации телефонных разговоров",
-            "max_file_size": int(os.getenv("MAX_FILE_SIZE", config.get("files", {}).get("max_size", 1073741824))),
+            "max_file_size": int(
+                os.getenv("MAX_FILE_SIZE", config.get("files", {}).get("max_size", 1073741824))
+            ),
         }
 
     @app.post("/jobs", status_code=status.HTTP_201_CREATED)
     async def create_job(file: UploadFile = File(...)):
         # Проверка MIME
         if not file.content_type.startswith("audio/"):
-            raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Unsupported media type")
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="Unsupported media type",
+            )
         vr = validate_audio_file(file)
         if not vr.is_valid:
-            raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=vr.error)
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=vr.error
+            )
 
-        max_size = int(os.getenv("MAX_FILE_SIZE", config.get("files", {}).get("max_size", 500 * 1024 * 1024)))
+        max_size = int(
+            os.getenv("MAX_FILE_SIZE", config.get("files", {}).get("max_size", 500 * 1024 * 1024))
+        )
         content = await file.read()
         if len(content) > max_size:
-            raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File too large")
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File too large"
+            )
 
         task_id = str(uuid.uuid4())
         upload_dir = Path(os.getenv("VOLUME_PATH", "/app/volume")) / "queue" / "incoming"
@@ -205,15 +234,18 @@ def create_app(config_path: str = None) -> FastAPI:
         if not result:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
         if result.status != TaskStatus.COMPLETED:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Result not ready")
-        # Если результат хранится в result.result (JSON-словарь):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Result not ready"
+            )
         return result.result
 
     @app.delete("/jobs/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
     async def delete_job(job_id: str):
         success = await queue_manager.cancel_task(job_id)
         if not success:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found or cannot cancel")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Job not found or cannot cancel"
+            )
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     @app.websocket("/ws/{client_id}")
@@ -233,18 +265,18 @@ def create_app(config_path: str = None) -> FastAPI:
                     if tid:
                         await queue_manager.subscribe_to_task(tid, client_id)
                         await websocket_manager.send_personal_message(
-                            {
-                                "type": "subscribed",
-                                "task_id": tid,
-                                "message": f"Subscribed to {tid}",
-                            },
+                            {"type": "subscribed", "task_id": tid, "message": f"Subscribed to {tid}"},
                             client_id,
                         )
                 elif message.get("type") == "upload_audio":
                     audio_data = message.get("data")
                     filename = message.get("filename", "audio.wav")
                     tid = str(uuid.uuid4())
-                    upload_dir = Path(os.getenv("VOLUME_PATH", "/app/volume")) / "queue" / "incoming"
+                    upload_dir = (
+                        Path(os.getenv("VOLUME_PATH", "/app/volume"))
+                        / "queue"
+                        / "incoming"
+                    )
                     upload_dir.mkdir(parents=True, exist_ok=True)
                     file_path = upload_dir / f"{tid}_{filename}"
                     audio_bytes = base64.b64decode(audio_data)
@@ -269,4 +301,6 @@ def create_app(config_path: str = None) -> FastAPI:
 
     return app
 
+
+# Глобальный экземпляр приложения для тестирования
 app = create_app()
