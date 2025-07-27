@@ -1,6 +1,6 @@
 # Конфигурация CallAnnotate
 # Автор: akoodoy@capilot.ru
-# Ссылка: https://github.com/momentics/CallAnnotate
+# С: https://github.com/momentics/CallAnnotate
 # Лицензия: Apache-2.0
 
 # Настройки сервера
@@ -23,14 +23,14 @@ queue:
   max_concurrent_tasks: 2
   max_queue_size: 100
   task_timeout: 3600  # 1 час в секундах
-  cleanup_interval: 300  # 5 минут в секундах
-  volume_path: "/volume"
+  cleanup_interval: 300 # 5 минут в секундах
+  volume_path: "./volume"
 
 # Настройки логирования
 logging:
   level: "INFO"
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-  file: "/volume/logs/system/app.log"
+  file: "./volume/logs/system/app.log"
   external_levels:
     uvicorn: "INFO"
     fastapi: "INFO"
@@ -39,24 +39,24 @@ logging:
 # Настройки диаризации
 diarization:
   model: "pyannote/speaker-diarization-3.1"
-  device: "cpu"  # или "cuda" если доступен GPU
+  device: "cpu" # или "cuda" если доступен GPU
   batch_size: 32
-  use_auth_token: null  # HuggingFace токен если требуется
+  use_auth_token: null # HuggingFace токен если требуется
 
 # Настройки транскрипции
 transcription:
   model: "openai/whisper-base"
   device: "cpu"
-  language: "ru"  # или "auto" для автоопределения
+  language: "ru" # или "auto" для автоопределения
   batch_size: 16
-  task: "transcribe"  # или "translate"
+  task: "transcribe" # или "translate"
 
 # Настройки распознавания голосов
 recognition:
   model: "speechbrain/spkrec-ecapa-voxceleb"
   device: "cpu"
-  threshold: 0.7  # порог для распознавания
-  embeddings_path: "/volume/models/embeddings"
+  threshold: 0.7 # порог для распознавания
+  embeddings_path: "./volume/models/embeddings"
 
 # Настройки CardDAV
 carddav:
@@ -70,18 +70,18 @@ carddav:
 # Известные голоса и их эмбеддинги
 voices:
   - name: "Иван Петров"
-    embedding: "/volume/models/embeddings/ivan_petrov.vec"
+    embedding: "./volume/models/embeddings/ivan_petrov.vec"
     phone: "+7-900-123-45-67"
     description: "Менеджер проекта"
-  
+    
   - name: "Мария Сидорова"
-    embedding: "/volume/models/embeddings/maria_sidorova.vec"
+    embedding: "./volume/models/embeddings/maria_sidorova.vec"
     phone: "+7-900-765-43-21"
     description: "Технический директор"
 
 # Настройки обработки файлов
 files:
-  max_size: 524288000  # 500MB в байтах
+  max_size: 524288000 # 500MB в байтах
   allowed_formats: ["wav", "mp3", "ogg", "flac", "aac", "m4a", "mp4"]
   temp_cleanup_hours: 24
 
@@ -92,7 +92,7 @@ notifications:
     timeout: 30
     retry_count: 3
     retry_delay: 5
-  
+    
   websocket:
     ping_interval: 30
     ping_timeout: 10
