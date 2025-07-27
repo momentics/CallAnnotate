@@ -12,3 +12,8 @@ docker-compose.override.yml
 
 # Environment
 .env
+
+
+volume/logs/queue/*.json
+volume/logs/system/*.log
+
