@@ -1,18 +1,19 @@
 # src/app/queue_manager.py
+
 # -*- coding: utf-8 -*-
 """
 Менеджер очереди задач для CallAnnotate
 
-Автор: akoodoy@capitol.ru
-Ссылка: https://github.com/momentics/CallAnnotate
+Автор: akoodoy@capitol.ruСсылка: https://github.com/momentics/CallAnnotate
 Лицензия: Apache-2.0
 """
 
 import asyncio
-from dataclasses import asdict
 import json
 import logging
 import threading
+import yaml
+
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
@@ -21,6 +22,7 @@ from typing import Callable, Dict, List, Optional, Any
 
 from .annotation import AnnotationService
 
+
 class TaskStatus(str, Enum):
     QUEUED = "queued"
     PROCESSING = "processing"
@@ -28,8 +30,10 @@ class TaskStatus(str, Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
+
 class TaskResult:
     """Результат выполнения задачи"""
+
     def __init__(
         self,
         task_id: str,
@@ -50,16 +54,18 @@ class TaskResult:
         self.progress: int = 0
         self.metadata: Optional[Dict[str, Any]] = metadata
 
+
 class QueueManager:
     def __init__(
         self,
         config: Dict[str, Any] = None,
         *,
         volume_path: str = None,
+        logs_base: str = None,
         max_queue_size: int = None,
         max_concurrent_tasks: int = None,
         task_timeout: int = None,
-        cleanup_interval: int = None
+        cleanup_interval: int = None,
     ):
         """
         Инициализация менеджера очереди.
@@ -67,14 +73,13 @@ class QueueManager:
         Args:
             config: словарь конфигурации раздела 'queue' из default.yaml.
             volume_path: путь к корневой папке volume, переопределяет config['volume_path'].
-            max_queue_size: максимальный размер очереди (переопределяет config).
-            max_concurrent_tasks: максимальное число параллельных задач (переопределяет config).
-            task_timeout: таймаут выполнения задачи в секундах (переопределяет config).
-            cleanup_interval: интервал фоновой очистки в секундах (переопределяет config).
+            logs_base: базовый путь для логов (вне volume), переопределяет config['logs_base'].
+            max_queue_size: максимальный размер очереди.
+            max_concurrent_tasks: максимальное число параллельных задач.
+            task_timeout: таймаут выполнения задачи в секундах.
+            cleanup_interval: интервал фоновой очистки в секундах.
         """
-        import yaml
-
-        # Загрузка конфигурации из YAML, если не передан явный словарь
+        # Загрузка конфигурации
         if config is None:
             base_dir = Path(__file__).resolve().parent.parent
             cfg_file = base_dir.parent / "config" / "default.yaml"
@@ -82,9 +87,11 @@ class QueueManager:
                 full_conf = yaml.safe_load(f)
             config = full_conf.get('queue', {})
 
-        # Переопределение конфигурационных параметров, если заданы
+        # Переопределение параметров из аргументов
         if volume_path is not None:
             config['volume_path'] = volume_path
+        if logs_base is not None:
+            config['logs_base'] = logs_base
         if max_queue_size is not None:
             config['max_queue_size'] = max_queue_size
         if max_concurrent_tasks is not None:
@@ -98,20 +105,31 @@ class QueueManager:
         self.logger = logging.getLogger(__name__)
 
         # Параметры очереди
-        self.max_concurrent_tasks: int = config.get('max_concurrent_tasks', 2)
+        self.max_concurrent_tasks: int = config.get('max_concurrent_tasks', 1)
         self.max_queue_size: int = config.get('max_queue_size', 100)
         self.task_timeout: int = config.get('task_timeout', 3600)
         self.cleanup_interval: int = config.get('cleanup_interval', 300)
 
-        # Пути для работы с файловой системой
-        self.volume_path: Path = Path(config.get('volume_path', '/app/volume'))
-        self.queue_path: Path = self.volume_path / 'queue'
-        self.logs_path: Path = self.volume_path / 'logs'
+        # Пути согласно README.md
+        self.base_volume: Path = Path(config.get('volume_path', '/volume'))
+        self.queue_path: Path = self.base_volume  # очередь – корень volume
+        self.incoming_path: Path = self.base_volume / 'incoming'
+        self.processing_path: Path = self.base_volume / 'processing'
+        self.completed_path: Path = self.base_volume / 'completed'
+        self.failed_path: Path = self.base_volume / 'failed'
+        self.archived_path: Path = self.base_volume / 'archived'
+        self.logs_volume: Path = self.base_volume / 'logs'
+        self.logs_system: Path = self.logs_volume / 'system'
+        self.models_path: Path = self.base_volume / 'models' / 'embeddings'
+        self.temp_path: Path = self.base_volume / 'temp'
 
-        # Создание необходимых директорий
+        # Дополнительные логи вне volume
+        self.logs_base: Path = Path(config.get('logs_base', '/var/log/callannotate'))
+
+        # Создание директорий
         self._create_directories()
 
-        # Внутренние структуры данных
+        # Внутренние структуры
         self.tasks: Dict[str, TaskResult] = {}
         self.task_queue: asyncio.Queue = asyncio.Queue(maxsize=self.max_queue_size)
         self.processing_tasks: Dict[str, asyncio.Task] = {}
@@ -122,542 +140,369 @@ class QueueManager:
         self.is_running: bool = False
         self.shutdown_event: asyncio.Event = asyncio.Event()
 
-        # Thread pool для CPU-интенсивных задач
+        # Пул для CPU-задач
         self.executor: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=self.max_concurrent_tasks)
-
-        # Блокировка для thread-safe операций
         self.lock: threading.RLock = threading.RLock()
 
+    def _create_directories(self):
+        """Создание структуры тома /volume и логов"""
+        dirs = [
+            # Основные папки очереди
+            self.incoming_path,
+            self.processing_path,
+            self.completed_path,
+            self.failed_path,
+            self.archived_path,
+            # Логи внутри volume
+            self.logs_system,
+            # Модели эмбеддингов
+            self.models_path,
+            # Временные файлы
+            self.temp_path,
+            # Дополнительные логи вне volume
+            self.logs_base / 'tasks',
+            self.logs_base / 'system',
+            self.logs_base / 'queue',
+        ]
+        for d in dirs:
+            d.mkdir(parents=True, exist_ok=True)
+
     async def get_queue_info(self):
-        # Возвращает информацию о длине очереди и т.д.
+        """Получение информации о состоянии очереди"""
+        with self.lock:
+            queue_length = self.task_queue.qsize()
+            processing = list(self.processing_tasks.keys())
+            queued = [tid for tid, t in self.tasks.items() if t.status == TaskStatus.QUEUED]
+        # среднее время обработки
+        times: List[float] = []
+        with self.lock:
+            for t in self.tasks.values():
+                if t.status == TaskStatus.COMPLETED and t.started_at and t.completed_at:
+                    start = datetime.fromisoformat(t.started_at)
+                    end = datetime.fromisoformat(t.completed_at)
+                    times.append((end - start).total_seconds())
+        avg_time = sum(times) / len(times) if times else 0
         return {
-            "queue_length": await self.get_queue_size(),
-            "processing_jobs": [],
-            "queued_jobs": [],
-            "average_processing_time": 0
+            "queue_length": queue_length,
+            "processing_jobs": processing,
+            "queued_jobs": queued,
+            "average_processing_time": avg_time,
         }
 
-    def _create_directories(self):
-        """Создание необходимых директорий"""
-        directories = [
-            self.queue_path / 'incoming',
-            self.queue_path / 'processing',
-            self.queue_path / 'completed',
-            self.queue_path / 'failed',
-            self.queue_path / 'archived',
-            self.volume_path / 'intermediate' / 'diarization',
-            self.volume_path / 'intermediate' / 'transcription',
-            self.volume_path / 'intermediate' / 'recognition',
-            self.volume_path / 'intermediate' / 'carddav',
-            self.volume_path / 'outputs' / 'pending',
-            self.volume_path / 'outputs' / 'delivered',
-            self.logs_path / 'tasks',
-            self.logs_path / 'system',
-            self.logs_path / 'queue'
-        ]
-        
-        for directory in directories:
-            directory.mkdir(parents=True, exist_ok=True)
-    
     async def start(self):
         """Запуск менеджера очереди"""
         if self.is_running:
             return
-        
         self.is_running = True
         self.shutdown_event.clear()
-        
-        # Восстановление состояния после перезапуска
         await self._restore_tasks()
-        
-        # Запуск воркеров
-        for i in range(self.max_concurrent_tasks):
-            worker = asyncio.create_task(self._worker(f"worker-{i}"))
-            self.workers.append(worker)
-        
-        # Запуск фонового процесса очистки
-        cleanup_task = asyncio.create_task(self._cleanup_task())
-        self.workers.append(cleanup_task)
-        
-        self.logger.info(f"QueueManager запущен с {self.max_concurrent_tasks} воркерами")
-    
+        # Один файл за раз
+        worker = asyncio.create_task(self._worker("worker-0"))
+        self.workers.append(worker)
+        cleanup = asyncio.create_task(self._cleanup_task())
+        self.workers.append(cleanup)
+        self.logger.info("QueueManager запущен")
+
     async def stop(self):
         """Остановка менеджера очереди"""
         if not self.is_running:
             return
-        
         self.logger.info("Остановка QueueManager...")
         self.is_running = False
         self.shutdown_event.set()
-        
-        # Ожидание завершения всех воркеров
         if self.workers:
             await asyncio.gather(*self.workers, return_exceptions=True)
-        
-        # Остановка executor
         self.executor.shutdown(wait=True)
-        
-        # Сохранение состояния
         await self._save_state()
-        
         self.logger.info("QueueManager остановлен")
-    
+
     async def add_task(self, task_id: str, metadata: Dict[str, Any]) -> bool:
         """Добавление задачи в очередь"""
         try:
             with self.lock:
                 if task_id in self.tasks:
                     return False
-                
-                # Создание TaskResult
-                task_result = TaskResult(
+                tr = TaskResult(
                     task_id=task_id,
                     status=TaskStatus.QUEUED,
-                    message="Задача в очереди на обработку",
+                    message="Задача в очереди",
                     created_at=datetime.now().isoformat(),
-                    metadata=metadata
+                    metadata=metadata,
                 )
-                
-                self.tasks[task_id] = task_result
-            
-            # Добавление в очередь
+                self.tasks[task_id] = tr
             await self.task_queue.put(task_id)
-            
-            # Сохранение метаданных в файл
             await self._save_task_metadata(task_id, metadata)
-            
-            self.logger.info(f"Задача {task_id} добавлена в очередь")
+            self.logger.info(f"Задача {task_id} добавлена")
             return True
-            
         except Exception as e:
-            self.logger.error(f"Ошибка при добавлении задачи {task_id}: {e}")
+            self.logger.error(f"add_task error {e}")
             return False
-    
+
     async def get_task_result(self, task_id: str) -> Optional[TaskResult]:
         """Получение результата задачи"""
         with self.lock:
             return self.tasks.get(task_id)
-    
+
     async def list_tasks(
         self,
         status: Optional[TaskStatus] = None,
         limit: int = 100,
         offset: int = 0
     ) -> Dict[str, TaskResult]:
-        """Получение списка задач с фильтрацией"""
+        """Список задач с фильтрацией"""
         with self.lock:
-            filtered_tasks = {}
-            
-            # Фильтрация по статусу
-            tasks_to_process = self.tasks.items()
-            if status:
-                tasks_to_process = [
-                    (tid, result) for tid, result in tasks_to_process
-                    if result.status == status
-                ]
-            
-            # Сортировка по времени создания (новые сначала)
-            tasks_to_process = sorted(
-                tasks_to_process,
-                key=lambda x: x[1].created_at,
-                reverse=True
-            )
-            
-            # Применение offset и limit
-            for task_id, result in tasks_to_process[offset:offset + limit]:
-                filtered_tasks[task_id] = result
-            
-            return filtered_tasks
-    
-    async def cancel_task(self, job_id: str):
+            items = list(self.tasks.items())
+        if status:
+            items = [(tid, res) for tid, res in items if res.status == status]
+        items.sort(key=lambda x: x[1].created_at, reverse=True)
+        selected = items[offset:offset + limit]
+        return {tid: res for tid, res in selected}
+
+    async def cancel_task(self, task_id: str) -> bool:
+        """Отмена задачи"""
         removed = False
-        # Пример: удаляем задачу из всех возможных хранилищ
-        if hasattr(self, '_active_tasks') and job_id in self._active_tasks:
-            del self._active_tasks[job_id]
-            removed = True
-        if hasattr(self, '_queue') and job_id in self._queue:
-            del self._queue[job_id]
-            removed = True
-        if hasattr(self, '_done_tasks') and job_id in self._done_tasks:
-            del self._done_tasks[job_id]
-            removed = True
-        if hasattr(self, '_failed_tasks') and job_id in self._failed_tasks:
-            del self._failed_tasks[job_id]
-            removed = True
-        # ... любые другие внутренние хранилища ...
-        import logging
-        if removed:
-            logging.getLogger(__name__).info(f"Задача {job_id} отменена")
-        else:
-            logging.getLogger(__name__).info(f"Задача {job_id} не найдена для отмены")
+        with self.lock:
+            if task_id in self.tasks and self.tasks[task_id].status in {
+                TaskStatus.QUEUED, TaskStatus.PROCESSING
+            }:
+                t = self.tasks[task_id]
+                t.status = TaskStatus.CANCELLED
+                t.message = "Задача отменена"
+                t.updated_at = datetime.now().isoformat()
+                removed = True
+        if task_id in self.processing_tasks:
+            self.processing_tasks[task_id].cancel()
+        self.logger.info(f"cancel_task {task_id}: {removed}")
         return removed
-        
+
     async def get_queue_size(self) -> int:
-        """Получение размера очереди"""
+        """Размер очереди"""
         return self.task_queue.qsize()
-    
+
     async def get_active_tasks_count(self) -> int:
-        """Получение количества активных задач"""
+        """Количество активных задач"""
         return len(self.processing_tasks)
-    
+
     async def subscribe_to_task(self, task_id: str, client_id: str):
-        """Подписка клиента на обновления задачи"""
+        """Подписка на уведомления"""
         if task_id not in self.task_subscribers:
             self.task_subscribers[task_id] = []
-        
         if client_id not in self.task_subscribers[task_id]:
             self.task_subscribers[task_id].append(client_id)
-    
+
     async def _worker(self, worker_name: str):
-        """Воркер для обработки задач из очереди"""
-        self.logger.info(f"Воркер {worker_name} запущен")
-        
+        """Воркер: один файл за раз"""
+        self.logger.info(f"Worker {worker_name} старт")
         while self.is_running:
             try:
-                # Получение задачи из очереди с таймаутом
                 try:
-                    task_id = await asyncio.wait_for(
-                        self.task_queue.get(),
-                        timeout=1.0
-                    )
+                    tid = await asyncio.wait_for(self.task_queue.get(), timeout=1.0)
                 except asyncio.TimeoutError:
                     continue
-                
-                # Обработка задачи
-                processing_task = asyncio.create_task(
-                    self._process_task(task_id, worker_name)
-                )
-                self.processing_tasks[task_id] = processing_task
-                
-                await processing_task
-                
-                # Удаление из активных задач
-                if task_id in self.processing_tasks:
-                    del self.processing_tasks[task_id]
-                
-                # Отметка выполнения в очереди
-                self.task_queue.task_done()
-                
-            except asyncio.CancelledError:
-                break
+                task = asyncio.create_task(self._process_task(tid))
+                self.processing_tasks[tid] = task
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    self.logger.info(f"Task {tid} cancelled")
+                finally:
+                    self.processing_tasks.pop(tid, None)
+                    self.task_queue.task_done()
             except Exception as e:
-                self.logger.error(f"Ошибка в воркере {worker_name}: {e}")
-        
-        self.logger.info(f"Воркер {worker_name} остановлен")
-    
-    async def _process_task(self, task_id: str, worker_name: str):
-        """Обработка отдельной задачи"""
-        task_log_path = self.logs_path / 'tasks' / f"{task_id}.log"
-        
-        # Настройка логирования для задачи
-        task_logger = logging.getLogger(f"task.{task_id}")
-        handler = logging.FileHandler(task_log_path)
+                self.logger.error(f"Worker error: {e}")
+        self.logger.info(f"Worker {worker_name} стоп")
+
+    async def _process_task(self, task_id: str):
+        """Обработка задачи"""
+        log_file = self.logs_base / 'tasks' / f"{task_id}.log"
+        tlogger = logging.getLogger(f"task.{task_id}")
+        handler = logging.FileHandler(log_file)
         handler.setFormatter(logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         ))
-        task_logger.addHandler(handler)
-        task_logger.setLevel(logging.INFO)
-        
+        tlogger.addHandler(handler)
+        tlogger.setLevel(logging.INFO)
         try:
             with self.lock:
-                if task_id not in self.tasks:
-                    return
-                
-                task_result = self.tasks[task_id]
-                
-                # Проверка на отмену
-                if task_result.status == TaskStatus.CANCELLED:
-                    return
-                
-                # Обновление статуса
-                task_result.status = TaskStatus.PROCESSING
-                task_result.message = f"Обрабатывается воркером {worker_name}"
-                task_result.started_at = datetime.now().isoformat()
-                task_result.updated_at = task_result.started_at
-            
-            task_logger.info(f"Начата обработка задачи {task_id}")
-            
-            # Уведомление подписчиков
-            await self._notify_subscribers(task_id, {
-                "type": "task_update",
-                "task_id": task_id,
-                "status": TaskStatus.PROCESSING,
-                "message": "Обработка начата"
-            })
-            
-            # Получение метаданных
-            metadata = task_result.metadata or {}
-            file_path = metadata.get('file_path')
-            
-            if not file_path or not Path(file_path).exists():
-                raise FileNotFoundError(f"Аудиофайл не найден: {file_path}")
-            
-            # Перемещение файла в processing
-            processing_path = self.queue_path / 'processing' / Path(file_path).name
-            Path(file_path).rename(processing_path)
-            
-            # Создание сервиса аннотации
-            annotation_service = AnnotationService(self.config)
-            
-            # Обработка аудио с обновлением прогресса
-            async def progress_callback(progress: int, message: str):
-                with self.lock:
-                    if task_id in self.tasks:
-                        self.tasks[task_id].progress = progress
-                        self.tasks[task_id].message = message
-                        self.tasks[task_id].updated_at = datetime.now().isoformat()
-                
-                await self._notify_subscribers(task_id, {
-                    "type": "task_progress",
-                    "task_id": task_id,
-                    "progress": progress,
-                    "message": message
-                })
-            
-            # Выполнение аннотации в отдельном потоке
+                tr = self.tasks.get(task_id)
+            if not tr or tr.status == TaskStatus.CANCELLED:
+                return
+            tr.status = TaskStatus.PROCESSING
+            tr.started_at = datetime.now().isoformat()
+            tr.updated_at = tr.started_at
+            tlogger.info(f"Start processing {task_id}")
+
+            # Работа с файлами согласно структуре
+            src = self.incoming_path / Path(tr.metadata.get('file_path', '')).name
+            if not src.exists():
+                raise FileNotFoundError(f"{src} not found")
+            dst = self.processing_path / src.name
+            src.rename(dst)
+
+            # Вызов AnnotationService
+            annotation = AnnotationService(self.config)
             loop = asyncio.get_event_loop()
             result = await loop.run_in_executor(
                 self.executor,
                 self._run_annotation_sync,
-                annotation_service,
-                str(processing_path),
+                annotation,
+                str(dst),
                 task_id,
-                progress_callback
+                self._progress_cb(task_id)
             )
-            
-            # Сохранение результата
-            output_path = self.volume_path / 'outputs' / 'pending' / f"{task_id}.json"
-            with open(output_path, 'w', encoding='utf-8') as f:
+
+            # Запись результата
+            out = self.completed_path / f"{task_id}.json"
+            with open(out, 'w', encoding='utf-8') as f:
                 json.dump(result, f, ensure_ascii=False, indent=2)
-            
+
             # Перемещение файла в completed
-            completed_path = self.queue_path / 'completed' / processing_path.name
-            processing_path.rename(completed_path)
-            
-            # Обновление статуса
+            dst.rename(self.completed_path / dst.name)
+
             with self.lock:
-                if task_id in self.tasks:
-                    task_result = self.tasks[task_id]
-                    task_result.status = TaskStatus.COMPLETED
-                    task_result.message = "Аннотация завершена успешно"
-                    task_result.completed_at = datetime.now().isoformat()
-                    task_result.updated_at = task_result.completed_at
-                    task_result.result = result
-                    task_result.progress = 100
-            
-            task_logger.info(f"Задача {task_id} завершена успешно")
-            
-            # Уведомление подписчиков
-            await self._notify_subscribers(task_id, {
-                "type": "task_completed",
-                "task_id": task_id,
-                "status": TaskStatus.COMPLETED,
-                "message": "Аннотация завершена",
-                "result": result
-            })
-            
+                tr.status = TaskStatus.COMPLETED
+                tr.completed_at = datetime.now().isoformat()
+                tr.updated_at = tr.completed_at
+                tr.result = result
+                tr.progress = 100
+            tlogger.info(f"Task {task_id} completed")
         except asyncio.CancelledError:
-            # Обработка отмены задачи
             with self.lock:
                 if task_id in self.tasks:
-                    self.tasks[task_id].status = TaskStatus.CANCELLED
-                    self.tasks[task_id].message = "Задача отменена"
-                    self.tasks[task_id].updated_at = datetime.now().isoformat()
-            
-            task_logger.info(f"Задача {task_id} отменена")
-            
+                    t = self.tasks[task_id]
+                    t.status = TaskStatus.CANCELLED
+                    t.updated_at = datetime.now().isoformat()
+            tlogger.info(f"Task {task_id} cancelled")
         except Exception as e:
-            # Обработка ошибки
-            error_msg = str(e)
-            
+            err = str(e)
             with self.lock:
-                if task_id in self.tasks:
-                    task_result = self.tasks[task_id]
-                    task_result.status = TaskStatus.FAILED
-                    task_result.message = f"Ошибка при обработке: {error_msg}"
-                    task_result.error = error_msg
-                    task_result.updated_at = datetime.now().isoformat()
-            
-            task_logger.error(f"Ошибка при обработке задачи {task_id}: {e}")
-            
-            # Перемещение файла в failed (если существует)
-            processing_file = self.queue_path / 'processing' / f"{task_id}_*"
-            for file_path in self.queue_path.glob(f'processing/{task_id}_*'):
-                failed_path = self.queue_path / 'failed' / file_path.name
-                file_path.rename(failed_path)
-            
-            # Уведомление подписчиков
-            await self._notify_subscribers(task_id, {
-                "type": "task_failed",
-                "task_id": task_id,
-                "status": TaskStatus.FAILED,
-                "message": f"Ошибка: {error_msg}",
-                "error": error_msg
-            })
-        
+                t = self.tasks.get(task_id)
+                if t:
+                    t.status = TaskStatus.FAILED
+                    t.error = err
+                    t.updated_at = datetime.now().isoformat()
+            tlogger.error(f"Error in task {task_id}: {e}")
+            # Перемещение в failed
+            for f in self.processing_path.glob(dst.name):
+                f.rename(self.failed_path / f.name)
         finally:
-            # Очистка ресурсов
-            task_logger.removeHandler(handler)
+            tlogger.removeHandler(handler)
             handler.close()
-    
+
     def _run_annotation_sync(
         self,
         annotation_service: AnnotationService,
         file_path: str,
         task_id: str,
-        progress_callback: Callable
+        progress_cb: Callable,
     ) -> Dict[str, Any]:
-        """Синхронный запуск аннотации"""
-        # Создание нового event loop для этого потока
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
+        """Синхронный вызов AnnotationService"""
+        import asyncio as _asyncio
+        loop = _asyncio.new_event_loop()
+        _asyncio.set_event_loop(loop)
         try:
             return loop.run_until_complete(
-                annotation_service.process_audio(file_path, task_id, progress_callback)
+                annotation_service.process_audio(file_path, task_id, progress_cb)
             )
         finally:
             loop.close()
-    
-    async def _notify_subscribers(self, task_id: str, message: Dict[str, Any]):
-        """Уведомление подписчиков о изменениях задачи"""
-        if task_id not in self.task_subscribers:
-            return
-        
-        # Импорт здесь для избежания циркулярных зависимостей
-        from .app import app
-        
-        websocket_manager = getattr(app.state, 'websocket_manager', None)
-        if not websocket_manager:
-            return
-        
-        # Отправка уведомлений всем подписчикам
-        for client_id in self.task_subscribers[task_id]:
-            await websocket_manager.send_personal_message(message, client_id)
-    
+
+    def _progress_cb(self, task_id: str) -> Callable:
+        async def cb(progress: int, message: str):
+            with self.lock:
+                if task_id in self.tasks:
+                    t = self.tasks[task_id]
+                    t.progress = progress
+                    t.message = message
+                    t.updated_at = datetime.now().isoformat()
+        return cb
+
     async def _cleanup_task(self):
-        """Фоновая задача очистки старых файлов и задач"""
+        """Фоновая очистка старых задач и файлов"""
         while self.is_running:
             try:
                 await asyncio.sleep(self.cleanup_interval)
-                
-                current_time = datetime.now()
-                cleanup_threshold = current_time - timedelta(days=7)  # Удаляем задачи старше 7 дней
-                
-                # Очистка завершенных задач
-                tasks_to_remove = []
+                threshold = datetime.now() - timedelta(days=7)
+                to_archive: List[str] = []
                 with self.lock:
-                    for task_id, result in self.tasks.items():
-                        if result.status in [TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED]:
-                            task_created = datetime.fromisoformat(result.created_at)
-                            if task_created < cleanup_threshold:
-                                tasks_to_remove.append(task_id)
-                
-                # Архивирование старых задач
-                for task_id in tasks_to_remove:
-                    await self._archive_task(task_id)
-                
-                if tasks_to_remove:
-                    self.logger.info(f"Архивировано {len(tasks_to_remove)} старых задач")
-                
+                    for tid, tr in self.tasks.items():
+                        created = datetime.fromisoformat(tr.created_at)
+                        if tr.status in {TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED} and created < threshold:
+                            to_archive.append(tid)
+                for tid in to_archive:
+                    await self._archive_task(tid)
+                if to_archive:
+                    self.logger.info(f"Archived {len(to_archive)} tasks")
             except Exception as e:
-                self.logger.error(f"Ошибка в задаче очистки: {e}")
-    
+                self.logger.error(f"Cleanup error: {e}")
+
     async def _archive_task(self, task_id: str):
         """Архивирование задачи"""
         try:
-            # Перемещение файлов в архив
-            for status_dir in ['completed', 'failed']:
-                status_path = self.queue_path / status_dir
-                for file_path in status_path.glob(f'{task_id}_*'):
-                    archive_path = self.queue_path / 'archived' / file_path.name
-                    file_path.rename(archive_path)
-            
-            # Перемещение результатов
-            result_file = self.volume_path / 'outputs' / 'pending' / f'{task_id}.json'
-            if result_file.exists():
-                delivered_path = self.volume_path / 'outputs' / 'delivered' / result_file.name
-                result_file.rename(delivered_path)
-            
-            # Удаление из памяти
+            for name in self.completed_path.glob(f"{task_id}*"):
+                name.rename(self.archived_path / name.name)
+            for name in self.failed_path.glob(f"{task_id}*"):
+                name.rename(self.archived_path / name.name)
+            # Удаляем из памяти
             with self.lock:
-                if task_id in self.tasks:
-                    del self.tasks[task_id]
-                
-                if task_id in self.task_subscribers:
-                    del self.task_subscribers[task_id]
-            
+                self.tasks.pop(task_id, None)
         except Exception as e:
-            self.logger.error(f"Ошибка при архивировании задачи {task_id}: {e}")
-    
+            self.logger.error(f"Archive error {e}")
+
     async def _save_task_metadata(self, task_id: str, metadata: Dict[str, Any]):
-        """Сохранение метаданных задачи в файл"""
-        metadata_path = self.logs_path / 'queue' / f'{task_id}_metadata.json'
-        with open(metadata_path, 'w', encoding='utf-8') as f:
-            json.dump(metadata, f, ensure_ascii=False, indent=2)
-    
+        """Сохранение метаданных задачи"""
+        meta = {**metadata, 'task_id': task_id, 'created_at': datetime.now().isoformat()}
+        path = self.logs_base / 'queue' / f"{task_id}_meta.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(meta, f, ensure_ascii=False, indent=2)
+
     async def _restore_tasks(self):
         """Восстановление задач после перезапуска"""
         try:
-            # Восстановление из processing - перемещение обратно в incoming
-            processing_path = self.queue_path / 'processing'
-            for file_path in processing_path.glob('*'):
-                if file_path.is_file():
-                    incoming_path = self.queue_path / 'incoming' / file_path.name
-                    file_path.rename(incoming_path)
-                    self.logger.info(f"Файл {file_path.name} перемещен обратно в очередь")
-            
-            # Восстановление метаданных из логов
-            queue_logs_path = self.logs_path / 'queue'
-            for metadata_file in queue_logs_path.glob('*_metadata.json'):
-                try:
-                    with open(metadata_file, 'r', encoding='utf-8') as f:
-                        metadata = json.load(f)
-                    
-                    task_id = metadata_file.stem.replace('_metadata', '')
-                    
-                    # Проверка существования файла
-                    file_path = metadata.get('file_path')
-                    if file_path and Path(file_path).exists():
-                        # Воссоздание TaskResult
-                        task_result = TaskResult(
-                            task_id=task_id,
-                            status=TaskStatus.QUEUED,
-                            message="Задача восстановлена после перезапуска",
-                            created_at=metadata.get('created_at', datetime.now().isoformat()),
-                            metadata=metadata
-                        )
-                        
-                        with self.lock:
-                            self.tasks[task_id] = task_result
-                        
-                        # Добавление в очередь
-                        await self.task_queue.put(task_id)
-                        
-                        self.logger.info(f"Задача {task_id} восстановлена")
-                
-                except Exception as e:
-                    self.logger.error(f"Ошибка при восстановлении задачи из {metadata_file}: {e}")
-        
+            for f in self.processing_path.glob('*'):
+                if f.is_file():
+                    f.rename(self.incoming_path / f.name)
+            for mf in (self.logs_base / 'queue').glob('*_meta.json'):
+                md = json.loads(mf.read_text(encoding='utf-8'))
+                tid = mf.stem.replace('_meta', '')
+                tr = TaskResult(
+                    task_id=tid,
+                    status=TaskStatus.QUEUED,
+                    message="Восстановлена после перезапуска",
+                    created_at=md.get('created_at', datetime.now().isoformat()),
+                    metadata=md,
+                )
+                with self.lock:
+                    self.tasks[tid] = tr
+                await self.task_queue.put(tid)
         except Exception as e:
-            self.logger.error(f"Ошибка при восстановлении задач: {e}")
-    
+            self.logger.error(f"Restore error: {e}")
+
     async def _save_state(self):
-        """Сохранение текущего состояния"""
+        """Сохранение состояния менеджера очереди"""
         try:
-            state_file = self.logs_path / 'queue' / 'manager_state.json'
-            state_data = {
+            state = {
                 'timestamp': datetime.now().isoformat(),
-                'tasks': {
-                    task_id: asdict(result)
-                    for task_id, result in self.tasks.items()
-                }
+                'tasks': {}
             }
-            
-            with open(state_file, 'w', encoding='utf-8') as f:
-                json.dump(state_data, f, ensure_ascii=False, indent=2)
-            
-            self.logger.info("Состояние менеджера очереди сохранено")
-        
+            with self.lock:
+                for tid, t in self.tasks.items():
+                    state['tasks'][tid] = {
+                        'task_id': t.task_id,
+                        'status': t.status.value,
+                        'message': t.message,
+                        'created_at': t.created_at,
+                        'updated_at': t.updated_at,
+                        'started_at': t.started_at,
+                        'completed_at': t.completed_at,
+                        'progress': t.progress,
+                        'error': t.error,
+                        'metadata': t.metadata,
+                    }
+            sf = self.logs_base / 'queue' / 'manager_state.json'
+            sf.parent.mkdir(parents=True, exist_ok=True)
+            with open(sf, 'w', encoding='utf-8') as f:
+                json.dump(state, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            self.logger.error(f"Ошибка при сохранении состояния: {e}")
+            self.logger.error(f"Save state error: {e}")

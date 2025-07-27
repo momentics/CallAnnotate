@@ -14,6 +14,6 @@ docker-compose.override.yml
 .env
 
 
-volume/logs/queue/*.json
-volume/logs/system/*.log
+#volume/logs/system/*.log
 
+#volume/models/embeddings
