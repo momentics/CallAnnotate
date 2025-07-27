@@ -29,25 +29,6 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# Patch TestClient to accept keyword arg 'app'
-try:
-    from fastapi.testclient import TestClient as _FastAPITestClient
-    from starlette.testclient import TestClient as _StarletteTestClient
-
-    # Preserve original __init__
-    _orig_init_fastapi = _FastAPITestClient.__init__
-    _orig_init_starlette = _StarletteTestClient.__init__
-
-    def _patched_init(self, *args, app=None, **kwargs):
-        if app is not None:
-            return _orig_init_fastapi(self, app, **kwargs) if isinstance(self, _FastAPITestClient) else _orig_init_starlette(self, app, **kwargs)
-        return _orig_init_fastapi(self, *args, **kwargs) if isinstance(self, _FastAPITestClient) else _orig_init_starlette(self, *args, **kwargs)
-
-    _FastAPITestClient.__init__ = _patched_init
-    _StarletteTestClient.__init__ = _patched_init
-except ImportError:
-    pass
-
 from .queue_manager import QueueManager, TaskStatus
 from .utils import setup_logging, validate_audio_file, create_task_metadata
 from .annotation import AnnotationService
