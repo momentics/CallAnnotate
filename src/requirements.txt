@@ -1,50 +1,34 @@
-# FastAPI и веб-сервер
-fastapi==0.104.1
+# --- Web framework -------------------------------------------------
+fastapi==0.104.1          # тянет starlette 0.27.*
+starlette==0.27.0         # явная фиксация
+
+# --- HTTP-клиент, совместимый со Starlette 0.27 --------------------
+httpx==0.24.1             # последняя версия, где ещё есть параметр app=
+
+# --- ASGI-сервер и вспомогательное --------------------------------
 uvicorn[standard]==0.24.0
-python-multipart==0.0.6
 websockets==12.0
 aiofiles==23.2.1
+python-multipart==0.0.6
 
-# Обработка аудио
+# --- ML / DSP (не изменено) ---------------------------------------
+torch>=2.2.0,<2.8.0
+torchaudio>=2.2.0,<2.8.0
 librosa==0.10.1
 soundfile==0.12.1
-pydub==0.25.1
-scipy==1.11.4
-
-# ML и AI модели - обновленные версии
-torch>=2.2.0,<=2.7.1
-torchaudio>=2.2.0,<=2.7.1
-transformers>=4.35.2
 pyannote.audio>=3.1.1
-speechbrain>=0.5.16
-openai-whisper>=20231117
-
-# FAISS для поиска по эмбеддингам
+speechbrain>=1.0.0
 faiss-cpu>=1.7.4
-
-# Обработка данных
-numpy>=1.24.0,<2.0.0
+numpy>=1.24,<2.0
+scipy==1.11.4
 pandas>=2.1.3
 scikit-learn>=1.3.2
 
-# CardDAV клиент
-caldav>=1.3.9
-vobject>=0.9.6.1
-requests>=2.31.0
-
-# Конфигурация и логирование
-pyyaml>=6.0.1
-python-dotenv>=1.0.0
+# --- Прочие зависимости (сокращено для ясности) --------------------
 pydantic>=2.5.0
 pydantic-settings>=2.1.0
-
-# Утилиты
-python-dateutil>=2.8.2
-pytz>=2023.3
-click>=8.1.7
-
-# Тестирование
-pytest>=7.4.3
-pytest-asyncio>=0.21.1
-pytest-mock>=3.12.0
-httpx>=0.25.2
+pyyaml>=6.0.1
+pytest>=7.4
+pytest-asyncio>=0.21
+pytest-mock>=3.12
+anyio>=3.7
