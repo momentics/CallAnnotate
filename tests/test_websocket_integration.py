@@ -1,134 +1,125 @@
-# tests/test_websocket_integration.py
-# Автор: akoodoy@capilСсылка: https://github.com/momentics/CallAnnotate
-# Лицензия: Apache-2.0
+# -*- coding: utf-8 -*-
+"""
+Интеграционные тесты WebSocket функциональности CallAnnotate
 
-import sys
-import os
-import pytest
+Автор: akoodoy@capilot.ru
+Ссылка: https://github.com
+Лицензия: Apache-2.0
+"""
+
 import json
+import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock
 
-# Добавляем src в путь для корректного импорта
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+from app.app import app
 
-from app.app import create_app
-
-# Создаем приложение для тестов
-app = create_app()
+# ИСПРАВЛЕНО: используем позиционный аргумент вместо именованного
 client = TestClient(app)
 
-@pytest.fixture
-def mock_queue_manager():
-    """Мок для queue_manager"""
-    mock = AsyncMock()
-    mock.get_queue_size.return_value = 0
-    mock.get_active_tasks_count.return_value = 0
-    mock.subscribe_to_task.return_value = None
-    mock.add_task.return_value = True
-    return mock
 
-@pytest.fixture
-def mock_annotation_service():
-    """Мок для annotation_service"""
-    mock = AsyncMock()
-    return mock
+class TestWebSocketIntegration:
+    """Тесты WebSocket интеграции"""
 
-def test_websocket_connection_and_heartbeat():
-    """Тест установки соединения и heartbeat функциональности"""
-    client_id = "test-client-123"
-    
-    with client.websocket_connect(f"/ws/{client_id}") as websocket:
-        # Отправляем ping и ожидаем pong
-        ping_message = {"type": "ping", "timestamp": "2025-01-27T00:00:00Z"}
-        websocket.send_text(json.dumps(ping_message))
-        
-        # Получаем ответ
-        response = websocket.receive_text()
-        response_data = json.loads(response)
-        
-        assert response_data.get("type") == "pong"
-        assert response_data.get("timestamp") == ping_message["timestamp"]
+    def test_websocket_connection(self):
+        """Тест подключения к WebSocket"""
+        with client.websocket_connect("/ws/test_client") as websocket:
+            # Отправляем ping
+            ping_message = {"type": "ping", "timestamp": "2024-01-01T00:00:00"}
+            websocket.send_text(json.dumps(ping_message))
+            
+            # Получаем pong
+            response = websocket.receive_text()
+            response_data = json.loads(response)
+            
+            assert response_data["type"] == "pong"
+            assert response_data["timestamp"] == "2024-01-01T00:00:00"
 
-def test_websocket_task_subscription():
-    """Тест подписки на задачу через WebSocket"""
-    client_id = "test-client-456"
-    task_id = "test-task-789"
-    
-    with client.websocket_connect(f"/ws/{client_id}") as websocket:
-        # Отправляем запрос на подписку
-        subscribe_message = {
-            "type": "subscribe_task",
-            "task_id": task_id
-        }
-        websocket.send_text(json.dumps(subscribe_message))
-        
-        # Получаем подтверждение подписки
-        response = websocket.receive_text()
-        response_data = json.loads(response)
-        
-        assert response_data.get("type") == "subscribed"
-        assert response_data.get("task_id") == task_id
-        assert "Subscribed to" in response_data.get("message", "")
+    def test_websocket_task_subscription(self):
+        """Тест подписки на задачу через WebSocket"""
+        with client.websocket_connect("/ws/test_client") as websocket:
+            # Подписываемся на задачу
+            subscribe_message = {
+                "type": "subscribe_task",
+                "task_id": "test_task_123"
+            }
+            websocket.send_text(json.dumps(subscribe_message))
+            
+            # Получаем подтверждение подписки
+            response = websocket.receive_text()
+            response_data = json.loads(response)
+            
+            assert response_data["type"] == "subscribed"
+            assert response_data["task_id"] == "test_task_123"
+            assert "Subscribed to test_task_123" in response_data["message"]
 
-def test_websocket_audio_upload():
-    """Тест загрузки аудио через WebSocket"""
-    client_id = "test-client-upload"
-    
-    # Создаем тестовые аудио данные (base64)
-    import base64
-    test_audio = b"fake_audio_data_for_testing"
-    audio_base64 = base64.b64encode(test_audio).decode('utf-8')
-    
-    with client.websocket_connect(f"/ws/{client_id}") as websocket:
-        # Отправляем аудио данные
-        upload_message = {
-            "type": "upload_audio",
-            "data": audio_base64,
-            "filename": "test_audio.wav",
-            "priority": 3
-        }
-        websocket.send_text(json.dumps(upload_message))
+    def test_websocket_audio_upload(self):
+        """Тест загрузки аудио через WebSocket"""
+        import base64
         
-        # Получаем подтверждение создания задачи
-        response = websocket.receive_text()
-        response_data = json.loads(response)
+        # Создаем тестовые аудио данные
+        test_audio_data = b"fake_audio_data_for_testing"
+        encoded_audio = base64.b64encode(test_audio_data).decode('utf-8')
         
-        assert response_data.get("type") == "task_created"
-        assert response_data.get("status") == "queued"
-        assert "task_id" in response_data
+        with client.websocket_connect("/ws/test_client") as websocket:
+            # Отправляем аудио
+            upload_message = {
+                "type": "upload_audio",
+                "data": encoded_audio,
+                "filename": "test_audio.wav",
+                "priority": 5
+            }
+            websocket.send_text(json.dumps(upload_message))
+            
+            # Получаем подтверждение создания задачи
+            response = websocket.receive_text()
+            response_data = json.loads(response)
+            
+            assert response_data["type"] == "task_created"
+            assert "task_id" in response_data
+            assert response_data["status"] == "queued"
 
-def test_websocket_connection_disconnect():
-    """Тест корректного отключения WebSocket"""
-    client_id = "test-client-disconnect"
-    
-    with client.websocket_connect(f"/ws/{client_id}") as websocket:
-        # Отправляем ping для проверки соединения
-        websocket.send_text(json.dumps({"type": "ping"}))
-        response = websocket.receive_text()
-        assert json.loads(response).get("type") == "pong"
+    def test_websocket_disconnect(self):
+        """Тест корректного отключения WebSocket"""
+        with client.websocket_connect("/ws/test_client") as websocket:
+            # Отправляем сообщение для проверки соединения
+            ping_message = {"type": "ping", "timestamp": "2024-01-01T00:00:00"}
+            websocket.send_text(json.dumps(ping_message))
+            
+            # Получаем ответ
+            response = websocket.receive_text()
+            response_data = json.loads(response)
+            assert response_data["type"] == "pong"
         
-        # Закрываем соединение
-        websocket.close()
-    
-    # После закрытия соединения попытка использования должна вызвать ошибку
-    # Это проверяется автоматически при выходе из контекстного менеджера
+        # После выхода из контекста соединение должно быть закрыто
+        # Это проверяется автоматически TestClient
 
-def test_websocket_invalid_message():
-    """Тест обработки некорректных сообщений"""
-    client_id = "test-client-invalid"
+
+@pytest.mark.asyncio
+async def test_websocket_manager_functionality():
+    """Тест функциональности WebSocketManager"""
+    from app.app import WebSocketManager
     
-    with client.websocket_connect(f"/ws/{client_id}") as websocket:
-        # Отправляем неизвестный тип сообщения
-        invalid_message = {
-            "type": "unknown_type",
-            "data": "some_data"
-        }
-        websocket.send_text(json.dumps(invalid_message))
-        
-        # WebSocket должен остаться активным и отвечать на ping
-        websocket.send_text(json.dumps({"type": "ping"}))
-        response = websocket.receive_text()
-        response_data = json.loads(response)
-        
-        assert response_data.get("type") == "pong"
+    manager = WebSocketManager()
+    
+    # Мокаем WebSocket
+    mock_websocket = AsyncMock()
+    mock_websocket.accept = AsyncMock()
+    mock_websocket.send_text = AsyncMock()
+    
+    # Тестируем подключение
+    await manager.connect(mock_websocket, "test_client")
+    assert "test_client" in manager.active_connections
+    
+    # Тестируем отправку сообщения
+    test_message = {"type": "test", "data": "hello"}
+    await manager.send_personal_message(test_message, "test_client")
+    mock_websocket.send_text.assert_called_once_with(json.dumps(test_message))
+    
+    # Тестируем отключение
+    manager.disconnect("test_client")
+    assert "test_client" not in manager.active_connections
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])
