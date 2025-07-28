@@ -130,16 +130,12 @@ class CardDAVStage(BaseStage):
             root = ET.fromstring(response.text)
             
             # Поиск контактов, содержащих имя
-            for response_elem in root.findall('.//{DAV:}response'):
-                address_data_elem = response_elem.find('.//{urn:ietf:params:xml:ns:carddav}address-data')
-                
-                if address_data_elem is not None and address_data_elem.text:
-                    vcard_data = address_data_elem.text
-                    contact_info = self._parse_vcard(vcard_data)
-                    
+            for address_data_elem in root.findall('.//address-data'):
+                if address_data_elem.text:
+                    contact_info = self._parse_vcard(address_data_elem.text)
                     if contact_info and self._name_matches(name, contact_info):
                         return contact_info
-            
+
             return None
             
         except Exception as e:

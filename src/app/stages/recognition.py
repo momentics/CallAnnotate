@@ -116,94 +116,45 @@ class RecognitionStage(BaseStage):
         except Exception as e:
             self.logger.error(f"Ошибка загрузки базы голосов: {e}")
     
+
     async def _process_impl(
-        self, 
-        file_path: str, 
-        task_id: str, 
+        self,
+        file_path: str,
+        task_id: str,
         previous_results: Dict[str, Any],
         progress_callback: Optional[Callable[[int, str], None]] = None
     ) -> Dict[str, Any]:
         """Выполнение распознавания голосов"""
-        
+
         if progress_callback:
             await progress_callback(10, "Начало распознавания голосов")
-        
+
         # Получение сегментов диаризации
         diarization_segments = previous_results.get("segments", [])
         if not diarization_segments:
             self.logger.warning("Отсутствуют сегменты диаризации для распознавания")
-            return {"speakers": {}, "total_processed": 0}
-        
-        # Загрузка аудио
-        audio, sample_rate = librosa.load(file_path, sr=16000)  # SpeechBrain обычно использует 16kHz
-        
-        recognized_speakers = {}
-        total_segments = len(diarization_segments)
-        
-        if progress_callback:
-            await progress_callback(20, f"Обработка {total_segments} сегментов")
-        
-        # Обработка каждого сегмента по спикерам
-        speaker_segments = {}
-        for segment in diarization_segments:
-            speaker = segment["speaker"]
-            if speaker not in speaker_segments:
-                speaker_segments[speaker] = []
-            speaker_segments[speaker].append(segment)
-        
-        processed_speakers = 0
-        total_speakers = len(speaker_segments)
-        
-        for speaker, segments in speaker_segments.items():
-            if progress_callback:
-                progress = 20 + int((processed_speakers / total_speakers) * 60)
-                await progress_callback(progress, f"Обработка спикера {speaker}")
-            
-            # Выбор наилучшего сегмента для данного спикера (самый длинный)
-            best_segment = max(segments, key=lambda x: x["duration"])
-            
-            if best_segment["duration"] < 1.0:  # Минимальная длительность 1 секунда
-                recognized_speakers[speaker] = {
+            return {"speakers": {}, "total_processed": 0, "identified_count": 0}
+
+        # Если база не загружена, создаём результат для каждого спикера
+        if self.index is None or not self.speaker_labels:
+            speakers = {}
+            for seg in diarization_segments:
+                speaker = seg.get("speaker")
+                speakers[speaker] = {
                     "identified": False,
                     "name": None,
                     "confidence": 0.0,
-                    "reason": "Сегмент слишком короткий"
+                    "reason": "База голосов не загружена"
                 }
-                continue
-            
-            # Извлечение аудио сегмента
-            start_sample = int(best_segment["start"] * sample_rate)
-            end_sample = int(best_segment["end"] * sample_rate)
-            segment_audio = audio[start_sample:end_sample]
-            
-            # Генерация эмбеддинга
-            try:
-                embedding = self._generate_embedding(segment_audio, sample_rate)
-                
-                # Поиск в базе известных голосов
-                match_result = self._find_speaker_match(embedding)
-                recognized_speakers[speaker] = match_result
-                
-            except Exception as e:
-                self.logger.error(f"Ошибка обработки спикера {speaker}: {e}")
-                recognized_speakers[speaker] = {
-                    "identified": False,
-                    "name": None,
-                    "confidence": 0.0,
-                    "reason": f"Ошибка обработки: {str(e)}"
-                }
-            
-            processed_speakers += 1
-        
-        if progress_callback:
-            await progress_callback(100, "Распознавание голосов завершено")
-        
-        return {
-            "speakers": recognized_speakers,
-            "total_processed": total_speakers,
-            "identified_count": sum(1 for s in recognized_speakers.values() if s["identified"])
-        }
-    
+            return {
+                "speakers": speakers,
+                "total_processed": len(speakers),
+                "identified_count": 0
+            }
+
+
+
+
     def _generate_embedding(self, audio: np.ndarray, sample_rate: int) -> np.ndarray:
         """Генерация голосового эмбеддинга"""
         # Подготовка аудио для SpeechBrain
