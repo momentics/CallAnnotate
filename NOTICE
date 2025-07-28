@@ -24,7 +24,7 @@ starlette
 Copyright © 2019–2025 Encode OSS Ltd.
 License: BSD-3-Clause
 
-uvicorn
+uvicorn (uvicorn[standard])
 Copyright © 2018–2025 Encode OSS Ltd.
 License: BSD-3-Clause
 
@@ -36,16 +36,16 @@ websockets
 Copyright © 2013–2025 Aymeric Augustin
 License: BSD-3-Clause
 
+aiofiles
+Copyright © 2017–2025 Tinche
+License: MIT
+
 httpx
 Copyright © 2018–2025 Encode OSS Ltd.
 License: BSD-3-Clause
 
 anyio
 Copyright © 2019–2025 Thomas Scholz et al.
-License: MIT
-
-aiofiles
-Copyright © 2017–2025 Tinche
 License: MIT
 
 openai-whisper
@@ -72,10 +72,6 @@ torchaudio
 Copyright © 2019–2025 PyTorch Team
 License: BSD-3-Clause
 
-transformers
-Copyright © 2018–2025 Hugging Face Inc.
-License: Apache-2.0
-
 librosa
 Copyright © 2013–2025 Librosa contributors
 License: ISC
@@ -100,6 +96,10 @@ pydub
 Copyright © 2014–2025 Jeffery Karttunen
 License: MIT
 
+transformers
+Copyright © 2018–2025 Hugging Face Inc.
+License: Apache-2.0
+
 pytorch-lightning
 Copyright © 2019–2025 Lightning AI
 License: Apache-2.0
@@ -112,16 +112,24 @@ vobject
 Copyright © 2006–2025 Eventable contributors
 License: MIT
 
+requests
+Copyright © 2011–2025 Kenneth Reitz et al.
+License: Apache-2.0
+
 python-dotenv
 Copyright © 2014–2025 Theskumar
 License: BSD-3-Clause
+
+pydantic
+Copyright © 2017–2025 Samuel Colvin et al.
+License: MIT
 
 pydantic-settings
 Copyright © 2023–2025 Samuel Colvin et al.
 License: MIT
 
 python-dateutil
-Copyright © 2003–2025 dateutil contributors
+Copyright © 2003–2025 Dateutil contributors
 License: BSD-3-Clause
 
 pytz
