@@ -8,6 +8,7 @@
 """
 
 from .base import BaseStage, StageResult
+from .preprocessing import PreprocessingStage          
 from .diarization import DiarizationStage
 from .transcription import TranscriptionStage
 from .recognition import RecognitionStage
@@ -16,6 +17,7 @@ from .carddav import CardDAVStage
 __all__ = [
     "BaseStage",
     "StageResult", 
+    "PreprocessingStage",                               
     "DiarizationStage",
     "TranscriptionStage",
     "RecognitionStage",

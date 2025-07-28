@@ -12,7 +12,7 @@ import inspect
 from datetime import datetime
 from typing import Dict, Any, Callable, Optional
 
-from .stages import DiarizationStage, TranscriptionStage, RecognitionStage, CardDAVStage
+from .stages import PreprocessingStage, DiarizationStage, TranscriptionStage, RecognitionStage, CardDAVStage
 from .schemas import (
     AnnotationResult, AudioMetadata, ProcessingInfo, FinalSpeaker, 
     FinalSegment, FinalTranscription, Statistics, TranscriptionWord
@@ -36,13 +36,14 @@ class AnnotationService:
         
         # Инициализация этапов обработки
         self.stages = [
+            PreprocessingStage(self.config.preprocess.dict(), models_registry),
             DiarizationStage(self.config.diarization.dict(), models_registry),
             TranscriptionStage(self.config.transcription.dict(), models_registry),
             RecognitionStage(self.config.recognition.dict(), models_registry),
             CardDAVStage(self.config.carddav.dict(), models_registry)
         ]
-        
-        self.logger.info("AnnotationService инициализирован с новой архитектурой этапов")
+        self.logger.info("AnnotationService инициализирован с архитектурой этапов")
+
     
     async def process_audio(
         self,

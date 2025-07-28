@@ -30,6 +30,11 @@ soundfile==0.12.1
 numpy>=1.24,<2.0
 scipy==1.11.4
 
+# Для предобработки DeepFilterNet2
+deepfilternet>=0.2.0
+pydub>=0.25.1
+soundfile>=0.12.1
+
 # Дополнительные ML-библиотеки
 transformers>=4.35.2
 pytorch-lightning>=2.5.2

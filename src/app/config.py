@@ -151,8 +151,6 @@ class CORSConfig(BaseSettings):
         env_prefix = "CORS_"
 
 
-# НОВЫЕ КОНФИГУРАЦИОННЫЕ КЛАССЫ
-
 class VoiceInfo(BaseModel):
     """Информация о голосе"""
     name: str = Field(..., description="Имя владельца голоса")
@@ -225,6 +223,17 @@ class FeaturesConfig(BaseModel):
     task_cancellation: bool = Field(True, description="Отмена задач")
     progress_tracking: bool = Field(True, description="Отслеживание прогресса")
 
+class PreprocessingConfig(BaseSettings):
+    """Конфигурация этапа предобработки (preprocess)"""
+    model: str = Field("DeepFilterNet2", description="Имя модели DeepFilterNet2")
+    device: str = Field("cpu", description="Устройство для вычислений")
+    chunk_duration: float = Field(2.0, gt=0, description="Длительность кадра (в секундах)")
+    overlap: float = Field(0.5, ge=0, description="Перекрытие между чанками (в секундах)")
+    target_rms: float = Field(-20.0, description="Целевой RMS уровень (дБFS)")
+
+    class Config:
+        env_prefix = "PREPROCESS_"
+
 
 class AppSettings(BaseSettings):
     """Основные настройки приложения"""
@@ -242,7 +251,6 @@ class AppSettings(BaseSettings):
 
     api: APIConfig = Field(default_factory=APIConfig)
 
-    # НОВЫЕ СЕКЦИИ
     voices: List[VoiceInfo] = Field(default_factory=list, description="Известные голоса")
     notifications: NotificationsConfig = Field(default_factory=NotificationsConfig)
     performance: PerformanceConfig = Field(default_factory=PerformanceConfig)
@@ -250,6 +258,9 @@ class AppSettings(BaseSettings):
     monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
     features: FeaturesConfig = Field(default_factory=FeaturesConfig)
     
+    preprocess: PreprocessingConfig = Field(default_factory=PreprocessingConfig)
+
+
     @validator('recognition')
     def validate_recognition_paths(cls, v):
         """Валидация путей для распознавания"""

@@ -55,6 +55,16 @@ cors:
 api:
   base_path: "/api/v1"
 
+
+# cекция preprocess
+preprocess:
+  model: "DeepFilterNet2"       # имя модели для предобработки
+  device: "cpu"                 # устройство для вычислений
+  chunk_duration: 2.0           # продолжительность чанка в секундах
+  overlap: 0.5                  # доля перекрытия между чанками (в секундах)
+  target_rms: -20.0             # целевой уровень RMS в дБFS
+
+
 # Этап диаризации (pyannote.audio)
 diarization:
   model: "pyannote/speaker-diarization-3.1"  # DIARIZATION_MODEL
