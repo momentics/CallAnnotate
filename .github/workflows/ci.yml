@@ -26,7 +26,7 @@ jobs:
       - name: Install System dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsndfile1-dev
+          sudo apt-get install -y libsndfile1-dev ffmpeg sox
 
       # Добавлена предустановка Rust для сборки deepfilternet
       - name: Install Rust toolchain
