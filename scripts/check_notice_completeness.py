@@ -24,30 +24,36 @@ NOTICE = ROOT / "NOTICE"
 # согласно требованиям Apache License 2.0
 
 REQUIRED_PACKAGES = [
-    "PyYAML",
-    "asteroid-filterbanks", 
-    "asyncio-mqtt",
     "fastapi",
-    "librosa",
-    "openai-whisper",
-    "pyCardDAV",
-    "pyannote.audio",
+    "starlette",
+    "uvicorn",
     "pydantic",
-    "python-multipart",
-    "requests",
+    "pydantic-settings",
+    "PyYAML",
+    "python-dotenv",
+    "deepfilternet",
+    "pydub",
     "soundfile",
+    "numpy",
+    "scipy",
+    "openai-whisper",
     "speechbrain",
+    "pyannote.audio",
+    "faiss-cpu",
     "torch",
     "torchaudio",
+    "librosa",
     "transformers",
-    "uvicorn",
-    "websockets",
+    "pytorch-lightning",
+    "caldav",
+    "vobject",
+    "requests",
 ]
 
 def load_requirements(path: Path) -> set[str]:
     pkgs = set()
     if not path.exists():
-        print(f"❌ Файл requirements.txt не найден: {path}", file=sys.stderr)
+        print(f"Файл requirements.txt не найден: {path}", file=sys.stderr)
         sys.exit(1)
     for line in path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
@@ -59,7 +65,7 @@ def load_requirements(path: Path) -> set[str]:
 
 def load_notice(path: Path) -> str:
     if not path.exists():
-        print(f"❌ Файл NOTICE не найден: {path}", file=sys.stderr)
+        print(f"Файл NOTICE не найден: {path}", file=sys.stderr)
         sys.exit(1)
     return path.read_text(encoding="utf-8").lower()
 
@@ -76,12 +82,12 @@ def main():
                 missing.append(pkg)
 
     if missing:
-        print("❌ В NOTICE отсутствуют следующие зависимости:")
+        print("В NOTICE отсутствуют следующие зависимости:")
         for pkg in missing:
             print(f"  - {pkg}")
         sys.exit(1)
     else:
-        print("✅ NOTICE содержит все обязательные зависимости.")
+        print("NOTICE содержит все обязательные зависимости.")
         sys.exit(0)
 
 if __name__ == "__main__":

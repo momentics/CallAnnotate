@@ -20,41 +20,49 @@ fastapi
 Copyright © 2018–2025 Sebastián Ramírez
 License: MIT
 
-librosa
-Copyright © 2013–2025 Librosa contributors
-License: ISC
+starlette
+Copyright © 2019–2025 Encode OSS Ltd.
+License: BSD-3-Clause
 
-openai-whisper
-Copyright © 2022–2025 OpenAI
-License: MIT
-
-pyCardDAV
-Copyright © 2011–2013 Christian Geier et al.
-License: MIT (Expat)
-
-pyannote.audio
-Copyright © 2015–2025 Hervé Bredin et al.
-License: MIT
-
-pydantic
-Copyright © 2017–2025 Samuel Colvin et al.
-License: MIT
+uvicorn
+Copyright © 2018–2025 Encode OSS Ltd.
+License: BSD-3-Clause
 
 python-multipart
 Copyright © 2014–2025 Andrew Duke
 License: Apache-2.0
 
-requests
-Copyright © 2011–2025 Kenneth Reitz et al.
-License: Apache-2.0
-
-soundfile
-Copyright © 2013–2025 Bastian Pötsch
+websockets
+Copyright © 2013–2025 Aymeric Augustin
 License: BSD-3-Clause
+
+httpx
+Copyright © 2018–2025 Encode OSS Ltd.
+License: BSD-3-Clause
+
+anyio
+Copyright © 2019–2025 Thomas Scholz et al.
+License: MIT
+
+aiofiles
+Copyright © 2017–2025 Tinche
+License: MIT
+
+openai-whisper
+Copyright © 2022–2025 OpenAI
+License: MIT
 
 speechbrain
 Copyright © 2020–2025 SpeechBrain Team
 License: Apache-2.0
+
+pyannote.audio
+Copyright © 2015–2025 Hervé Bredin et al.
+License: MIT
+
+faiss-cpu
+Copyright © 2017–2025 Facebook AI Research
+License: BSD-3-Clause
 
 torch
 Copyright © 2016–2025 PyTorch Team
@@ -68,14 +76,72 @@ transformers
 Copyright © 2018–2025 Hugging Face Inc.
 License: Apache-2.0
 
-uvicorn
-Copyright © 2018–2025 Encode OSS Ltd.
+librosa
+Copyright © 2013–2025 Librosa contributors
+License: ISC
+
+soundfile
+Copyright © 2013–2025 Bastian Pötsch
 License: BSD-3-Clause
 
-websockets
-Copyright © 2013–2025 Aymeric Augustin
+numpy
+Copyright © 2005–2025 NumPy developers
 License: BSD-3-Clause
 
+scipy
+Copyright © 2001–2025 SciPy Developers
+License: BSD-3-Clause
 
-For complete license texts, see the LICENSE file and individual 
-component documentation.
+deepfilternet
+Copyright © 2020–2025 DeepFilterNet contributors
+License: Apache-2.0
+
+pydub
+Copyright © 2014–2025 Jeffery Karttunen
+License: MIT
+
+pytorch-lightning
+Copyright © 2019–2025 Lightning AI
+License: Apache-2.0
+
+caldav
+Copyright © 2011–2025 Christian Geier et al.
+License: MIT
+
+vobject
+Copyright © 2006–2025 Eventable contributors
+License: MIT
+
+python-dotenv
+Copyright © 2014–2025 Theskumar
+License: BSD-3-Clause
+
+pydantic-settings
+Copyright © 2023–2025 Samuel Colvin et al.
+License: MIT
+
+python-dateutil
+Copyright © 2003–2025 dateutil contributors
+License: BSD-3-Clause
+
+pytz
+Copyright © 2005–2025 Stuart Bishop et al.
+License: MIT
+
+click
+Copyright © 2014–2025 Pallets Projects
+License: BSD-3-Clause
+
+pytest
+Copyright © 2015–2025 pytest-dev community
+License: MIT
+
+pytest-asyncio
+Copyright © 2017–2025 pytest-dev community
+License: MIT
+
+pytest-mock
+Copyright © 2018–2025 pytest-dev community
+License: MIT
+
+For complete license texts, see the LICENSE file and individual component documentation.
