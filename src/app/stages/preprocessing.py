@@ -16,7 +16,7 @@ import numpy as np
 import soundfile as sf
 from pydub import AudioSegment, effects
 
-from rnnoise_wrapper import RNNoise  # обёртка RNNoise_Wrapper
+from ..rnnoise_wrapper import RNNoise
 from .base import BaseStage
 
 try:
