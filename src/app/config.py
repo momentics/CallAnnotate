@@ -94,7 +94,8 @@ class ServerConfig(BaseSettings):
     workers: int = Field(1, gt=0, description="Количество воркеров")
     reload: bool = Field(False, description="Автоперезагрузка")
     log_level: str = Field("info", description="Уровень логирования uvicorn")
-    
+    version: Optional[str] = Field("1.0.0", description="Версия сервиса")    
+
     class Config:
         env_prefix = "SERVER_"
 

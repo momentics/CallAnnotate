@@ -13,6 +13,6 @@ docker-compose.override.yml
 # Environment
 .env
 
-volume/logs/system/*.log
+volume/logs/*.log
 
 #volume/models/embeddings
