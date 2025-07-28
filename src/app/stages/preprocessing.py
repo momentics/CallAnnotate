@@ -1,6 +1,8 @@
+# src/app/stages/preprocessing.py
+
 # -*- coding: utf-8 -*-
 """
-Этап предобработки аудио: чанковая нормализация и подавление шума
+Этап предобработки аудио: чанковая нормализация, подавление шума RNNoise_Wrapper и DeepFilterNet2
 Автор: akoodoy@capilot.ru
 Ссылка: https://github.com/momentics/CallAnnotate
 Лицензия: Apache-2.0
@@ -8,15 +10,15 @@
 
 import os
 import tempfile
-import builtins
 from typing import Dict, Any, Optional, Callable
-from pydub import AudioSegment, effects
+
 import numpy as np
 import soundfile as sf
+from pydub import AudioSegment, effects
 
+from rnnoise_wrapper import RNNoise  # обёртка RNNoise_Wrapper
 from .base import BaseStage
 
-# ИМПОРТИРУЕМ на уровень модуля!
 try:
     from df.enhance import init_df, enhance
 except ImportError:
@@ -27,8 +29,6 @@ except ImportError:
 class PreprocessingStage(BaseStage):
     def __init__(self, config: Dict[str, Any], models_registry=None):
         super().__init__(config, models_registry)
-        self.init_df = None
-        self.enhance = None
         self.model = None
         self.df_state = None
 
@@ -37,15 +37,13 @@ class PreprocessingStage(BaseStage):
         return "preprocess"
 
     async def _initialize(self):
-        # Используем глобальные init_df/enhance
+        # Проверяем DeepFilterNet2
         if init_df is None or enhance is None:
             raise RuntimeError("Не установлена зависимость deepfilternet")
-        self.init_df = init_df
-        self.enhance = enhance
-        self.config = self.config or {}
-        self.model, self.df_state, _ = self.init_df(
-            model=self.config.get("model"),
-            device=self.config.get("device")
+        # Инициализация DeepFilterNet2
+        self.model, self.df_state, _ = init_df(
+            model=self.config.get("model", "DeepFilterNet2"),
+            device=self.config.get("device", "cpu")
         )
 
     async def _process_impl(
@@ -55,59 +53,71 @@ class PreprocessingStage(BaseStage):
         previous_results: Dict[str, Any],
         progress_callback: Optional[Callable[[int, str], None]] = None
     ) -> Dict[str, Any]:
-        """Разбивает файл на чанки, нормализует и очищает шум."""
+        """
+        Разбивает WAV на чанки, нормализует громкость,
+        применяет RNNoise_Wrapper (если доступно) и DeepFilterNet2,
+        и объединяет результат в один WAV-файл.
+        """
+        dur_sec = float(self.config.get("chunk_duration", 2.0))
+        overlap_sec = float(self.config.get("overlap", 0.5))
+        target_rms = float(self.config.get("target_rms", -20.0))
 
-        # параметры из конфига
-        dur = self.config.get("chunk_duration", 2.0)
-        ovl = self.config.get("overlap", 0.5)
-        target_rms = self.config.get("target_rms", -20.0)
-
-        # загрузка аудио
         audio = AudioSegment.from_file(file_path)
         sr = audio.frame_rate
-        chunk_ms = int(dur * 1000)
-        overlap_ms = int(ovl * 1000)
+        chunk_ms = int(dur_sec * 1000)
+        overlap_ms = int(overlap_sec * 1000)
+        total_ms = len(audio)
 
         processed_chunks = []
         position = 0
-        total_ms = len(audio)
         idx = 0
 
         while position < total_ms:
             end = min(position + chunk_ms, total_ms)
             chunk = audio[position:end]
 
-            # нормализация громкости
+            # Нормализация RMS
             normed = effects.normalize(chunk, headroom=abs(target_rms))
 
-            # преобразование в numpy
-            samples = np.array(normed.get_array_of_samples(), dtype=np.float32)
-            samples = samples.reshape(-1, normed.channels).mean(axis=1)
+            # Попытка лёгкого подавления через RNNoise_Wrapper
+            try:
+                denoiser = RNNoise()
+                denoised_seg = denoiser.filter(normed)
+            except Exception:
+                denoised_seg = normed  # если не удалось — используем исходный
 
-            # подавление шума DeepFilterNet2
-            enhanced = self.enhance(self.model, self.df_state, samples)
+            # Конвертация в numpy (моно)
+            samples = np.array(denoised_seg.get_array_of_samples(), dtype=np.float32)
+            samples = samples.reshape(-1, denoised_seg.channels).mean(axis=1)
+
+            # Глубокое шумоподавление
+            samples_df = enhance(self.model, self.df_state, samples)
+
+            # Сохраняем чанки
             tmp_path = os.path.join(tempfile.gettempdir(), f"{task_id}_chunk{idx}.wav")
-            sf.write(tmp_path, enhanced, sr)
+            sf.write(tmp_path, samples_df, sr)
             processed_chunks.append(tmp_path)
 
             idx += 1
             position += chunk_ms - overlap_ms
-            if progress_callback:
-                await progress_callback(int(100 * position / total_ms), f"Preprocess chunk {idx}")
 
-        # записываем объединённый файл
-        combined = sum(
-            (AudioSegment.from_file(p) for p in processed_chunks[1:]),
-            AudioSegment.from_file(processed_chunks[0])
-        )
-        out_path = file_path.replace(".wav", "_preprocessed.wav")
+            if progress_callback:
+                percent = min(100, int(100 * position / total_ms))
+                await progress_callback(percent, f"preprocess chunk {idx}")
+
+        # Объединяем и экспортируем
+        combined = AudioSegment.from_file(processed_chunks[0])
+        for p in processed_chunks[1:]:
+            combined += AudioSegment.from_file(p)
+
+        out_path = file_path.replace(".wav", "_processed.wav")
         combined.export(out_path, format="wav")
 
-        # очистка temp
+        # Чистим временные файлы
         for p in processed_chunks:
             try:
                 os.remove(p)
-            except:
+            except OSError:
                 pass
 
         return {"processed_path": out_path}
