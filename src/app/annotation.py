@@ -8,6 +8,7 @@
 """
 
 import logging
+import inspect
 from datetime import datetime
 from typing import Dict, Any, Callable, Optional
 
@@ -121,17 +122,20 @@ class AnnotationService:
             self.logger.error(f"Ошибка при обработке аудио {file_path}: {e}")
             raise
     
+
     async def _update_progress(
         self,
-        callback: Optional[Callable[[int, str], None]],
+        callback: Optional[Callable[[int, str], Any]],
         progress: int,
         message: str
     ):
-        """Обновление прогресса выполнения"""
         if callback:
-            await callback(progress, message)
+            result = callback(progress, message)
+            if inspect.isawaitable(result):
+                await result
         self.logger.info(f"Прогресс {progress}%: {message}")
-    
+
+
     def _build_final_annotation(
         self,
         task_id: str,

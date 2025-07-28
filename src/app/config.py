@@ -17,6 +17,12 @@ from pydantic_settings import BaseSettings
 # Field и валидаторы — из pydantic
 from pydantic import BaseModel, Field, field_validator, validator
 
+class APIConfig(BaseModel):
+    """Конфигурация HTTP API"""
+    base_path: str = Field("/api/v1", description="Базовый путь для REST API")
+
+    class Config:
+        env_prefix = "API_"
 
 class RecognitionConfig(BaseSettings):
     """Конфигурация этапа распознавания голосов"""
@@ -233,7 +239,9 @@ class AppSettings(BaseSettings):
     files: FilesConfig = Field(default_factory=FilesConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     cors: CORSConfig = Field(default_factory=CORSConfig)
-    
+
+    api: APIConfig = Field(default_factory=APIConfig)
+
     # НОВЫЕ СЕКЦИИ
     voices: List[VoiceInfo] = Field(default_factory=list, description="Известные голоса")
     notifications: NotificationsConfig = Field(default_factory=NotificationsConfig)

@@ -1,0 +1,2185 @@
+2025-07-28 15:34:35,609 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:34:35,609 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:34:35,609 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:34:35,609 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:34:35,609 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:34:35,609 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:34:35,619 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:34:35,619 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:34:35,619 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:34:35,619 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:34:35,629 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:34:35,629 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:34:35,629 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:34:35,629 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:34:35,629 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:34:35,629 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:34:36,869 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:34:36,869 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:34:36,879 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:34:36,889 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:34:37,059 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:34:37,059 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:34:37,079 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:34:37,079 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 15:34:58,567 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:34:58,567 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:34:58,567 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:34:58,567 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:34:58,567 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:34:58,567 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:34:58,567 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:34:58,577 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:34:58,577 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:34:58,577 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:34:58,577 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:34:58,577 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:34:58,577 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:34:58,577 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:34:58,577 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:34:58,587 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:34:59,317 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:34:59,317 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:34:59,327 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:34:59,337 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:34:59,507 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:34:59,507 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:34:59,507 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:34:59,517 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 15:39:35,192 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:39:35,202 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 15:39:35,202 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 404 Not Found"
+2025-07-28 15:39:35,242 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 15:39:35,242 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 15:39:35,263 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:39:35,283 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 15:39:35,293 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:39:35,303 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 15:39:35,333 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:39:35,343 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:39:35,343 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:39:35,343 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:39:35,343 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:39:35,343 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:39:35,343 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:39:35,353 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:39:35,353 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:39:35,353 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:39:35,363 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:39:35,363 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:39:35,363 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:39:35,363 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:39:35,363 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:39:35,363 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:39:36,128 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:39:36,138 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:39:36,138 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:39:36,518 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:39:36,518 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:39:36,528 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:39:36,528 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 15:39:56,780 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:39:56,780 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 15:39:56,790 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 404 Not Found"
+2025-07-28 15:39:56,820 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 15:39:56,830 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 15:39:56,840 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:39:56,850 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 15:39:56,860 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:39:56,870 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 15:39:56,890 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:39:56,890 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:39:56,890 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:39:56,890 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:39:56,890 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:39:56,890 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:39:56,890 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:39:56,900 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:39:56,900 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:39:56,900 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:39:56,900 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:39:56,900 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:39:56,900 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:39:56,910 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:39:56,910 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:39:56,910 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:39:57,641 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:39:57,661 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:39:57,671 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:39:58,020 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:39:58,050 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:39:58,050 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:39:58,050 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 15:45:15,463 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:45:15,463 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 15:45:15,473 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 15:45:15,483 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 307 Temporary Redirect"
+2025-07-28 15:45:15,483 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs/ "HTTP/1.1 404 Not Found"
+2025-07-28 15:45:15,503 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 307 Temporary Redirect"
+2025-07-28 15:45:15,503 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs/ "HTTP/1.1 404 Not Found"
+2025-07-28 15:45:15,533 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:45:15,543 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 15:45:15,553 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 405 Method Not Allowed"
+2025-07-28 15:45:15,573 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 405 Method Not Allowed"
+2025-07-28 15:45:15,613 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:45:15,613 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:45:15,613 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:45:15,613 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:45:15,613 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:45:15,613 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:45:15,613 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:45:15,623 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:45:15,623 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:45:15,623 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:45:15,623 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:45:15,623 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:45:15,623 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:45:15,633 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:45:15,633 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:45:15,633 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:45:16,383 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:45:16,383 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:45:16,393 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:45:16,413 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 15:45:16,423 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:45:16,433 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:45:16,433 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:45:16,433 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 15:45:41,029 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:45:41,029 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 15:45:41,039 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 15:45:41,039 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 307 Temporary Redirect"
+2025-07-28 15:45:41,049 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs/ "HTTP/1.1 404 Not Found"
+2025-07-28 15:45:41,049 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 307 Temporary Redirect"
+2025-07-28 15:45:41,059 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs/ "HTTP/1.1 404 Not Found"
+2025-07-28 15:45:41,089 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:45:41,089 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 15:45:41,109 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 405 Method Not Allowed"
+2025-07-28 15:45:41,119 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 405 Method Not Allowed"
+2025-07-28 15:45:41,149 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:45:41,149 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:45:41,149 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:45:41,149 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:45:41,149 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:45:41,149 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:45:41,149 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:45:41,149 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:45:41,149 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:45:41,149 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:45:41,159 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:45:41,159 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:45:41,159 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:45:41,159 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:45:41,159 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:45:41,159 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:45:41,909 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:45:41,919 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:45:41,919 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:45:41,929 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 15:45:41,939 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:45:41,939 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:45:41,939 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:45:41,939 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 15:46:05,880 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:46:05,880 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 15:46:05,880 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 15:46:05,890 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 307 Temporary Redirect"
+2025-07-28 15:46:05,890 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs/ "HTTP/1.1 404 Not Found"
+2025-07-28 15:46:05,900 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 307 Temporary Redirect"
+2025-07-28 15:46:05,910 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs/ "HTTP/1.1 404 Not Found"
+2025-07-28 15:46:05,940 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:46:05,940 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 15:46:05,950 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 405 Method Not Allowed"
+2025-07-28 15:46:05,970 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 405 Method Not Allowed"
+2025-07-28 15:46:05,990 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:46:05,990 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:46:05,990 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:46:05,990 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:46:05,990 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:46:06,000 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:46:06,000 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:46:06,000 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:46:06,000 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:46:06,000 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:46:06,000 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:46:06,010 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:46:06,010 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:46:06,010 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:46:06,010 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:46:06,010 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:46:06,740 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:46:06,760 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:46:06,770 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:46:06,790 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 15:46:06,790 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:46:06,790 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:46:06,790 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:46:06,790 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 15:49:34,355 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:49:34,355 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 15:49:34,365 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 15:49:34,375 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 15:49:34,385 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 15:49:34,425 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:49:34,425 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 15:49:34,445 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:49:34,465 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 15:49:34,495 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:49:34,495 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:49:34,495 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:49:34,495 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:49:34,495 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:49:34,505 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:49:34,505 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:49:34,505 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:49:34,505 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:49:34,505 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:49:34,515 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:49:34,515 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:49:34,515 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:49:34,525 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:49:34,525 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:49:34,525 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:49:35,264 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:49:35,264 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:49:35,284 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:49:35,304 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 15:49:35,304 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:49:35,314 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:49:35,314 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:49:35,334 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 15:49:56,666 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:49:56,666 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 15:49:56,666 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 15:49:56,676 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 15:49:56,686 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 15:49:56,716 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:49:56,726 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 15:49:56,736 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:49:56,746 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 15:49:56,766 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:49:56,766 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:49:56,766 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:49:56,766 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:49:56,766 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:49:56,766 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:49:56,766 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:49:56,776 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:49:56,776 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:49:56,776 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:49:56,776 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:49:56,776 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:49:56,776 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:49:56,786 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:49:56,786 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:49:56,786 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:49:57,506 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:49:57,506 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:49:57,516 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:49:57,526 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 15:49:57,526 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:49:57,536 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:49:57,536 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:49:57,536 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 15:51:57,811 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:51:57,811 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 15:51:57,821 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 15:51:57,831 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 15:51:58,181 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:51:58,191 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 15:51:58,201 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:51:58,221 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 15:51:58,251 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:51:58,251 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:51:58,251 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:51:58,251 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:51:58,251 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:51:58,251 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:51:58,251 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:51:58,261 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:51:58,261 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:51:58,261 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:51:58,261 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:51:58,261 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:51:58,261 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:51:58,271 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:51:58,271 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:51:58,271 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:51:59,191 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:51:59,191 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:51:59,201 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:51:59,211 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 15:51:59,221 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:51:59,221 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:51:59,231 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:51:59,231 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 15:52:21,862 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:52:21,862 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 15:52:21,872 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 15:52:21,872 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 15:52:22,222 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:52:22,232 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 15:52:22,242 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:52:22,252 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 15:52:22,272 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:52:22,272 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:52:22,272 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:52:22,272 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:52:22,272 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:52:22,282 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:52:22,282 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:52:22,282 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:52:22,282 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:52:22,282 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:52:22,292 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:52:22,292 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:52:22,292 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:52:22,292 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:52:22,292 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:52:22,292 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:52:23,212 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:52:23,212 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:52:23,222 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:52:23,222 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 15:52:23,232 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:52:23,232 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:52:23,232 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:52:23,232 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 15:55:09,291 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:55:09,301 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 15:55:09,301 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 15:55:09,321 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 15:55:09,641 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:55:09,651 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 15:55:09,671 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:55:09,681 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 15:55:09,711 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:55:09,711 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:55:09,711 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:55:09,711 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:55:09,711 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:55:09,721 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:55:09,721 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:55:09,721 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:55:09,721 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:55:09,721 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:55:09,731 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:55:09,731 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:55:09,731 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:55:09,741 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:55:09,741 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:55:09,741 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:55:10,651 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:55:10,661 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:55:10,671 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:55:10,701 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 15:55:10,701 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:55:10,701 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:55:10,711 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:55:10,711 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 15:55:40,181 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:55:40,181 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 15:55:40,191 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 15:55:40,201 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 15:55:40,521 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:55:40,531 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 15:55:40,541 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:55:40,541 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 15:55:40,571 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:55:40,571 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:55:40,571 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:55:40,571 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:55:40,571 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:55:40,571 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:55:40,571 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:55:40,571 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:55:40,571 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:55:40,571 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:55:40,581 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:55:40,581 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:55:40,581 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:55:40,591 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:55:40,591 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:55:40,591 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:55:41,481 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:55:41,491 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:55:41,501 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:55:41,511 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 15:55:41,521 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:55:41,521 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:55:41,521 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:55:41,531 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 15:58:21,240 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:58:21,250 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 15:58:21,250 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 15:58:21,270 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 15:58:21,280 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 15:58:21,280 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/b6ca2f79-5db0-4aaf-ad80-218c9a635bba "HTTP/1.1 200 OK"
+2025-07-28 15:58:21,290 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:58:21,300 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 15:58:21,330 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:58:21,340 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 15:58:21,370 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:58:21,370 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:58:21,370 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:58:21,370 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:58:21,370 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:58:21,370 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:58:21,370 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:58:21,380 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:58:21,380 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:58:21,380 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:58:21,380 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:58:21,380 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:58:21,380 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:58:21,390 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:58:21,390 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:58:21,390 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:58:22,120 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:58:22,120 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:58:22,130 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:58:22,170 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 15:58:22,170 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:58:22,180 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:58:22,180 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:58:22,190 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 15:58:41,946 - app.queue.manager - INFO - QueueManager started
+2025-07-28 15:58:41,946 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 15:58:41,956 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 15:58:41,966 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 15:58:41,976 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 15:58:41,976 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/5ab064a2-593d-4d8c-8f49-eaa0df99bb46 "HTTP/1.1 200 OK"
+2025-07-28 15:58:41,986 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:58:41,996 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 15:58:42,026 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 15:58:42,026 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 15:58:42,056 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:58:42,056 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:58:42,056 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:58:42,056 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 15:58:42,056 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 15:58:42,056 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 15:58:42,056 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 15:58:42,056 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:58:42,056 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:58:42,056 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:58:42,066 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:58:42,066 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:58:42,066 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 15:58:42,066 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 15:58:42,066 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 15:58:42,066 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 15:58:42,786 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 15:58:42,836 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 15:58:42,836 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 15:58:42,876 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 15:58:42,876 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 15:58:42,906 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 15:58:42,906 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 15:58:42,936 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:01:22,292 - app.queue.manager - INFO - QueueManager started
+2025-07-28 16:01:22,302 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:01:22,302 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:01:22,322 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:01:22,322 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:01:22,332 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/1dc2a203-8e18-420b-8424-24bf0dd7a7f0 "HTTP/1.1 200 OK"
+2025-07-28 16:01:22,342 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:01:22,352 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:01:22,382 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:01:22,392 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:01:22,422 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:01:22,422 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:01:22,422 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:01:22,422 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:01:22,422 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:01:22,422 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:01:22,422 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:01:22,432 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:01:22,432 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:01:22,432 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:01:22,432 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:01:22,432 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:01:22,432 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:01:22,442 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:01:22,442 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:01:22,442 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:01:23,172 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:01:23,182 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:01:23,192 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:01:23,202 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:01:23,212 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:01:23,212 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:01:23,222 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:01:23,222 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:01:45,975 - app.queue.manager - INFO - QueueManager started
+2025-07-28 16:01:45,975 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:01:45,985 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:01:45,995 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:01:46,005 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:01:46,005 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/988f28df-5904-425d-b2bb-9f9709913b57 "HTTP/1.1 200 OK"
+2025-07-28 16:01:46,015 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:01:46,015 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:01:46,045 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:01:46,055 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:01:46,075 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:01:46,075 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:01:46,075 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:01:46,075 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:01:46,075 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:01:46,085 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:01:46,085 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:01:46,085 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:01:46,085 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:01:46,085 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:01:46,085 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:01:46,085 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:01:46,085 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:01:46,095 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:01:46,095 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:01:46,095 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:01:46,825 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:01:46,825 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:01:46,835 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:01:46,835 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:01:46,845 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:01:46,845 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:01:46,845 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:01:46,845 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:05:21,233 - app.queue.manager - INFO - QueueManager started
+2025-07-28 16:05:21,243 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:05:21,253 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:05:21,263 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:05:21,273 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:05:21,273 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/0e3ea512-6fe7-47ef-ad31-9bcbf57a533a "HTTP/1.1 200 OK"
+2025-07-28 16:05:21,283 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:05:21,293 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:05:21,323 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:05:21,333 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:05:21,363 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:05:21,363 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:05:21,363 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:05:21,363 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:05:21,363 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:05:21,363 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:05:21,373 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:05:21,373 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:05:21,373 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:05:21,373 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:05:21,383 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:05:21,383 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:05:21,383 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:05:21,393 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:05:21,393 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:05:21,393 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:05:22,113 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:05:22,133 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:05:22,143 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:05:22,163 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:05:22,173 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:05:22,173 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:05:22,183 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:05:22,193 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:05:49,735 - app.queue.manager - INFO - QueueManager started
+2025-07-28 16:05:49,735 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:05:49,745 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:05:49,755 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:05:49,755 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:05:49,765 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/a4b0af5b-2d4c-45cb-bf03-b065d4660a41 "HTTP/1.1 200 OK"
+2025-07-28 16:05:49,765 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:05:49,775 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:05:49,805 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:05:49,815 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:05:49,835 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:05:49,835 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:05:49,835 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:05:49,835 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:05:49,835 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:05:49,835 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:05:49,835 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:05:49,845 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:05:49,845 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:05:49,845 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:05:49,845 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:05:49,845 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:05:49,845 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:05:49,855 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:05:49,855 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:05:49,855 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:05:50,585 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:05:50,585 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:05:50,595 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:05:50,645 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:05:50,645 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:05:50,685 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:05:50,685 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:05:50,695 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:08:43,936 - app.queue.manager - INFO - QueueManager started
+2025-07-28 16:08:43,946 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:08:43,946 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:08:43,966 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:08:43,966 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:08:43,976 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/cd8cae68-da7f-4d65-b4dd-e45c5349943e "HTTP/1.1 200 OK"
+2025-07-28 16:08:43,986 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:08:43,996 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:08:44,026 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:08:44,036 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:08:44,066 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:08:44,066 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:08:44,066 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:08:44,066 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:08:44,066 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:08:44,066 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:08:44,066 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:08:44,076 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:08:44,076 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:08:44,076 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:08:44,076 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:08:44,076 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:08:44,076 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:08:44,086 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:08:44,086 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:08:44,086 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:08:44,826 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:08:44,826 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:08:44,846 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:08:44,876 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:08:44,876 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:08:44,886 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:08:44,896 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:08:44,896 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:09:04,250 - app.queue.manager - INFO - QueueManager started
+2025-07-28 16:09:04,250 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:09:04,260 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:09:04,260 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:09:04,270 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:09:04,280 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/02ac4900-8080-4791-9195-c734a7ce2061 "HTTP/1.1 200 OK"
+2025-07-28 16:09:04,280 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:09:04,290 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:09:04,320 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:09:04,330 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:09:04,350 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:09:04,350 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:09:04,350 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:09:04,350 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:09:04,350 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:09:04,350 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:09:04,350 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:09:04,360 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:09:04,360 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:09:04,360 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:09:04,360 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:09:04,360 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:09:04,360 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:09:04,370 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:09:04,370 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:09:04,370 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:09:05,100 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:09:05,100 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:09:05,110 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:09:05,120 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:09:05,120 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:09:05,120 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:09:05,130 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:09:05,130 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:13:05,691 - app.queue.manager - INFO - QueueManager started
+2025-07-28 16:13:05,691 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:13:05,701 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:13:05,711 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:13:05,721 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:13:05,731 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/03e68916-8603-413e-9005-91eb50354edc "HTTP/1.1 200 OK"
+2025-07-28 16:13:05,741 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:13:05,741 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:13:05,781 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:13:05,781 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:13:05,821 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:13:05,821 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:13:05,821 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:13:05,821 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:13:05,821 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:13:05,821 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:13:05,821 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:13:05,831 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:13:05,831 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:13:05,831 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:13:05,831 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:13:05,831 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:13:05,831 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:13:05,841 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:13:05,841 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:13:05,841 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:13:06,581 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:13:06,581 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:13:06,601 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:13:06,631 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:13:06,631 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:13:06,641 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:13:06,641 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:13:06,651 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:13:54,241 - app.queue.manager - INFO - QueueManager started
+2025-07-28 16:13:54,251 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:13:54,251 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:13:54,261 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:13:54,271 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:13:54,271 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/031290f3-08e1-4d0d-9a11-f61146decbe9 "HTTP/1.1 200 OK"
+2025-07-28 16:13:54,281 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:13:54,291 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:13:54,321 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:13:54,331 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:13:54,351 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:13:54,351 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:13:54,351 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:13:54,351 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:13:54,351 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:13:54,351 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:13:54,351 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:13:54,361 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:13:54,361 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:13:54,361 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:13:54,361 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:13:54,361 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:13:54,361 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:13:54,371 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:13:54,371 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:13:54,371 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:13:55,111 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:13:55,111 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:13:55,131 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:13:55,141 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:13:55,151 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:13:55,151 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:13:55,161 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:13:55,161 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:17:02,250 - app.queue.manager - INFO - QueueManager started
+2025-07-28 16:17:02,250 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:17:02,260 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:17:02,270 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:17:02,280 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:17:02,280 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/aa90dc47-156d-4070-8fd0-fb0e16ebba1e "HTTP/1.1 200 OK"
+2025-07-28 16:17:02,290 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:17:02,300 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:17:02,330 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:17:02,340 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:17:02,370 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:17:02,370 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:17:02,370 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:17:02,370 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:17:02,370 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:17:02,370 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:17:02,370 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:17:02,380 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:17:02,380 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:17:02,380 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:17:02,380 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:17:02,380 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:17:02,380 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:17:02,390 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:17:02,390 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:17:02,390 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:17:03,120 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:17:03,120 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:17:03,130 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:17:03,130 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:17:03,140 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:17:03,150 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:17:03,150 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:17:03,150 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:17:25,372 - app.queue.manager - INFO - QueueManager started
+2025-07-28 16:17:25,372 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:17:25,382 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:17:25,392 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:17:25,402 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:17:25,402 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/1612e222-ac89-4ad3-a83f-e79807dd88de "HTTP/1.1 200 OK"
+2025-07-28 16:17:25,412 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:17:25,422 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:17:25,452 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:17:25,452 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:17:25,482 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:17:25,482 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:17:25,482 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:17:25,482 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:17:25,482 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:17:25,482 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:17:25,482 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:17:25,482 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:17:25,482 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:17:25,482 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:17:25,492 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:17:25,492 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:17:25,492 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:17:25,492 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:17:25,492 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:17:25,492 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:17:26,212 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:17:26,212 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:17:26,232 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:17:26,232 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:17:26,242 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:17:26,262 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:17:26,272 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:17:26,272 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:21:06,967 - app.queue.manager - INFO - QueueManager started
+2025-07-28 16:21:06,967 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:21:06,977 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:21:06,987 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:21:06,997 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:21:06,997 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/56db7869-097b-459a-abc9-5782bfd0f390 "HTTP/1.1 200 OK"
+2025-07-28 16:21:07,007 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:21:07,017 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:21:07,047 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:21:07,057 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:21:07,087 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:21:07,087 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:21:07,087 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:21:07,087 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:21:07,087 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:21:07,087 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:21:07,087 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:21:07,097 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:21:07,097 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:21:07,097 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:21:07,097 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:21:07,097 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:21:07,097 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:21:07,107 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:21:07,107 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:21:07,107 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:21:07,837 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:21:07,847 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:21:07,857 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:21:07,887 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:21:07,887 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:21:07,887 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:21:07,897 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:21:07,897 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:21:38,409 - app.queue.manager - INFO - QueueManager started
+2025-07-28 16:21:38,419 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:21:38,419 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:21:38,429 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:21:38,439 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:21:38,439 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/9a42429b-1571-43a5-8547-6350fba684e8 "HTTP/1.1 200 OK"
+2025-07-28 16:21:38,449 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:21:38,459 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:21:38,493 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:21:38,501 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:21:38,526 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:21:38,526 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:21:38,526 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:21:38,526 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:21:38,526 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:21:38,526 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:21:38,526 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:21:38,526 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:21:38,526 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:21:38,526 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:21:38,534 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:21:38,534 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:21:38,534 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:21:38,534 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:21:38,534 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:21:38,534 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:21:39,264 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:21:39,274 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:21:39,274 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:21:39,292 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:21:39,300 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:21:39,302 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:21:39,302 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:21:39,310 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:28:58,436 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:28:58,446 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:28:58,456 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:28:58,466 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:28:58,476 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/d245c430-01e6-43cf-851f-4ba24fecaf39 "HTTP/1.1 404 Not Found"
+2025-07-28 16:28:58,506 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:28:58,516 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 200 OK"
+2025-07-28 16:28:58,526 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:28:58,526 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:28:58,566 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:28:58,566 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:28:58,566 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:28:58,566 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:28:58,566 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:28:58,566 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:28:58,566 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:28:58,576 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:28:58,576 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:28:58,576 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:28:58,576 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:28:58,576 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:28:58,576 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:28:58,586 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:28:58,586 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:28:58,586 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:28:59,316 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:28:59,326 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:28:59,326 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:28:59,346 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:28:59,346 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:28:59,346 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:28:59,356 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:28:59,356 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:29:22,429 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:29:22,439 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:29:22,439 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:29:22,449 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:29:22,459 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/d138cd28-7275-4fa5-a0de-d3b5ebc6a3ee "HTTP/1.1 404 Not Found"
+2025-07-28 16:29:22,489 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:29:22,499 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 200 OK"
+2025-07-28 16:29:22,499 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:29:22,509 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:29:22,529 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:29:22,529 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:29:22,529 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:29:22,529 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:29:22,529 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:29:22,529 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:29:22,529 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:29:22,539 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:29:22,539 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:29:22,539 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:29:22,539 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:29:22,539 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:29:22,539 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:29:22,549 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:29:22,549 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:29:22,549 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:29:23,269 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:29:23,269 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:29:23,279 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:29:23,289 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:29:23,299 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:29:23,299 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:29:23,299 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:29:23,299 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:38:34,475 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:38:34,485 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:38:34,505 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:38:34,515 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:38:34,834 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:38:34,844 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:38:34,854 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:38:34,864 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:38:34,894 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:38:34,894 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:38:34,894 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:38:34,894 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:38:34,894 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:38:34,894 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:38:34,894 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:38:34,894 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:38:34,904 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:38:34,904 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:38:34,904 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:38:34,904 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:38:34,904 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:38:34,914 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:38:34,914 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:38:34,914 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:38:35,815 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:38:35,815 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:38:35,825 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:38:35,835 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:38:35,845 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:38:35,845 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:38:35,845 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:38:35,845 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:38:57,803 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:38:57,813 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:38:57,823 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:38:57,833 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:38:58,157 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:38:58,167 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:38:58,177 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:38:58,187 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:38:58,207 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:38:58,207 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:38:58,207 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:38:58,207 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:38:58,207 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:38:58,207 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:38:58,207 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:38:58,217 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:38:58,217 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:38:58,217 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:38:58,217 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:38:58,217 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:38:58,217 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:38:58,227 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:38:58,227 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:38:58,227 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:38:59,117 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:38:59,127 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:38:59,157 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:38:59,177 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:38:59,177 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:38:59,187 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:38:59,187 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:38:59,197 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:41:02,066 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:41:02,076 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:41:02,086 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:41:02,096 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:41:02,106 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/cd10010f-0992-4e03-a522-ac9727086bdc "HTTP/1.1 200 OK"
+2025-07-28 16:41:02,116 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:41:02,116 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:41:02,156 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:41:02,156 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:41:02,196 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:41:02,196 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:41:02,196 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:41:02,196 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:41:02,196 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:41:02,196 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:41:02,196 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:41:02,196 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:41:02,196 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:41:02,196 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:41:02,206 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:41:02,206 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:41:02,206 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:41:02,216 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:41:02,216 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:41:02,216 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:41:02,936 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:41:02,946 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:41:02,956 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:41:02,966 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:41:02,976 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:41:02,986 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:41:02,996 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:41:02,996 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:41:25,196 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:41:25,206 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:41:25,216 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:41:25,226 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:41:25,226 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/8f13cb1f-431f-44d1-bedc-adecdacc6e1c "HTTP/1.1 200 OK"
+2025-07-28 16:41:25,236 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:41:25,236 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:41:25,266 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:41:25,276 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:41:25,296 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:41:25,296 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:41:25,296 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:41:25,296 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:41:25,296 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:41:25,306 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:41:25,306 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:41:25,306 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:41:25,306 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:41:25,306 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:41:25,306 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:41:25,316 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:41:25,316 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:41:25,316 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:41:25,316 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:41:25,316 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:41:26,036 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:41:26,036 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:41:26,046 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:41:26,056 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:41:26,066 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:41:26,066 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:41:26,066 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:41:26,076 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:45:47,264 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:45:47,274 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:45:47,284 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:45:47,294 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:45:47,304 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/6a711cb4-a919-41e7-9989-32d000201329 "HTTP/1.1 200 OK"
+2025-07-28 16:45:47,314 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:45:47,324 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:45:47,354 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:45:47,364 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:45:47,394 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:45:47,394 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:45:47,394 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:45:47,394 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:45:47,394 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:45:47,394 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:45:47,394 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:45:47,404 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:45:47,404 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:45:47,404 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:45:47,404 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:45:47,404 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:45:47,404 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:45:47,414 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:45:47,414 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:45:47,414 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:45:48,144 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:45:48,154 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:45:48,154 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:45:48,174 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:45:48,174 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:45:48,194 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:45:48,194 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:45:48,194 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:46:21,873 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:46:21,883 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:46:21,893 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:46:21,903 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:46:21,903 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/583fa101-1e39-4ed8-89c8-61ab6be4cbee "HTTP/1.1 200 OK"
+2025-07-28 16:46:21,913 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:46:21,923 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 404 Not Found"
+2025-07-28 16:46:21,953 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:46:21,953 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:46:21,983 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:46:21,983 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:46:21,983 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:46:21,983 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:46:21,983 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:46:21,983 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:46:21,983 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:46:21,983 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:46:21,983 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:46:21,983 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:46:21,993 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:46:21,993 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:46:21,993 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:46:21,993 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:46:21,993 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:46:21,993 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:46:22,703 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:46:22,713 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:46:22,713 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:46:22,753 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:46:22,753 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:46:22,763 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:46:22,763 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:46:22,773 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:56:56,318 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:56:56,328 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:56:56,348 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:56:56,368 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:56:56,368 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/a39fc384-17ee-4bc5-96d7-c03d076cab62 "HTTP/1.1 200 OK"
+2025-07-28 16:56:56,378 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:56:56,398 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 200 OK"
+2025-07-28 16:56:56,408 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:56:56,418 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:56:56,478 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:56:56,488 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:56:56,488 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:56:56,488 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:56:56,488 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:56:56,488 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:56:56,488 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:56:56,498 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:56:56,498 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:56:56,498 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:56:56,508 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:56:56,508 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:56:56,508 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:56:56,518 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:56:56,518 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:56:56,518 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:56:57,928 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:56:57,938 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:56:57,948 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:56:57,988 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:56:58,008 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:56:58,028 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:56:58,038 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:56:58,038 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 16:57:42,525 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 16:57:42,545 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 16:57:42,555 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 16:57:42,565 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 16:57:42,575 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/e29312d1-f694-4518-aee6-b75241ae833e "HTTP/1.1 200 OK"
+2025-07-28 16:57:42,585 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:57:42,595 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 200 OK"
+2025-07-28 16:57:42,605 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 16:57:42,615 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 16:57:42,665 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:57:42,665 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:57:42,665 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:57:42,665 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 16:57:42,665 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 16:57:42,675 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 16:57:42,675 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 16:57:42,675 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:57:42,675 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:57:42,675 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:57:42,685 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:57:42,685 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:57:42,685 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 16:57:42,695 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 16:57:42,695 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 16:57:42,695 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 16:57:44,085 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 16:57:44,095 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 16:57:44,105 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 16:57:44,175 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 16:57:44,185 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 16:57:44,185 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 16:57:44,185 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 16:57:44,185 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 17:02:33,010 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:02:33,010 - app.annotation - ERROR - Ошибка при обработке аудио C:\Users\momentics\AppData\Local\Temp\pytest-of-momentics\pytest-159\test_process_audio_all_stages_0\test.wav: object NoneType can't be used in 'await' expression
+2025-07-28 17:02:33,080 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:02:33,080 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:02:33,080 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:02:33,080 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:02:33,080 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:02:33,080 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:02:33,080 - app.annotation - ERROR - Этап transcription завершился с ошибкой: fail
+2025-07-28 17:02:33,080 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:02:33,080 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:02:33,080 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:02:33,080 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:02:33,080 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:02:33,080 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:02:33,080 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:02:33,120 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 17:02:33,130 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 17:02:33,140 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 17:02:33,150 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 17:02:33,160 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/9ae6d4fb-b468-4140-871d-af02422c08d8 "HTTP/1.1 200 OK"
+2025-07-28 17:02:33,170 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:02:33,180 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 200 OK"
+2025-07-28 17:02:33,200 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:02:33,211 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 17:02:33,341 - app.queue.manager - INFO - QueueManager started
+2025-07-28 17:02:33,514 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:02:33,514 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:02:33,514 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:02:33,514 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:02:33,514 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:02:33,514 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:02:33,514 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 17:02:33,529 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:02:33,529 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:02:33,529 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:02:33,529 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:02:33,529 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:02:33,529 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 17:02:33,545 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:02:33,546 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:02:33,546 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:02:35,108 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 17:02:35,108 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 17:02:35,128 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 17:02:35,178 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 17:02:35,178 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 17:02:35,178 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 17:02:35,198 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 17:02:35,198 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 17:11:55,152 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:11:55,162 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:11:55,162 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:11:55,162 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:11:55,162 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:11:55,162 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:11:55,162 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:11:55,162 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:11:55,162 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:11:55,162 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:11:55,162 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:11:55,162 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:11:55,162 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:11:55,182 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:11:55,182 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:11:55,182 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:11:55,182 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:11:55,182 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:11:55,182 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:11:55,182 - app.annotation - ERROR - Этап transcription завершился с ошибкой: fail
+2025-07-28 17:11:55,182 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:11:55,182 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:11:55,182 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:11:55,182 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:11:55,182 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:11:55,182 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:11:55,182 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:11:55,212 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 17:11:55,232 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 17:11:55,242 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 17:11:55,252 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 17:11:55,262 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/51a26b92-4a5a-47f1-831b-1fa49e6c7ed3 "HTTP/1.1 200 OK"
+2025-07-28 17:11:55,272 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:11:55,282 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 200 OK"
+2025-07-28 17:11:55,292 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:11:55,302 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 17:11:55,322 - app.queue.manager - INFO - QueueManager started
+2025-07-28 17:11:55,522 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:11:55,522 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:11:55,522 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:11:55,522 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:11:55,522 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:11:55,522 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:11:55,522 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 17:11:55,532 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:11:55,532 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:11:55,532 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:11:55,532 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:11:55,532 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:11:55,532 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 17:11:55,542 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:11:55,542 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:11:55,542 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:11:56,962 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 17:11:56,962 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 17:11:56,972 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 17:11:57,032 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 17:11:57,052 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 17:11:57,062 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 17:11:57,062 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 17:11:57,062 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 17:14:24,389 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:14:24,389 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:14:24,389 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:14:24,389 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:14:24,389 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:14:24,389 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:14:24,389 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:14:24,389 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:14:24,389 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:14:24,389 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:14:24,389 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:14:24,389 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:14:24,389 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:14:24,409 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:14:24,409 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:14:24,409 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:14:24,409 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:14:24,409 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:14:24,409 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:14:24,409 - app.annotation - ERROR - Этап transcription завершился с ошибкой: fail
+2025-07-28 17:14:24,409 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:14:24,409 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:14:24,409 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:14:24,409 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:14:24,409 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:14:24,409 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:14:24,409 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:14:24,449 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 17:14:24,459 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 17:14:24,469 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 17:14:24,489 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 17:14:24,499 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/15d8b27d-d469-4224-8f16-dde85f3886e5 "HTTP/1.1 200 OK"
+2025-07-28 17:14:24,509 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:14:24,529 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 200 OK"
+2025-07-28 17:14:24,539 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:14:24,549 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 17:14:24,579 - app.queue.manager - INFO - QueueManager started
+2025-07-28 17:14:24,779 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:14:24,779 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:14:24,779 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:14:24,779 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:14:24,779 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:14:24,779 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:14:24,779 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 17:14:24,789 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:14:24,789 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:14:24,789 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:14:24,799 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:14:24,799 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:14:24,799 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 17:14:24,809 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:14:24,809 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:14:24,809 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:14:26,209 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 17:14:26,219 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 17:14:26,229 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 17:14:26,319 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 17:14:26,319 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 17:14:26,329 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 17:14:26,339 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 17:14:26,339 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 17:14:58,314 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:14:58,314 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:14:58,314 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:14:58,314 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:14:58,324 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:14:58,324 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:14:58,324 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:14:58,324 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:14:58,324 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:14:58,324 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:14:58,324 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:14:58,324 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:14:58,324 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:14:58,344 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:14:58,344 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:14:58,344 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:14:58,344 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:14:58,344 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:14:58,344 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:14:58,344 - app.annotation - ERROR - Этап transcription завершился с ошибкой: fail
+2025-07-28 17:14:58,344 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:14:58,344 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:14:58,344 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:14:58,344 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:14:58,344 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:14:58,344 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:14:58,344 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:14:58,374 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 17:14:58,384 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 17:14:58,394 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 17:14:58,414 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 17:14:58,414 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/c895f3fe-8f2f-442f-9ca0-31ed69c8c9eb "HTTP/1.1 200 OK"
+2025-07-28 17:14:58,434 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:14:58,444 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 200 OK"
+2025-07-28 17:14:58,454 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:14:58,464 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 17:14:58,474 - app.queue.manager - INFO - QueueManager started
+2025-07-28 17:14:58,674 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:14:58,674 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:14:58,674 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:14:58,674 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:14:58,674 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:14:58,684 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:14:58,684 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 17:14:58,684 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:14:58,684 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:14:58,684 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:14:58,694 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:14:58,694 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:14:58,694 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 17:14:58,704 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:14:58,704 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:14:58,704 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:15:00,094 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 17:15:00,094 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 17:15:00,114 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 17:15:00,154 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 17:15:00,164 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 17:15:00,164 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 17:15:00,184 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 17:15:00,204 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 17:18:06,467 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:18:06,467 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:18:06,467 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:18:06,467 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:18:06,467 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:18:06,467 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:18:06,467 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:18:06,467 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:18:06,467 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:18:06,467 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:18:06,467 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:18:06,467 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:18:06,467 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:18:06,487 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:18:06,487 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:18:06,487 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:18:06,487 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:18:06,487 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:18:06,487 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:18:06,487 - app.annotation - ERROR - Этап transcription завершился с ошибкой: fail
+2025-07-28 17:18:06,487 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:18:06,487 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:18:06,487 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:18:06,487 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:18:06,487 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:18:06,487 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:18:06,487 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:18:06,527 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 17:18:06,537 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 17:18:06,547 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 17:18:06,567 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 17:18:06,577 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/907dd96f-9630-41d6-b6e8-8b6d5484997d "HTTP/1.1 200 OK"
+2025-07-28 17:18:06,587 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:18:06,597 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 200 OK"
+2025-07-28 17:18:06,617 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:18:06,627 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 17:18:06,657 - app.queue.manager - INFO - QueueManager started
+2025-07-28 17:18:06,857 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:18:06,857 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:18:06,857 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:18:06,857 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:18:06,857 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:18:06,857 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:18:06,857 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 17:18:06,867 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:18:06,867 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:18:06,867 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:18:06,877 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:18:06,877 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:18:06,877 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 17:18:06,887 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:18:06,887 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:18:06,887 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:18:08,277 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 17:18:08,277 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 17:18:08,287 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 17:18:08,347 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 17:18:08,357 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 17:18:08,367 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 17:18:08,377 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 17:18:08,377 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 17:18:40,638 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:18:40,638 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:18:40,638 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:18:40,638 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:18:40,638 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:18:40,638 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:18:40,638 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:18:40,638 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:18:40,638 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:18:40,638 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:18:40,638 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:18:40,638 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:18:40,638 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:18:40,658 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:18:40,658 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:18:40,658 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:18:40,658 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:18:40,658 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:18:40,658 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:18:40,658 - app.annotation - ERROR - Этап transcription завершился с ошибкой: fail
+2025-07-28 17:18:40,658 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:18:40,658 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:18:40,658 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:18:40,658 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:18:40,658 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:18:40,658 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:18:40,658 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:18:40,688 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 17:18:40,698 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 17:18:40,718 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 17:18:40,728 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 17:18:40,738 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/16c7f6b6-f6f9-41c4-847b-d094788bb978 "HTTP/1.1 200 OK"
+2025-07-28 17:18:40,748 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:18:40,758 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 200 OK"
+2025-07-28 17:18:40,768 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:18:40,778 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 17:18:40,798 - app.queue.manager - INFO - QueueManager started
+2025-07-28 17:18:40,988 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:18:40,988 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:18:40,988 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:18:40,988 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:18:40,988 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:18:40,998 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:18:40,998 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 17:18:40,998 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:18:40,998 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:18:40,998 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:18:41,008 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:18:41,008 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:18:41,008 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 17:18:41,018 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:18:41,018 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:18:41,018 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:18:42,398 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 17:18:42,398 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 17:18:42,408 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 17:18:42,468 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 17:18:42,478 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 17:18:42,478 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 17:18:42,488 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 17:18:42,498 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 17:23:33,225 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:23:33,225 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:23:33,225 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:23:33,225 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:23:33,225 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:23:33,225 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:23:33,225 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:23:33,225 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:23:33,225 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:23:33,225 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:23:33,225 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:23:33,225 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:23:33,225 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:23:33,245 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:23:33,245 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:23:33,245 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:23:33,245 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:23:33,245 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:23:33,245 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:23:33,245 - app.annotation - ERROR - Этап transcription завершился с ошибкой: fail
+2025-07-28 17:23:33,245 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:23:33,245 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:23:33,255 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:23:33,255 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:23:33,255 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:23:33,255 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:23:33,255 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:23:33,285 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 17:23:33,295 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 17:23:33,315 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 17:23:33,335 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 17:23:33,345 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/dc81d9f1-e5e4-49f4-81d1-a08116694458 "HTTP/1.1 200 OK"
+2025-07-28 17:23:33,355 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:23:33,375 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 200 OK"
+2025-07-28 17:23:33,385 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:23:33,395 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 17:23:33,425 - app.queue.manager - INFO - QueueManager started
+2025-07-28 17:23:33,535 - app.queue.manager - INFO - QueueManager stopped
+2025-07-28 17:23:33,585 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:23:33,595 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:23:33,595 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:23:33,595 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:23:33,595 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:23:33,595 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:23:33,595 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 17:23:33,605 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:23:33,605 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:23:33,605 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:23:33,615 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:23:33,615 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:23:33,615 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 17:23:33,615 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:23:33,625 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:23:33,625 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:23:35,075 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 17:23:35,075 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 17:23:35,095 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 17:23:35,135 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 17:23:35,145 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 17:23:35,145 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 17:23:35,155 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 17:23:35,155 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 17:24:12,618 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:24:12,618 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:24:12,618 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:24:12,618 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:24:12,618 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:24:12,618 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:24:12,618 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:24:12,618 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:24:12,618 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:24:12,618 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:24:12,618 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:24:12,628 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:24:12,628 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:24:12,638 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:24:12,648 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:24:12,648 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:24:12,648 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:24:12,648 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:24:12,648 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:24:12,648 - app.annotation - ERROR - Этап transcription завершился с ошибкой: fail
+2025-07-28 17:24:12,648 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:24:12,648 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:24:12,648 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:24:12,648 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:24:12,648 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:24:12,648 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:24:12,648 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:24:12,678 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 17:24:12,688 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 17:24:12,698 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 17:24:12,718 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 17:24:12,728 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/378945bd-1a8a-4c0c-9663-8b96bef7c098 "HTTP/1.1 200 OK"
+2025-07-28 17:24:12,738 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:24:12,748 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 200 OK"
+2025-07-28 17:24:12,758 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:24:12,768 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 17:24:12,788 - app.queue.manager - INFO - QueueManager started
+2025-07-28 17:24:12,898 - app.queue.manager - INFO - QueueManager stopped
+2025-07-28 17:24:12,948 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:24:12,948 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:24:12,948 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:24:12,948 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:24:12,948 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:24:12,948 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:24:12,948 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 17:24:12,958 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:24:12,958 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:24:12,958 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:24:12,958 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:24:12,968 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:24:12,968 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 17:24:12,968 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:24:12,968 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:24:12,968 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:24:14,448 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 17:24:14,448 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 17:24:14,458 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 17:24:14,498 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 17:24:14,508 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 17:24:14,508 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 17:24:14,518 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 17:24:14,518 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 17:28:35,224 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:28:35,224 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:28:35,224 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:28:35,224 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:28:35,224 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:28:35,224 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:28:35,224 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:28:35,224 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:28:35,224 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:28:35,234 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:28:35,234 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:28:35,234 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:28:35,234 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:28:35,254 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:28:35,254 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:28:35,254 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:28:35,254 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:28:35,254 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:28:35,254 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:28:35,254 - app.annotation - ERROR - Этап transcription завершился с ошибкой: fail
+2025-07-28 17:28:35,254 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:28:35,254 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:28:35,254 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:28:35,254 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:28:35,254 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:28:35,254 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:28:35,254 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:28:35,274 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 22%: diarization midway
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 50%: transcription midway
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 75%: recognition midway
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 87%: carddav midway
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:28:35,274 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:28:35,324 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 17:28:35,334 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 17:28:35,354 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 17:28:35,374 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 17:28:35,384 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/8d93f667-7cc9-43a6-b70e-5caccda6527e "HTTP/1.1 200 OK"
+2025-07-28 17:28:35,394 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:28:35,424 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 200 OK"
+2025-07-28 17:28:35,434 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:28:35,444 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 17:28:35,487 - app.queue.manager - INFO - QueueManager started
+2025-07-28 17:28:35,591 - app.queue.manager - INFO - QueueManager stopped
+2025-07-28 17:28:35,601 - app.queue.manager - INFO - QueueManager started
+2025-07-28 17:28:35,711 - app.queue.manager - INFO - QueueManager stopped
+2025-07-28 17:28:35,780 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:28:35,780 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:28:35,780 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:28:35,780 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:28:35,780 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:28:35,780 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:28:35,780 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 17:28:35,790 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:28:35,790 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:28:35,790 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:28:35,800 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:28:35,800 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:28:35,800 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 17:28:35,810 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:28:35,810 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:28:35,810 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:28:37,378 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 17:28:37,378 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 17:28:37,388 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 17:28:37,438 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 17:28:37,438 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 17:28:37,438 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 17:28:37,468 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 17:28:37,488 - WebSocketManager - INFO - WS client cid2 disconnected
+2025-07-28 17:29:13,393 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:29:13,393 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:29:13,393 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:29:13,396 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:29:13,396 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:29:13,396 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:29:13,396 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:29:13,396 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:29:13,396 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:29:13,396 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:29:13,396 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:29:13,396 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:29:13,396 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:29:13,412 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:29:13,412 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:29:13,412 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:29:13,420 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:29:13,420 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:29:13,420 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:29:13,420 - app.annotation - ERROR - Этап transcription завершился с ошибкой: fail
+2025-07-28 17:29:13,420 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:29:13,420 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:29:13,420 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:29:13,420 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:29:13,420 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:29:13,420 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:29:13,420 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:29:13,438 - app.annotation - INFO - AnnotationService инициализирован с новой архитектурой этапов
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 0%: Начало обработки аудио
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 5%: Метаданные аудио извлечены
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 10%: Начало этапа diarization
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 22%: diarization midway
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 35%: Этап diarization завершен
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 35%: Начало этапа transcription
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 50%: transcription midway
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 65%: Этап transcription завершен
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 65%: Начало этапа recognition
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 75%: recognition midway
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 85%: Этап recognition завершен
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 85%: Начало этапа carddav
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 87%: carddav midway
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 90%: Этап carddav завершен
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 95%: Сборка финального результата
+2025-07-28 17:29:13,438 - app.annotation - INFO - Прогресс 100%: Аннотация завершена
+2025-07-28 17:29:13,477 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/health "HTTP/1.1 200 OK"
+2025-07-28 17:29:13,487 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/info "HTTP/1.1 200 OK"
+2025-07-28 17:29:13,497 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 404 Not Found"
+2025-07-28 17:29:13,507 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/jobs "HTTP/1.1 201 Created"
+2025-07-28 17:29:13,517 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/972778b4-7a6c-454f-9943-0b8ac59282e0 "HTTP/1.1 200 OK"
+2025-07-28 17:29:13,527 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:29:13,537 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/jobs/test-job/result "HTTP/1.1 200 OK"
+2025-07-28 17:29:13,556 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/unknown "HTTP/1.1 404 Not Found"
+2025-07-28 17:29:13,563 - httpx - INFO - HTTP Request: DELETE http://testserver/api/v1/jobs/test-job "HTTP/1.1 404 Not Found"
+2025-07-28 17:29:13,580 - app.queue.manager - INFO - QueueManager started
+2025-07-28 17:29:13,697 - app.queue.manager - INFO - QueueManager stopped
+2025-07-28 17:29:13,707 - app.queue.manager - INFO - QueueManager started
+2025-07-28 17:29:13,817 - app.queue.manager - INFO - QueueManager stopped
+2025-07-28 17:29:13,880 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:29:13,880 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:29:13,880 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:29:13,880 - app.models_registry - INFO - Загрузка модели: test
+2025-07-28 17:29:13,880 - app.models_registry - INFO - Модель test загружена успешно
+2025-07-28 17:29:13,880 - app.models_registry - INFO - Модель test выгружена
+2025-07-28 17:29:13,880 - app.models_registry - INFO - Все модели выгружены
+2025-07-28 17:29:13,888 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:29:13,888 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:29:13,888 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:29:13,896 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:29:13,896 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:29:13,896 - app.stages.base.DummyStage - ERROR - Ошибка в этапе dummy: fail
+Traceback (most recent call last):
+  File "C:\CallAnnotate\CallAnnotate\src\app\stages\base.py", line 91, in process
+    payload = await self._process_impl(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\CallAnnotate\CallAnnotate\tests\test_stages_base.py", line 19, in _process_impl
+    raise RuntimeError("fail")
+RuntimeError: fail
+2025-07-28 17:29:13,904 - app.stages.base.DummyStage - INFO - Инициализация этапа dummy
+2025-07-28 17:29:13,904 - app.stages.base.DummyStage - INFO - Начало обработки этапа dummy для задачи tid
+2025-07-28 17:29:13,904 - app.stages.base.DummyStage - INFO - Этап dummy завершен для задачи tid за 0.00с
+2025-07-28 17:29:15,374 - WebSocketManager - INFO - WS client test_client connected
+2025-07-28 17:29:15,374 - WebSocketManager - INFO - WS client test_client disconnected
+2025-07-28 17:29:15,384 - WebSocketManager - INFO - WS client wsid connected
+2025-07-28 17:29:15,424 - WebSocketManager - INFO - WS client wsid disconnected
+2025-07-28 17:29:15,435 - WebSocketManager - INFO - WS client cid connected
+2025-07-28 17:29:15,435 - WebSocketManager - INFO - WS client cid disconnected
+2025-07-28 17:29:15,446 - WebSocketManager - INFO - WS client cid2 connected
+2025-07-28 17:29:15,446 - WebSocketManager - INFO - WS client cid2 disconnected

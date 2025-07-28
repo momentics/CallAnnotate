@@ -153,7 +153,13 @@ def format_duration(seconds: Union[int, float]) -> str:
 def setup_logging(cfg: Dict[str, Any]):
     """
     Настройка логирования через dictConfig.
+    Создаёт каталоги для файловых хендлеров перед применением конфигурации.
     """
+    # Ensure log file directory exists
+    log_file = cfg.get("file")
+    if log_file:
+        Path(log_file).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
+
     handlers = ["console"]
     cfg_dict = {
         "version": 1,
@@ -171,12 +177,12 @@ def setup_logging(cfg: Dict[str, Any]):
             "handlers": handlers
         }
     }
-    if cfg.get("file"):
+    if log_file:
         cfg_dict["handlers"]["file"] = {
             "class": "logging.FileHandler",
             "formatter": "default",
             "level": cfg.get("level", "INFO").upper(),
-            "filename": cfg.get("file")
+            "filename": log_file
         }
         cfg_dict["root"]["handlers"].append("file")
     logging.config.dictConfig(cfg_dict)
@@ -212,3 +218,12 @@ def create_task_metadata(
     if websocket_client_id:
         meta["websocket_client_id"] = websocket_client_id
     return meta
+
+
+def get_human_readable_size(num: int) -> str:
+    """Возвращает размер в удобочитаемом формате (KB/MB/GB)"""
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if num < 1024.0:
+            return f"{num:3.1f}{unit}"
+        num /= 1024.0
+    return f"{num:.1f}PB"

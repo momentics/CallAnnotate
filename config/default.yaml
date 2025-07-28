@@ -1,43 +1,125 @@
-# Конфигурация CallAnnotate
-# Автор: akoodoy@capilot.ru
-# Ссылка: https://github.com/momentics/CallAnnotate
-# Лицензия: Apache-2.0
+# config/default.yaml
+# Основные настройки сервиса CallAnnotate.
+# Значения по умолчанию синхронизированы с Pydantic-моделями в src/app/config.py.
 
+# Секция сервера
 server:
-  host: "0.0.0.0"
-  port: 8000
-  reload: false
-  workers: 1
-  version: "1.0.0"
+  # Адрес и порт, на которых слушает FastAPI/uvicorn
+  host: "0.0.0.0"         # SERVER_HOST
+  port: 8000              # SERVER_PORT
+  workers: 1              # SERVER_WORKERS
+  reload: false           # SERVER_RELOAD
+  log_level: "info"       # SERVER_LOG_LEVEL
+  version: "1.1.0"        # SERVER_VERSION
 
-cors:
-  origins: ["*"]
-  allow_methods: ["*"]
-  allow_headers: ["*"]
-  allow_credentials: true
-
+# Секция очереди задач
 queue:
-  volume_path: "./volume"
-  max_concurrent_tasks: 2
-  max_queue_size: 100
-  task_timeout: 3600
-  cleanup_interval: 300
+  # Путь к каталогу volume (incoming/processing/completed/failed)
+  volume_path: "./volume"    # QUEUE_VOLUME_PATH
+  max_concurrent_tasks: 2    # QUEUE_MAX_CONCURRENT_TASKS
+  max_queue_size: 100        # QUEUE_MAX_QUEUE_SIZE
+  task_timeout: 3600         # QUEUE_TASK_TIMEOUT (сек)
+  cleanup_interval: 300      # QUEUE_CLEANUP_INTERVAL (сек)
 
-logging:
-  level: INFO
-  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-  file: "./volume/logs/app.log"
-
+# Секция файлов
 files:
-  max_size: 524288000
-  allowed_formats: ["wav","mp3","ogg","flac","aac","m4a","mp4"]
+  # Максимальный размер загружаемого файла (в байтах)
+  max_size: 524288000        # FILES_MAX_SIZE (500 MB)
+  # Разрешённые расширения
+  allowed_formats:
+    - "wav"
+    - "mp3"
+    - "ogg"
+    - "flac"
+    - "aac"
+    - "m4a"
+    - "mp4"
+  temp_cleanup_hours: 24     # FILES_TEMP_CLEANUP_HOURS
 
+# Секция логирования
+logging:
+  # Уровень логирования для корневого логгера
+  level: "INFO"              # LOGGING_LEVEL
+  # Формат выводимых сообщений
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"  # LOGGING_FORMAT
+  # Путь к файлу логов (если не задан, логируется только в консоль)
+  file: "./volume/logs/system/app.log"  # LOGGING_FILE
+  # Уровни логирования для внешних библиотек
+  external_levels:
+    uvicorn: "INFO"
+    fastapi: "INFO"
+    asyncio: "WARNING"
+
+# CORS (Cross-Origin Resource Sharing)
+cors:
+  origins:
+    - "*"                     # CORS_ORIGINS
+  allow_credentials: true     # CORS_ALLOW_CREDENTIALS
+  allow_methods:
+    - "*"                     # CORS_ALLOW_METHODS
+  allow_headers:
+    - "*"                     # CORS_ALLOW_HEADERS
+
+# HTTP API
+api:
+  # Базовый префикс для всех REST-эндпоинтов
+  base_path: "/api/v1"        # API_BASE_PATH
+
+# Этап диаризации (pyannote.audio)
+diarization:
+  model: "pyannote/speaker-diarization-3.1"  # DIARIZATION_MODEL
+  use_auth_token: null                      # DIARIZATION_USE_AUTH_TOKEN
+  device: "cpu"                             # DIARIZATION_DEVICE
+  batch_size: 32                            # DIARIZATION_BATCH_SIZE
+
+# Этап транскрипции (OpenAI Whisper)
+transcription:
+  model: "openai/whisper-base"  # TRANSCRIPTION_MODEL
+  device: "cpu"                 # TRANSCRIPTION_DEVICE
+  language: "ru"                # TRANSCRIPTION_LANGUAGE ("auto" для автоопределения)
+  batch_size: 16                # TRANSCRIPTION_BATCH_SIZE
+  task: "transcribe"            # TRANSCRIPTION_TASK ("translate" для перевода)
+
+# Этап распознавания (SpeechBrain + FAISS)
+recognition:
+  model: "speechbrain/spkrec-ecapa-voxceleb"  # RECOGNITION_MODEL
+  device: "cpu"                              # RECOGNITION_DEVICE
+  threshold: 0.7                             # RECOGNITION_THRESHOLD
+  embeddings_path: null                      # RECOGNITION_EMBEDDINGS_PATH
+  index_path: null                           # RECOGNITION_INDEX_PATH
+
+# Этап CardDAV (связывание контактов)
+carddav:
+  enabled: true        # CARDDAV_ENABLED
+  url: null            # CARDDAV_URL
+  username: null       # CARDDAV_USERNAME
+  password: null       # CARDDAV_PASSWORD
+  timeout: 30          # CARDDAV_TIMEOUT (сек)
+  verify_ssl: true     # CARDDAV_VERIFY_SSL
+
+# Информация о голосах (список пуст по умолчанию)
+voices: []
+
+# Настройки уведомлений
+notifications:
+  webhooks:
+    enabled: true
+    timeout: 30
+    retry_count: 3
+    retry_delay: 5
+  websocket:
+    ping_interval: 30
+    ping_timeout: 10
+    close_timeout: 10
+
+# Параметры производительности
 performance:
-  temp_dir: "./volume/temp"
   cpu_cores: 4
   memory_limit: "3GB"
+  temp_dir: "/tmp/callannotate"
   parallel_processing: true
 
+# Безопасность и лимитирование
 security:
   api_key_required: false
   rate_limiting:
@@ -47,11 +129,13 @@ security:
     virus_scan: false
     content_validation: true
 
+# Мониторинг и метрики
 monitoring:
   metrics_enabled: true
   health_check_interval: 60
   performance_logging: true
 
+# Фичи сервиса
 features:
   real_time_processing: true
   batch_processing: true
