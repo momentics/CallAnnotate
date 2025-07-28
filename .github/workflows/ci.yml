@@ -37,6 +37,8 @@ jobs:
           # Клонируем репозиторий RNNoise
           git clone https://gitlab.xiph.org/xiph/rnnoise.git /tmp/rnnoise
           cd /tmp/rnnoise
+          # Включаем все SIMD-расширения для текущей платформы
+          export CFLAGS="-march=native -O3"
           ./autogen.sh
           ./configure
           make
