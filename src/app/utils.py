@@ -150,43 +150,6 @@ def format_duration(seconds: Union[int, float]) -> str:
     return " ".join(parts)
 
 
-def setup_logging(cfg: Dict[str, Any]):
-    """
-    Настройка логирования через dictConfig.
-    Создаёт каталоги для файловых хендлеров перед применением конфигурации.
-    """
-    # Ensure log file directory exists
-    log_file = cfg.get("file")
-    if log_file:
-        Path(log_file).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
-
-    handlers = ["console"]
-    cfg_dict = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {"default": {"format": cfg.get("format")}},
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "formatter": "default",
-                "level": cfg.get("level", "INFO").upper()
-            }
-        },
-        "root": {
-            "level": cfg.get("level", "INFO").upper(),
-            "handlers": handlers
-        }
-    }
-    if log_file:
-        cfg_dict["handlers"]["file"] = {
-            "class": "logging.FileHandler",
-            "formatter": "default",
-            "level": cfg.get("level", "INFO").upper(),
-            "filename": log_file
-        }
-        cfg_dict["root"]["handlers"].append("file")
-    logging.config.dictConfig(cfg_dict)
-
 
 def create_task_metadata(
     task_id: str,
@@ -227,3 +190,86 @@ def get_human_readable_size(num: int) -> str:
             return f"{num:3.1f}{unit}"
         num /= 1024.0
     return f"{num:.1f}PB"
+
+
+
+def setup_logging(cfg: Dict[str, Any]):
+    """
+    Настройка логирования через dictConfig.
+    Создаёт каталоги для файловых хендлеров перед применением конфигурации.
+    """
+    log_file = cfg.get("file")
+    if log_file:
+        # Создать папку для файла логов
+        Path(log_file).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
+
+    handlers = ["console"]
+    cfg_dict = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {"default": {"format": cfg.get("format")}},
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "formatter": "default",
+                "level": cfg.get("level", "INFO").upper()
+            }
+        },
+        "root": {
+            "level": cfg.get("level", "INFO").upper(),
+            "handlers": handlers
+        }
+    }
+    if log_file:
+        cfg_dict["handlers"]["file"] = {
+            "class": "logging.FileHandler",
+            "formatter": "default",
+            "level": cfg.get("level", "INFO").upper(),
+            "filename": log_file
+        }
+        cfg_dict["root"]["handlers"].append("file")
+
+    logging.config.dictConfig(cfg_dict)
+
+
+def ensure_volume_structure(volume_path: str) -> None:
+    """
+    Создаёт полную структуру каталогов volume для CallAnnotate.
+
+    Структура:
+      volume/
+        incoming/
+        processing/
+        completed/
+        failed/
+        logs/
+          system/
+          tasks/
+        models/
+          embeddings/
+        temp/
+    """
+    logger = logging.getLogger(__name__)
+    base = Path(volume_path).expanduser().resolve()
+    subdirs = [
+        "incoming",
+        "processing",
+        "completed",
+        "failed",
+        "logs/system",
+        "logs/tasks",
+        "models/embeddings",
+        "temp",
+    ]
+
+    try:
+        base.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Volume base directory ensured: {base}")
+        for sub in subdirs:
+            path = base / sub
+            path.mkdir(parents=True, exist_ok=True)
+            logger.debug(f"Created subdirectory: {path}")
+        logger.info(f"Volume structure created at {base}")
+    except Exception as e:
+        logger.error(f"Error creating volume structure at {base}: {e}")
+        raise

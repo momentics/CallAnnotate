@@ -8,6 +8,8 @@ from typing import Dict, Optional, Any
 
 from ..core.interfaces.queue import QueueService
 from ..annotation import AnnotationService
+from ..utils import ensure_volume_structure
+
 
 class TaskStatus(str):
     QUEUED = "queued"
@@ -31,19 +33,35 @@ class TaskResult:
         self.metadata = metadata
         self.subscribers: set[str] = set()
 
+# src/app/queue/manager.py
+
 class AsyncQueueManager(QueueService):
     def __init__(self, cfg: Dict[str, Any]):
         qcfg = cfg["queue"]
-        self.volume = Path(qcfg["volume_path"]).resolve()
-        self.incoming = self.volume / "incoming"; self.processing = self.volume / "processing"
-        self.completed = self.volume / "completed"; self.failed = self.volume / "failed"
-        for p in (self.incoming,self.processing,self.completed,self.failed):
-            p.mkdir(parents=True, exist_ok=True)
-        self.max_queue = qcfg["max_queue_size"]; self.max_concurrent = qcfg["max_concurrent_tasks"]
-        self.timeout = qcfg["task_timeout"]; self.cleanup_interval = qcfg["cleanup_interval"]
-        self._queue = asyncio.Queue(self.max_queue); self._tasks: Dict[str,TaskResult] = {}
-        self._lock = asyncio.Lock(); self._workers: list[asyncio.Task] = []; self._running = asyncio.Event()
-        self._logger = logging.getLogger(__name__); self._cfg = cfg
+        self.volume = Path(qcfg["volume_path"]).expanduser().resolve()
+
+        # Обеспечить создание всей структуры volume сразу
+        ensure_volume_structure(str(self.volume))
+
+        self.incoming   = self.volume / "incoming"
+        self.processing = self.volume / "processing"
+        self.completed  = self.volume / "completed"
+        self.failed     = self.volume / "failed"
+
+        self.max_queue      = qcfg["max_queue_size"]
+        self.max_concurrent = qcfg["max_concurrent_tasks"]
+        self.timeout        = qcfg["task_timeout"]
+        self.cleanup_interval = qcfg["cleanup_interval"]
+
+        self._queue = asyncio.Queue(self.max_queue)
+        self._tasks = {}
+        self._lock = asyncio.Lock()
+        self._workers = []
+        self._running = asyncio.Event()
+        self._logger = logging.getLogger(__name__)
+        self._cfg = cfg
+
+        self._logger.info(f"AsyncQueueManager initialized with volume: {self.volume}")
 
     async def add_task(self, job_id: str, metadata: Dict[str, Any]) -> bool:
         async with self._lock:

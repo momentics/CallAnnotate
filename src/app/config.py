@@ -88,7 +88,7 @@ class QueueConfig(BaseSettings):
     task_timeout: int = Field(3600, gt=0, description="Таймаут задачи в секундах")
     cleanup_interval: int = Field(300, gt=0, description="Интервал очистки в секундах")
     volume_path: str = Field("./volume", description="Путь к volume")
-    
+
     class Config:
         env_prefix = "QUEUE_"
 

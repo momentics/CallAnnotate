@@ -4,19 +4,44 @@ import sys
 import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock
+from pathlib import Path
 from fastapi.testclient import TestClient
 from app.app import app
 import app.api.deps as deps
 
-# Включаем src в PYTHONPATH
+# Добавляем src в PYTHONPATH
 sys.path.insert(
     0,
     os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")),
 )
 
 @pytest.fixture(scope="session", autouse=True)
+def setup_test_environment():
+    """
+    Настройка тестового окружения:
+    - Определяем тестовую директорию volume через VOLUME_PATH
+    - Создаём полную структуру папок для тестов
+    """
+    from app.utils import ensure_volume_structure
+
+    test_volume = Path(__file__).parent / "test_volume"
+    os.environ["VOLUME_PATH"] = str(test_volume)
+
+    # Обеспечиваем создание структуры volume
+    ensure_volume_structure(str(test_volume))
+
+    yield test_volume
+
+    # Очистка после тестов
+    import shutil
+    shutil.rmtree(test_volume, ignore_errors=True)
+
+@pytest.fixture(scope="session", autouse=True)
 def mock_queue_and_annotation():
-    # Заготовленный mock-результат для test-job
+    """
+    Мок для AsyncQueueManager и AnnotationService
+    """
+    # Подготовка mock-задачи для job_id "test-job"
     mock_task = MagicMock()
     mock_task.task_id = "test-job"
     mock_task.status = "completed"
@@ -26,10 +51,14 @@ def mock_queue_and_annotation():
     mock_task.created_at = "2025-07-27T00:00:00Z"
     mock_task.updated_at = "2025-07-27T00:01:00Z"
 
-    # Внутреннее хранилище задач
     jobs = {}
 
     async def add_task(job_id, metadata):
+        # Для каждого нового задания убеждаемся в структуре volume
+        from app.utils import ensure_volume_structure
+        volume_path = os.getenv("VOLUME_PATH", "./volume")
+        ensure_volume_structure(volume_path)
+
         tr = AsyncMock()
         tr.task_id = job_id
         tr.status = "processing"
@@ -60,11 +89,15 @@ def mock_queue_and_annotation():
     mock_q.start.return_value = None
     mock_q.stop.return_value = None
 
-    # Подменяем singleton-очередь в модуле deps
+    # Заменяем singleton-очередь
     deps._queue = mock_q
-
     return mock_q
 
 @pytest.fixture
-def client(mock_queue_and_annotation):
-    return TestClient(app)
+def client(mock_queue_and_annotation, setup_test_environment):
+    """
+    Тестовый клиент FastAPI.
+    Запуск TestClient в контекстном менеджере для выполнения событий startup.
+    """
+    with TestClient(app) as c:
+        yield c
