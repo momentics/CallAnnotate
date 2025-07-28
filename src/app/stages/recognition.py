@@ -19,7 +19,7 @@ try:
 except ImportError:
     faiss = None
 
-from speechbrain.inference.classifiers import EncoderClassifier
+from speechbrain.inference import EncoderClassifier
 
 from .base import BaseStage
 
