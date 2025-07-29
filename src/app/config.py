@@ -67,7 +67,6 @@ class TranscriptionConfig(BaseSettings):
         env_prefix = "TRANSCRIPTION_"
 
 
-
 class CardDAVConfig(BaseSettings):
     """Конфигурация CardDAV"""
     enabled: bool = Field(True, description="Включить CardDAV")
@@ -225,11 +224,65 @@ class FeaturesConfig(BaseModel):
 
 class PreprocessingConfig(BaseSettings):
     """Конфигурация этапа предобработки (preprocess)"""
-    model: str = Field("DeepFilterNet2", description="Имя модели DeepFilterNet2")
-    device: str = Field("cpu", description="Устройство для вычислений")
-    chunk_duration: float = Field(2.0, gt=0, description="Длительность кадра (в секундах)")
-    overlap: float = Field(0.5, ge=0, description="Перекрытие между чанками (в секундах)")
-    target_rms: float = Field(-20.0, description="Целевой RMS уровень (дБFS)")
+    # === Основные параметры обработки ===
+    model: str = Field("DeepFilterNet2", description="Модель для улучшения речи (DeepFilterNet2)")
+    device: str = Field("cpu", description="Устройство вычислений (cpu/cuda)")
+    chunk_duration: float = Field(2.0, gt=0, description="Длительность чанка в секундах")
+    overlap: float = Field(0.5, ge=0, description="Перекрытие между чанками в секундах")
+    target_rms: float = Field(-20.0, description="Целевой RMS уровень в дБFS")
+    
+    # === Конфигурация SoX (системный аудиопроцессор) ===
+    sox_enabled: bool = Field(True, description="Включить предварительную обработку SoX")
+    sox_noise_profile_duration: float = Field(2.0, gt=0, description="Длительность для создания профиля шума (сек)")
+    sox_noise_reduction: float = Field(0.3, ge=0.0, le=1.0, description="Коэффициент подавления шума (0.0-1.0)")
+    sox_gain_normalization: bool = Field(True, description="Применять автоматическую нормализацию усиления")
+    
+    # === Конфигурация RNNoise (нейронное шумоподавление) ===
+    rnnoise_enabled: bool = Field(True, description="Включить RNNoise шумоподавление")
+    rnnoise_sample_rate: int = Field(48000, description="Частота дискретизации для RNNoise (только 48kHz)")
+    
+    # === Конфигурация DeepFilterNet (улучшение речи) ===
+    deepfilter_enabled: bool = Field(True, description="Включить DeepFilterNet обработку")
+    
+    # === Параметры выходных файлов ===
+    output_suffix: str = Field("_processed", description="Суффикс для обработанного файла")
+    audio_format: str = Field("wav", description="Формат выходного аудио (wav/flac/ogg)")
+    bit_depth: int = Field(16, gt=0, description="Глубина битов PCM (16/24/32)")
+    channels: str = Field("mono", description="Количество каналов (mono/stereo/original)")
+    sample_rate_target: Optional[int] = Field(None, description="Целевая частота дискретизации (null = сохранить исходную)")
+    
+    # === Параметры обработки ===
+    chunk_overlap_method: str = Field("linear", description="Метод склеивания чанков (linear/windowed)")
+    processing_threads: int = Field(1, gt=0, description="Количество потоков для параллельной обработки")
+    memory_limit_mb: int = Field(1024, gt=0, description="Лимит использования памяти в МБ")
+    
+    # === Служебные параметры ===
+    temp_cleanup: bool = Field(True, description="Автоматическая очистка временных файлов")
+    preserve_original: bool = Field(True, description="Сохранять оригинальный файл")
+    debug_mode: bool = Field(False, description="Режим отладки с дополнительным логированием")
+    save_intermediate: bool = Field(False, description="Сохранять промежуточные результаты")
+    progress_interval: int = Field(10, gt=0, le=100, description="Интервал отчета о прогрессе (%)")
+
+    @field_validator("audio_format")
+    def validate_audio_format(cls, v):
+        allowed_formats = ["wav", "flac", "ogg", "mp3"]
+        if v not in allowed_formats:
+            raise ValueError(f"Формат {v} не поддерживается. Доступные: {allowed_formats}")
+        return v
+
+    @field_validator("channels")
+    def validate_channels(cls, v):
+        allowed_channels = ["mono", "stereo", "original"]
+        if v not in allowed_channels:
+            raise ValueError(f"Режим каналов {v} не поддерживается. Доступные: {allowed_channels}")
+        return v
+
+    @field_validator("chunk_overlap_method")
+    def validate_overlap_method(cls, v):
+        allowed_methods = ["linear", "windowed"]
+        if v not in allowed_methods:
+            raise ValueError(f"Метод склеивания {v} не поддерживается. Доступные: {allowed_methods}")
+        return v
 
     class Config:
         env_prefix = "PREPROCESS_"

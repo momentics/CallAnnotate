@@ -55,15 +55,46 @@ cors:
 api:
   base_path: "/api/v1"
 
-
-# cекция preprocess
+# Конфигурация этапа предобработки аудио (PreprocessingStage)
 preprocess:
-  model: "DeepFilterNet2"       # имя модели для предобработки
-  device: "cpu"                 # устройство для вычислений
-  chunk_duration: 2.0           # продолжительность чанка в секундах
-  overlap: 0.5                  # доля перекрытия между чанками (в секундах)
-  target_rms: -20.0             # целевой уровень RMS в дБFS
-
+  # === Основные параметры обработки ===
+  model: "DeepFilterNet2"              # Модель для улучшения речи (DeepFilterNet2)
+  device: "cpu"                        # Устройство вычислений (cpu/cuda)
+  chunk_duration: 2.0                  # Длительность чанка в секундах
+  overlap: 0.5                         # Перекрытие между чанками в секундах
+  target_rms: -20.0                    # Целевой RMS уровень в дБFS
+  
+  # === Конфигурация SoX (системный аудиопроцессор) ===
+  sox_enabled: true                    # Включить предварительную обработку SoX
+  sox_noise_profile_duration: 2.0     # Длительность для создания профиля шума (сек)
+  sox_noise_reduction: 0.3            # Коэффициент подавления шума (0.0-1.0)
+  sox_gain_normalization: true        # Применять автоматическую нормализацию усиления
+  
+  # === Конфигурация RNNoise (нейронное шумоподавление) ===
+  rnnoise_enabled: true               # Включить RNNoise шумоподавление
+  rnnoise_sample_rate: 48000          # Частота дискретизации для RNNoise (только 48kHz)
+  
+  # === Конфигурация DeepFilterNet (улучшение речи) ===
+  deepfilter_enabled: true            # Включить DeepFilterNet обработку
+  
+  # === Параметры выходных файлов ===
+  output_suffix: "_processed"         # Суффикс для обработанного файла
+  audio_format: "wav"                 # Формат выходного аудио (wav/flac/ogg)
+  bit_depth: 16                       # Глубина битов PCM (16/24/32)
+  channels: "mono"                    # Количество каналов (mono/stereo/original)
+  sample_rate_target: null            # Целевая частота дискретизации (null = сохранить исходную)
+  
+  # === Параметры обработки ===
+  chunk_overlap_method: "linear"      # Метод склеивания чанков (linear/windowed)
+  processing_threads: 1               # Количество потоков для параллельной обработки
+  memory_limit_mb: 1024              # Лимит использования памяти в МБ
+  
+  # === Служебные параметры ===
+  temp_cleanup: true                  # Автоматическая очистка временных файлов
+  preserve_original: true             # Сохранять оригинальный файл
+  debug_mode: false                   # Режим отладки с дополнительным логированием
+  save_intermediate: false            # Сохранять промежуточные результаты
+  progress_interval: 10               # Интервал отчета о прогрессе (%)
 
 # Этап диаризации (pyannote.audio)
 diarization:
