@@ -96,12 +96,17 @@ preprocess:
   save_intermediate: false            # Сохранять промежуточные результаты
   progress_interval: 10               # Интервал отчета о прогрессе (%)
 
-# Этап диаризации (pyannote.audio)
+# секция диаризации
 diarization:
-  model: "pyannote/speaker-diarization-3.1"  # DIARIZATION_MODEL
-  use_auth_token: null                      # DIARIZATION_USE_AUTH_TOKEN
-  device: "cpu"                             # DIARIZATION_DEVICE
-  batch_size: 32                            # DIARIZATION_BATCH_SIZE
+  model: "pyannote/speaker-diarization-3.1"
+  use_auth_token: null
+  device: "cpu"
+  batch_size: 32
+  # параметры скользящего окна
+  window_enabled: false   # включает режим windowed-diariazation
+  window_size: 30.0       # длина окна в секундах
+  hop_size: 10.0          # шаг окна в секундах
+
 
 # Этап транскрипции (OpenAI Whisper)
 transcription:
