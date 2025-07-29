@@ -12,6 +12,7 @@ docker-compose.override.yml
 
 # Environment
 .env
+.coverage
 
 volume/logs/system/*.log
 volume/logs/tasks/*.log

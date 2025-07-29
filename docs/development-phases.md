@@ -12,7 +12,7 @@ CallAnnotate — модульная система автоматической 
      - Реализовать FastAPI-эндпоинты `/health`, `/info`, `/jobs`  
      - Организовать файловую очередь: папки `incoming`, `processing`, `completed`, `failed`, `archived`  
      - Асинхронная фоновая обработка одного файла через `QueueManager`  
-     - Dockerfile + `docker-compose.yml`  
+     - Dockerfile + `docker-compose.ystages`  
      - Unit-тесты (coverage ≥ 80 %)  
      - CI (GitHub Actions)  
    - **Критерии готовности:** все тесты зелёные, файлы переходят по состояниям, `/health` и `/info` возвращают корректный JSON.
@@ -31,11 +31,11 @@ CallAnnotate — модульная система автоматической 
 
 ---
 
-## **Phase 3: Интерфейс ML-модулей и конфигурация**  
+## **Phase 3: Интерфейс stages модулей и конфигурация**  
    - **Задачи:**  
-     1. Создать пакет `src/ml`, абстрактный класс `MLProcessor` (методы `load_model()`, `process(input)`, `cleanup()`).  
-     2. Описать конфигурацию моделей в `config/models.yaml` (путь, параметры).  
-     3. Реализовать заглушки (mocks) для всех ML-модулей.  
+     1. Создать файл `src/app/stages/base.py`, абстрактный класс `BaseStage`.  
+     2. Описать конфигурацию моделей в `config/default.yaml` (путь, параметры).  
+     3. Реализовать заглушки (mocks) для всех stages-модулей.  
      4. Unit-тесты интерфейса (coverage ≥ 90 %).  
    - **Критерии готовности:** класс и конфиг работают, mocks возвращают предсказуемый результат, тесты зелёные.
 
@@ -43,7 +43,7 @@ CallAnnotate — модульная система автоматической 
 
 ## **Phase 4: Предобработка аудио**  
    - **Задачи:**  
-     1. `src/ml/preprocessing.py`: нормализация уровня громкости, удаление шума (например, через sox).  
+     1. `src/app/stages/preprocessing.py`: нормализация уровня громкости, удаление шума (например, через sox, улучшение речи).  
      2. Unit-тесты обработки на контрольных WAV-файлах.  
      3. Интеграция с `QueueManager`: вызвать preprocessing перед остальными этапами.  
    - **Критерии готовности:** предобработка применяет фильтры, тесты проверяют характеристики аудио.
@@ -52,7 +52,7 @@ CallAnnotate — модульная система автоматической 
 
 ## **Phase 5: Диаризация спикеров**  
    - **Задачи:**  
-     1. `src/ml/diarization.py`: интеграция библиотеки pyannote/speaker-diarization.  
+     1. `src/app/stages/diarization.py`: интеграция библиотеки pyannote/speaker-diarization.  
      2. Unit-тесты сегментации: проверка временных меток на небольших записях.  
      3. Интеграция в pipeline: preprocessing → diarization.  
    - **Критерии готовности:** сегменты спикеров корректны, тесты зелёные.
@@ -61,7 +61,7 @@ CallAnnotate — модульная система автоматической 
 
 ## **Phase 6: Batch-ASR (Whisper)**  
    - **Задачи:**  
-     1. `src/ml/transcription.py`: обёртка над OpenAI Whisper для пакетной обработки.  
+     1. `src/app/stages/transcription.py`: обёртка над OpenAI Whisper для пакетной обработки.  
      2. Unit-тесты на коротких аудиофайлах: проверка наличия текста.  
      3. Интеграция в pipeline: preprocessing → diarization → transcription.  
    - **Критерии готовности:** транскрипция возвращает текст для тестовых файлов, тесты зелёные.
@@ -70,7 +70,7 @@ CallAnnotate — модульная система автоматической 
 
 ## **Phase 8: Speaker Recognition**  
    - **Задачи:**  
-     1. `src/ml/recognition.py`: интеграция ECAPA-TDNN (speechbrain) для сравнения эмбеддингов.  
+     1. `src/app/stages/recognition.py`: интеграция ECAPA-TDNN (speechbrain) для сравнения эмбеддингов.  
      2. CRUD-REST-эндпоинты для управления «известными» голосами и загрузки эмбеддингов.  
      3. Unit-тесты точности распознавания (precision ≥ 85 % на контрольном наборе).  
    - **Критерии готовности:** API возвращает идентификатор спикера или `unknown`, тесты зелёные.
@@ -79,14 +79,14 @@ CallAnnotate — модульная система автоматической 
 
 ## **Phase 9: Интеграция CardDAV-контактов**  
    - **Задачи:**  
-     1. `src/contacts/carddav_client.py`: асинхронный клиент с кэшированием и fallback.  
+     1. `src/app/stages/carddav_client.py`: асинхронный клиент с кэшированием и fallback.  
      2. REST-эндпоинты CRUD для контактов.  
      3. Интеграционные тесты с мок-сервером (pytest-aioresponses).  
    - **Критерии готовности:** контакты успешно синхронизируются, CRUD-операции работают, тесты зелёные.
 
 ---
 
-## **Phase 14: Клиентские SDK и примеры**  
+## **Phase 10: Клиентские SDK и примеры**  
     - **Задачи:**  
       1. Генерация SDK на Python/JavaScript из OpenAPI.  
       2. Примеры использования (upload, subscribe, fetch result).  
@@ -95,7 +95,7 @@ CallAnnotate — модульная система автоматической 
 
 ---
 
-## **Phase 15: Production-ready CI/CD и контейнеризация**  
+## **Phase 11: Production-ready CI/CD и контейнеризация**  
     - **Задачи:**  
       1. Кросс-платформенные Docker-образы (amd64, arm64).  
       2. Security scan зависимостей (Trivy, Dependabot).  

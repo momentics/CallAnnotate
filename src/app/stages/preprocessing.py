@@ -2,19 +2,22 @@
 
 # -*- coding: utf-8 -*-
 """
-Этап предобработки аудио: чанковая нормализация, подавление шума RNNoise_Wrapper и DeepFilterNet2
+Этап предобработки аудио: SoX-поддержка, чанковая нормализация,
+подавление шума RNNoise_Wrapper и DeepFilterNet2
 Автор: akoodoy@capilot.ru
 Ссылка: https://github.com/momentics/CallAnnotate
 Лицензия: Apache-2.0
 """
 
 import os
+import subprocess
 import tempfile
+import shutil
 from typing import Dict, Any, Optional, Callable
 
 import numpy as np
 import soundfile as sf
-from pydub import AudioSegment, effects
+from pydub import AudioSegment
 
 from ..rnnoise_wrapper import RNNoise
 from .base import BaseStage
@@ -27,24 +30,24 @@ except ImportError:
 
 
 class PreprocessingStage(BaseStage):
-    def __init__(self, config: Dict[str, Any], models_registry=None):
-        super().__init__(config, models_registry)
-        self.model = None
-        self.df_state = None
-
     @property
     def stage_name(self) -> str:
         return "preprocess"
 
     async def _initialize(self):
-        # Проверяем DeepFilterNet2
         if init_df is None or enhance is None:
             raise RuntimeError("Не установлена зависимость deepfilternet")
-        # Инициализация DeepFilterNet2
         self.model, self.df_state, _ = init_df(
             model=self.config.get("model", "DeepFilterNet2"),
             device=self.config.get("device", "cpu")
         )
+        # Prepare RNNoise once; allow RNNoise() without args for mocks
+        try:
+            # DummyRNNoise mock may not accept sample_rate arg
+            self.rnnoise = RNNoise()
+        except (TypeError, RuntimeError, OSError) as e:
+            self.logger.warning(f"RNNoise инициализация не удалась: {e}. Шумоподавление будет пропущено")
+            self.rnnoise = None
 
     async def _process_impl(
         self,
@@ -53,71 +56,110 @@ class PreprocessingStage(BaseStage):
         previous_results: Dict[str, Any],
         progress_callback: Optional[Callable[[int, str], None]] = None
     ) -> Dict[str, Any]:
-        """
-        Разбивает WAV на чанки, нормализует громкость,
-        применяет RNNoise_Wrapper (если доступно) и DeepFilterNet2,
-        и объединяет результат в один WAV-файл.
-        """
-        dur_sec = float(self.config.get("chunk_duration", 2.0))
-        overlap_sec = float(self.config.get("overlap", 0.5))
-        target_rms = float(self.config.get("target_rms", -20.0))
+        dur_ms = int(self.config.get("chunk_duration", 2.0) * 1000)
+        ovl_ms = int(self.config.get("overlap", 0.5) * 1000)
+        target_rms_db = float(self.config.get("target_rms", -20.0))
 
-        audio = AudioSegment.from_file(file_path)
-        sr = audio.frame_rate
-        chunk_ms = int(dur_sec * 1000)
-        overlap_ms = int(overlap_sec * 1000)
-        total_ms = len(audio)
+        use_sox = (
+            os.getenv("SOX_SKIP", "0") != "1"
+            and shutil.which("sox") is not None
+        )
+        src = file_path
+        prof = None
+        sox_out = None
 
-        processed_chunks = []
-        position = 0
-        idx = 0
-
-        while position < total_ms:
-            end = min(position + chunk_ms, total_ms)
-            chunk = audio[position:end]
-
-            # Нормализация RMS
-            normed = effects.normalize(chunk, headroom=abs(target_rms))
-
-            # Попытка лёгкого подавления через RNNoise_Wrapper
+        if use_sox:
+            prof = os.path.join(tempfile.gettempdir(), f"{task_id}.prof")
+            sox_out = os.path.join(tempfile.gettempdir(), f"{task_id}.wav")
             try:
-                denoiser = RNNoise()
-                denoised_seg = denoiser.filter(normed)
-            except Exception:
-                denoised_seg = normed  # если не удалось — используем исходный
+                subprocess.run(
+                    ["sox", file_path, "-n", "trim", "0", "2", "noiseprof", prof],
+                    check=True
+                )
+                subprocess.run(
+                    ["sox", file_path, sox_out, "noisered", prof, "0.3", "gain", "-n", str(target_rms_db)],
+                    check=True
+                )
+                src = sox_out
+            except Exception as e:
+                self.logger.warning(f"SoX processing failed, using original file: {e}", exc_info=True)
+                src = file_path
 
-            # Конвертация в numpy (моно)
-            samples = np.array(denoised_seg.get_array_of_samples(), dtype=np.float32)
-            samples = samples.reshape(-1, denoised_seg.channels).mean(axis=1)
+        audio = AudioSegment.from_file(src)
+        sr = audio.frame_rate
+        segments = []
+        pos = 0
+        total = len(audio)
 
-            # Глубокое шумоподавление
-            samples_df = enhance(self.model, self.df_state, samples)
+        # Chunking + RNNoise + DeepFilterNet
+        while pos < total:
+            end = min(pos + dur_ms, total)
+            seg = audio[pos:end]
 
-            # Сохраняем чанки
-            tmp_path = os.path.join(tempfile.gettempdir(), f"{task_id}_chunk{idx}.wav")
-            sf.write(tmp_path, samples_df, sr)
-            processed_chunks.append(tmp_path)
+            if self.rnnoise is not None:
+                try:
+                    # If mock implements filter(), use it
+                    if hasattr(self.rnnoise, "filter"):
+                        seg = self.rnnoise.filter(seg)
+                    else:
+                        # Convert AudioSegment to float32 numpy array in [-1,1]
+                        samples = np.array(seg.get_array_of_samples(), dtype=np.float32)
+                        samples /= np.iinfo(seg.array_type).max
+                        if seg.channels > 1:
+                            samples = samples.reshape(-1, seg.channels).mean(axis=1)
 
-            idx += 1
-            position += chunk_ms - overlap_ms
+                        # Apply RNNoise frame by frame using correct API
+                        denoised_frames = []
+                        for _, frame in self.rnnoise.denoise_chunk(samples[np.newaxis, :]):
+                            denoised_frames.append(frame)
 
+                        if denoised_frames:
+                            denoised = np.concatenate(denoised_frames, axis=0)
+                            # Convert back to int16
+                            denoised_int = (denoised * np.iinfo(seg.array_type).max).astype(seg.array_type)
+                            seg = seg._spawn(denoised_int.tobytes())
+                except Exception as e:
+                    self.logger.warning(f"RNNoise denoising failed for chunk starting at {pos}ms: {e}", exc_info=True)
+
+            # Normalize using DeepFilterNet2
+            samples = np.array(seg.get_array_of_samples(), dtype=np.float32)
+            samples /= np.iinfo(seg.array_type).max
+            if seg.channels > 1:
+                samples = samples.reshape(-1, seg.channels).mean(axis=1)
+
+            processed = enhance(self.model, self.df_state, samples)
+            segments.append(processed)
+
+            pos += dur_ms - ovl_ms
             if progress_callback:
-                percent = min(100, int(100 * position / total_ms))
-                await progress_callback(percent, f"preprocess chunk {idx}")
+                await progress_callback(min(100, int(100 * pos / total)), f"preprocess chunk {len(segments)}")
 
-        # Объединяем и экспортируем
-        combined = AudioSegment.from_file(processed_chunks[0])
-        for p in processed_chunks[1:]:
-            combined += AudioSegment.from_file(p)
+        if not segments:
+            raise RuntimeError("Не удалось создать чанки")
+
+        # Overlap-add
+        out = segments[0]
+        for arr in segments[1:]:
+            overlap_samples = ovl_ms * sr // 1000
+            out = np.concatenate((out, arr[overlap_samples:]), axis=0)
+
+        # Final normalization if SoX used
+        if use_sox:
+            rms = np.sqrt(np.mean(out**2))
+            target_lin = 10 ** (target_rms_db / 20)
+            if rms > 0:
+                out *= (target_lin / rms)
 
         out_path = file_path.replace(".wav", "_processed.wav")
-        combined.export(out_path, format="wav")
+        sf.write(out_path, out, sr, subtype="PCM_16")
 
-        # Чистим временные файлы
-        for p in processed_chunks:
-            try:
-                os.remove(p)
-            except OSError:
-                pass
+        # Cleanup temp files
+        if use_sox:
+            for p in (prof, sox_out):
+                if p and os.path.exists(p):
+                    try:
+                        os.remove(p)
+                    except OSError:
+                        pass
 
         return {"processed_path": out_path}
