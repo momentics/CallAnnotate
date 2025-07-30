@@ -58,6 +58,12 @@ class DiarizationConfig(BaseSettings):
         env_prefix = "DIARIZATION_"
 
 
+class MetricsConfig(BaseModel):
+    """Конфигурация метрик для транскрипции"""
+    confidence: bool = Field(True, description="Сбор avg confidence")
+    avg_logprob: bool = Field(True, description="Сбор avg logprob")
+    no_speech_prob: bool = Field(True, description="Сбор avg no_speech_prob")
+    timing: bool = Field(True, description="Сбор времени транскрипции")
 
 
 class TranscriptionConfig(BaseSettings):
@@ -67,6 +73,7 @@ class TranscriptionConfig(BaseSettings):
     language: str = Field("ru", description="Язык транскрипции или auto")
     batch_size: int = Field(16, gt=0, description="Размер пакета")
     task: str = Field("transcribe", description="Задача: transcribe или translate")
+    metrics: MetricsConfig = Field(default_factory=MetricsConfig, description="Настройки сбора метрик")
     
     class Config:
         env_prefix = "TRANSCRIPTION_"

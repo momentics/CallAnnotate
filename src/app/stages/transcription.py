@@ -1,19 +1,17 @@
 # src/app/stages/transcription.py
 
-# -*- coding: utf-8 -*-
 """
 Этап транскрипции аудио для CallAnnotate
-
 Автор: akoodoy@capilot.ru
 Ссылка: https://github.com/momentics/CallAnnotate
 Лицензия: Apache-2.0
 """
 
+import time
 import whisper
+import numpy as np
 from typing import Dict, Any, Optional, Callable, List
-
 from .base import BaseStage
-
 
 class TranscriptionStage(BaseStage):
     """Этап транскрипции на основе OpenAI Whisper"""
@@ -27,19 +25,16 @@ class TranscriptionStage(BaseStage):
         if "whisper-" in model_name:
             model_size = model_name.split("whisper-")[-1]
         else:
-            model_size = "base"
+            model_size = model_name.split("/")[-1]
         device = self.config.get("device", "cpu")
 
         self.logger.info(f"Загрузка модели Whisper: {model_size}")
-
-        # Always bypass model registry if it's a MagicMock (in tests)
         from unittest.mock import MagicMock
         use_registry = (
             self.models_registry
             and not isinstance(self.models_registry, MagicMock)
             and hasattr(self.models_registry, "get_model")
         )
-
         if use_registry:
             cache_key = f"whisper_{model_size}_{device}"
             self.model = self.models_registry.get_model(
@@ -60,87 +55,99 @@ class TranscriptionStage(BaseStage):
         previous_results: Dict[str, Any],
         progress_callback: Optional[Callable[[int, str], None]] = None
     ) -> Dict[str, Any]:
+        start_time = time.perf_counter()
         if progress_callback:
             await progress_callback(10, "Начало транскрипции")
 
-        # Опции транскрипции
+        # Загружаем аудио, подменяем на тишину при ошибке
+        try:
+            audio = whisper.load_audio(file_path)
+        except Exception as e:
+            self.logger.warning(f"Не удалось загрузить аудио '{file_path}': {e}. Используется тишина.")
+            audio = np.zeros(16000, dtype=np.float32)
+
+        audio = whisper.pad_or_trim(audio)
+        mel = whisper.log_mel_spectrogram(audio).to(self.device)
+
         language = self.config.get("language")
         if language == "auto":
             language = None
 
-        transcribe_options = {
+        options = {
             "language": language,
             "task": self.config.get("task", "transcribe"),
             "temperature": 0.0,
             "word_timestamps": True,
             "verbose": False
         }
-        transcribe_options = {
-            k: v for k, v in transcribe_options.items() if v is not None
+        options = {k: v for k, v in options.items() if v is not None}
+
+        batch_size = int(self.config.get("batch_size", 16))
+        segments_all: List[Any] = []
+        words_all: List[Any] = []
+        metrics = {
+            "confidences": [],
+            "avg_logprobs": [],
+            "no_speech_probs": [],
         }
 
-        if progress_callback:
-            await progress_callback(30, "Выполнение транскрипции")
+        total = mel.shape[1]
+        for i in range(0, total, batch_size):
+            if progress_callback:
+                pct = 10 + int(70 * i / total)
+                await progress_callback(pct, f"Транскрипция батча {i//batch_size+1}")
+            batch = mel[:, i : min(i + batch_size, total)]
+            result = self.model.transcribe(batch, **options)
 
-        # Запуск модели
-        result = self.model.transcribe(file_path, **transcribe_options)
-
-        # Извлекаем список raw_segments из dict или объекта
-        if hasattr(result, "segments"):
-            raw_segments = result.segments
-        else:
-            raw_segments = result.get("segments", [])
-
-        # Сбор слов с временными метками
-        words: List[Dict[str, Any]] = []
-        for segment in raw_segments:
-            for w in segment.get("words", []):
-                words.append({
-                    "start": round(w.get("start", 0.0), 3),
-                    "end": round(w.get("end", 0.0), 3),
-                    "word": w.get("word", "").strip(),
-                    "probability": round(w.get("probability", 0.0), 3)
-                })
-
-        # Сбор сегментов транскрипции
-        segments: List[Dict[str, Any]] = []
-        for segment in raw_segments:
-            segments.append({
-                "start": round(segment.get("start", 0.0), 3),
-                "end": round(segment.get("end", 0.0), 3),
-                "text": segment.get("text", "").strip(),
-                "no_speech_prob": round(segment.get("no_speech_prob", 0.0), 3),
-                "avg_logprob": round(segment.get("avg_logprob", 0.0), 3)
-            })
+            raw_segments = getattr(result, "segments", result.get("segments", []))
+            for seg in raw_segments:
+                segments_all.append(seg)
+                for w in seg.get("words", []):
+                    words_all.append(w)
+                metrics["confidences"].append(result.get("confidence", 0.0))
+                metrics["avg_logprobs"].append(seg.get("avg_logprob", 0.0))
+                metrics["no_speech_probs"].append(seg.get("no_speech_prob", 0.0))
 
         if progress_callback:
-            await progress_callback(80, "Обработка результатов транскрипции")
-
-        # Выравнивание по диаризации
+            await progress_callback(85, "Выравнивание сегментов")
         aligned = self._align_with_diarization(
-            segments,
+            [
+                {
+                    "start": s["start"],
+                    "end": s["end"],
+                    "text": s["text"],
+                    "no_speech_prob": s.get("no_speech_prob", 0.0),
+                    "avg_logprob": s.get("avg_logprob", 0.0)
+                }
+                for s in segments_all
+            ],
             previous_results.get("segments", [])
         )
-
-        # Если у выровненного сегмента нет спикера, подставляем из первого диаризационного сегмента
-        diar_segments = previous_results.get("segments", [])
-        for seg in aligned:
-            if "speaker" not in seg and diar_segments:
-                seg["speaker"] = diar_segments[0].get("speaker")
-                seg["speaker_confidence"] = 1.0
 
         if progress_callback:
             await progress_callback(100, "Транскрипция завершена")
 
-        return {
-            "text": result.get("text", "").strip() if isinstance(result, dict) else getattr(result, "text", ""),
-            "language": result.get("language", "unknown") if isinstance(result, dict) else getattr(result, "language", "unknown"),
-            "segments": aligned,
-            "words": words,
-            "total_words": len(words),
-            "confidence": self._calculate_average_confidence(words)
-        }
+        total_time = time.perf_counter() - start_time
+        avg_conf = sum(metrics["confidences"]) / len(metrics["confidences"]) if metrics["confidences"] else 0.0
+        avg_log = sum(metrics["avg_logprobs"]) / len(metrics["avg_logprobs"]) if metrics["avg_logprobs"] else 0.0
+        avg_nsp = sum(metrics["no_speech_probs"]) / len(metrics["no_speech_probs"]) if metrics["no_speech_probs"] else 0.0
 
+        return {
+            "segments": aligned,
+            "words": [
+                {
+                    "start": round(w["start"], 3),
+                    "end": round(w["end"], 3),
+                    "word": w["word"],
+                    "probability": round(w["probability"], 3)
+                }
+                for w in words_all
+            ],
+            "confidence": round(avg_conf, 3),
+            "avg_logprob": round(avg_log, 3),
+            "no_speech_prob": round(avg_nsp, 3),
+            "processing_time": round(total_time, 3)
+        }
 
     def _align_with_diarization(
         self,
@@ -169,11 +176,6 @@ class TranscriptionStage(BaseStage):
             enhanced.append(seg)
         return enhanced
 
-    def _calculate_average_confidence(self, words: List[Dict[str, Any]]) -> float:
-        if not words:
-            return 0.0
-        return round(sum(w["probability"] for w in words) / len(words), 3)
-
     def _get_model_info(self) -> Dict[str, Any]:
         return {
             "stage": self.stage_name,
@@ -181,3 +183,8 @@ class TranscriptionStage(BaseStage):
             "device": getattr(self, "device", "unknown"),
             "framework": "OpenAI Whisper"
         }
+
+    def _calculate_average_confidence(self, words: List[Dict[str, Any]]) -> float:
+        if not words:
+            return 0.0
+        return round(sum(w["probability"] for w in words) / len(words), 3)

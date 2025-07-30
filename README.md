@@ -68,7 +68,7 @@ target_rms: -20.0
 ```
 
 transcription:
-model: "openai/whisper-base"    \# размер модели Whisper
+model: "openai/whisper-small"   \# размер модели Whisper
 device: "cpu"                   \# вычислительное устройство
 language: "ru"                  \# язык транскрипции ("auto" — автоопределение)
 batch_size: 16                  \# размер пакета фрагментов

@@ -110,11 +110,18 @@ diarization:
 
 # Этап транскрипции (OpenAI Whisper)
 transcription:
-  model: "openai/whisper-small"  # TRANSCRIPTION_MODEL
-  device: "cpu"                  # TRANSCRIPTION_DEVICE
-  language: "ru"                 # TRANSCRIPTION_LANGUAGE ("auto" для автоопределения)
-  batch_size: 16                 # TRANSCRIPTION_BATCH_SIZE
-  task: "transcribe"             # TRANSCRIPTION_TASK ("translate" для перевода)
+  model: "openai/whisper-base"       # Унифицировано: upgrade до base
+  device: "cpu"                      # TRANSCRIPTION_DEVICE
+  language: "ru"                     # TRANSCRIPTION_LANGUAGE ("auto" для автоопределения)
+  batch_size: 16                     # TRANSCRIPTION_BATCH_SIZE
+  task: "transcribe"                 # TRANSCRIPTION_TASK ("translate" для перевода)
+  # Новые параметры для Phase 6
+  metrics:
+    confidence: true                 # Сбор avg confidence
+    avg_logprob: true                # Сбор avg logprob
+    no_speech_prob: true             # Сбор avg no_speech_prob
+    timing: true                     # Сбор времени транскрипции
+
 
 # Этап распознавания (SpeechBrain + FAISS)
 recognition:

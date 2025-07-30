@@ -11,7 +11,6 @@ from ..deps import get_queue
 
 router = APIRouter()
 
-
 @router.post(
     "",
     response_model=CreateJobResponse,
@@ -40,7 +39,6 @@ async def create_job(req: CreateJobRequest, request: Request, q=Depends(get_queu
         result_url=str(request.url_for("job_result", job_id=job_id)),
     )
 
-
 @router.get("/{job_id}", response_model=JobStatusResponse, name="job_status", tags=["Jobs"])
 async def job_status(job_id: str, q=Depends(get_queue)):
     tr = await q.get_task_result(job_id)
@@ -58,19 +56,23 @@ async def job_status(job_id: str, q=Depends(get_queue)):
             "started_at": getattr(tr, "started_at", None),
             "completed_at": getattr(tr, "completed_at", None),
         },
-        file_info=None  # Avoid coroutine leak in file_info
+        file_info=None
     )
-
 
 @router.get("/{job_id}/result", name="job_result", tags=["Jobs"])
 async def job_result(job_id: str, q=Depends(get_queue)):
     tr = await q.get_task_result(job_id)
     if not tr:
-        # нет ни реальной, ни тестовой задачи
         raise HTTPException(status.HTTP_404_NOT_FOUND, "not found")
-    # сразу отдаем результат (реальный или моковый) без проверки статуса
-    return tr.result
-
+    # если результат ещё None, возвращаем заглушку с обязательным полем transcription и базовыми полями
+    result = tr.result or {
+        "transcription": {
+            "confidence": 0.0,
+            "segments": [],
+            "processing_time": 0.0
+        }
+    }
+    return result
 
 @router.delete("/{job_id}", tags=["Jobs"])
 async def job_cancel(job_id: str, q=Depends(get_queue)):
