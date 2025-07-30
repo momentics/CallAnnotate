@@ -1,0 +1,41 @@
+{
+  "segments": [
+    {
+      "start": 0.000,
+      "end": 3.215,
+      "duration": 3.215,
+      "speaker": "Speaker_1",
+      "confidence": 0.92
+    },
+    {
+      "start": 3.215,
+      "end": 7.800,
+      "duration": 4.585,
+      "speaker": "Speaker_2",
+      "confidence": 0.87
+    },
+    {
+      "start": 7.800,
+      "end": 10.000,
+      "duration": 2.200,
+      "speaker": "Speaker_1",
+      "confidence": 0.99
+    }
+  ],
+  "speakers": [
+    "Speaker_1",
+    "Speaker_2"
+  ],
+  "speaker_stats": {
+    "Speaker_1": {
+      "total_duration": 5.415,
+      "segments_count": 2
+    },
+    "Speaker_2": {
+      "total_duration": 4.585,
+      "segments_count": 1
+    }
+  },
+  "total_segments": 3,
+  "total_speakers": 2
+}

@@ -3,15 +3,21 @@
 # -*- coding: utf-8 -*-
 """
 WebSocket роутер для CallAnnotate
+Автор: akoodoy@capilot.ru
+Ссылка: https://github.com/momentics/CallAnnotate
+Лицензия: Apache-2.0
 """
+
 import json
 import logging
 import os
-from pathlib import Path
+import asyncio
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
+from pathlib import Path
 from typing import Dict
+
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
 
 from ...core.interfaces.queue import QueueService
 from ..deps import get_queue
@@ -20,20 +26,22 @@ from ...config import load_settings
 
 router = APIRouter()
 
-
 class WebSocketManager:
-    def __init__(self):
+    def __init__(self, ping_interval: int):
         self._clients: Dict[str, WebSocket] = {}
         self._logger = logging.getLogger(self.__class__.__name__)
+        self._ping_interval = ping_interval
 
     async def connect(self, ws: WebSocket, client_id: str):
         await ws.accept()
         self._clients[client_id] = ws
         self._logger.info("WS client %s connected", client_id)
+        asyncio.create_task(self._heartbeat(client_id))
 
     def disconnect(self, client_id: str):
-        self._clients.pop(client_id, None)
-        self._logger.info("WS client %s disconnected", client_id)
+        ws = self._clients.pop(client_id, None)
+        if ws:
+            self._logger.info("WS client %s disconnected", client_id)
 
     async def send(self, client_id: str, message: dict):
         ws = self._clients.get(client_id)
@@ -45,8 +53,24 @@ class WebSocketManager:
             self._logger.error("WS send error to %s: %s", client_id, e)
             self.disconnect(client_id)
 
-ws_manager = WebSocketManager()
+    async def _heartbeat(self, client_id: str):
+        """
+        Периодическая отправка server-initiated ping сообщения.
+        """
+        while client_id in self._clients:
+            try:
+                await asyncio.sleep(self._ping_interval)
+                await self.send(client_id, {
+                    "type": "ping",
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+            except Exception as e:
+                self._logger.error("Heartbeat error for %s: %s", client_id, e)
+                break
 
+# Инициализация WS-менеджера с параметром из конфигурации
+cfg = load_settings()
+ws_manager = WebSocketManager(ping_interval=cfg.notifications.websocket.ping_interval)
 
 @router.websocket("/{client_id}")
 async def websocket_endpoint(
@@ -72,6 +96,7 @@ async def websocket_endpoint(
             msg_type = message.get("type")
 
             if msg_type == "ping":
+                # Ответ на клиентский ping
                 await ws_manager.send(client_id, {
                     "type": "pong",
                     "timestamp": message.get("timestamp")

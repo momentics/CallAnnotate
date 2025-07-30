@@ -65,6 +65,12 @@ jobs:
       - name: Run tests
         run: pytest tests/
 
+      - name: Upload OpenAPI spec artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-spec
+          path: openapi.json
+        
       - name: Check NOTICE file completeness
         run: |
           python scripts/check_notice_completeness.py

@@ -1,0 +1,187 @@
+{
+  "task_id": "123e4567-e89b-12d3-a456-426614174000",
+  "version": "1.0.0",
+  "created_at": "2025-07-30T00:00:00Z",
+  "audio_metadata": {
+    "filename": "call_example.wav",
+    "duration": 12.34,
+    "sample_rate": 16000,
+    "channels": 1,
+    "format": "wav",
+    "bitrate": 128000,
+    "size_bytes": 197530
+  },
+  "processing_info": {
+    "diarization_model": {
+      "stage": "diarization",
+      "model_name": "pyannote/speaker-diarization-3.1",
+      "device": "cpu",
+      "framework": "pyannote.audio"
+    },
+    "transcription_model": {
+      "stage": "transcription",
+      "model_size": "base",
+      "device": "cpu",
+      "framework": "OpenAI Whisper"
+    },
+    "recognition_model": {
+      "stage": "recognition",
+      "model_name": "speechbrain/spkrec-ecapa-voxceleb",
+      "device": "cpu",
+      "threshold": 0.7,
+      "database_size": 2,
+      "framework": "SpeechBrain + FAISS"
+    },
+    "processing_time": {
+      "diarization": 1.23,
+      "transcription": 2.34,
+      "recognition": 0.56,
+      "carddav": 0.12
+    }
+  },
+  "speakers": [
+    {
+      "id": "speaker_01",
+      "label": "spk1",
+      "segments_count": 2,
+      "total_duration": 7.5,
+      "identified": true,
+      "name": "Алиса",
+      "contact_info": {
+        "full_name": "Алиса Иванова",
+        "first_name": "Алиса",
+        "last_name": "Иванова",
+        "phones": ["+78001234567"],
+        "emails": ["alice@example.com"],
+        "organization": "ПримерООО"
+      },
+      "voice_embedding": "models/embeddings/alice_ivanova.vec",
+      "confidence": 0.85
+    },
+    {
+      "id": "speaker_02",
+      "label": "spk2",
+      "segments_count": 1,
+      "total_duration": 4.84,
+      "identified": false,
+      "name": null,
+      "contact_info": null,
+      "voice_embedding": null,
+      "confidence": 0.0
+    }
+  ],
+  "segments": [
+    {
+      "id": 1,
+      "start": 0.00,
+      "end": 3.50,
+      "duration": 3.50,
+      "speaker": "speaker_01",
+      "speaker_label": "spk1",
+      "text": "Здравствуйте, спасибо за звонок. Чем могу помочь сегодня?",
+      "words": [
+        {"start": 0.00, "end": 0.50, "word": "Здравствуйте,", "probability": 0.98},
+        {"start": 0.51, "end": 1.00, "word": "спасибо", "probability": 0.95},
+        {"start": 1.01, "end": 1.40, "word": "за", "probability": 0.96},
+        {"start": 1.41, "end": 1.80, "word": "звонок.", "probability": 0.94},
+        {"start": 1.81, "end": 2.20, "word": "Чем", "probability": 0.93},
+        {"start": 2.21, "end": 2.60, "word": "могу", "probability": 0.92},
+        {"start": 2.61, "end": 2.90, "word": "помочь", "probability": 0.90},
+        {"start": 2.91, "end": 3.20, "word": "сегодня?", "probability": 0.91}
+      ],
+      "confidence": 0.93
+    },
+    {
+      "id": 2,
+      "start": 3.50,
+      "end": 8.00,
+      "duration": 4.50,
+      "speaker": "speaker_02",
+      "speaker_label": "spk2",
+      "text": "Здравствуйте, я хотел бы узнать баланс своего счета, пожалуйста.",
+      "words": [
+        {"start": 3.50, "end": 3.80, "word": "Здравствуйте,", "probability": 0.96},
+        {"start": 3.81, "end": 4.10, "word": "я", "probability": 0.94},
+        {"start": 4.11, "end": 4.40, "word": "хотел", "probability": 0.95},
+        {"start": 4.41, "end": 4.70, "word": "бы", "probability": 0.93},
+        {"start": 4.71, "end": 5.00, "word": "узнать", "probability": 0.92},
+        {"start": 5.01, "end": 5.30, "word": "баланс", "probability": 0.91},
+        {"start": 5.31, "end": 5.80, "word": "своего", "probability": 0.90},
+        {"start": 5.81, "end": 6.20, "word": "счета,", "probability": 0.89},
+        {"start": 6.21, "end": 6.50, "word": "пожалуйста.", "probability": 0.90}
+      ],
+      "confidence": 0.92
+    },
+    {
+      "id": 3,
+      "start": 8.00,
+      "end": 12.34,
+      "duration": 4.34,
+      "speaker": "speaker_01",
+      "speaker_label": "spk1",
+      "text": "Конечно. Ваш текущий баланс составляет одну две три четыре тысячи рублей. Могу ли ещё чем-то помочь?",
+      "words": [
+        {"start": 8.00, "end": 8.30, "word": "Конечно.", "probability": 0.97},
+        {"start": 8.31, "end": 8.80, "word": "Ваш", "probability": 0.94},
+        {"start": 8.81, "end": 9.20, "word": "текущий", "probability": 0.93},
+        {"start": 9.21, "end": 9.60, "word": "баланс", "probability": 0.92},
+        {"start": 9.61, "end": 10.10, "word": "составляет", "probability": 0.90},
+        {"start": 10.11, "end": 10.50, "word": "одну", "probability": 0.91},
+        {"start": 10.51, "end": 10.80, "word": "две", "probability": 0.90},
+        {"start": 10.81, "end": 11.10, "word": "три", "probability": 0.89},
+        {"start": 11.11, "end": 11.40, "word": "четыре", "probability": 0.88},
+        {"start": 11.41, "end": 11.80, "word": "тысячи", "probability": 0.87},
+        {"start": 11.81, "end": 12.10, "word": "рублей.", "probability": 0.86},
+        {"start": 12.11, "end": 12.34, "word": "Могу", "probability": 0.85},
+        {"start": 12.31, "end": 12.34, "word": "?", "probability": 0.80}
+      ],
+      "confidence": 0.90
+    }
+  ],
+  "transcription": {
+    "full_text": "[speaker_01]: Здравствуйте, спасибо за звонок. Чем могу помочь сегодня?\n[speaker_02]: Здравствуйте, я хотел бы узнать баланс своего счета, пожалуйста.\n[speaker_01]: Конечно. Ваш текущий баланс составляет одну две три четыре тысячи рублей. Могу ли ещё чем-то помочь?",
+    "confidence": 0.92,
+    "language": "ru",
+    "words": [
+      {"start": 0.00, "end": 0.50, "word": "Здравствуйте,", "probability": 0.98},
+      {"start": 0.51, "end": 1.00, "word": "спасибо", "probability": 0.95},
+      {"start": 1.01, "end": 1.40, "word": "за", "probability": 0.96},
+      {"start": 1.41, "end": 1.80, "word": "звонок.", "probability": 0.94},
+      {"start": 1.81, "end": 2.20, "word": "Чем", "probability": 0.93},
+      {"start": 2.21, "end": 2.60, "word": "могу", "probability": 0.92},
+      {"start": 2.61, "end": 2.90, "word": "помочь", "probability": 0.90},
+      {"start": 2.91, "end": 3.20, "word": "сегодня?", "probability": 0.91},
+      {"start": 3.50, "end": 3.80, "word": "Здравствуйте,", "probability": 0.96},
+      {"start": 3.81, "end": 4.10, "word": "я", "probability": 0.94},
+      {"start": 4.11, "end": 4.40, "word": "хотел", "probability": 0.95},
+      {"start": 4.41, "end": 4.70, "word": "бы", "probability": 0.93},
+      {"start": 4.71, "end": 5.00, "word": "узнать", "probability": 0.92},
+      {"start": 5.01, "end": 5.30, "word": "баланс", "probability": 0.91},
+      {"start": 5.31, "end": 5.80, "word": "своего", "probability": 0.90},
+      {"start": 5.81, "end": 6.20, "word": "счета,", "probability": 0.89},
+      {"start": 6.21, "end": 6.50, "word": "пожалуйста.", "probability": 0.90},
+      {"start": 8.00, "end": 8.30, "word": "Конечно.", "probability": 0.97},
+      {"start": 8.31, "end": 8.80, "word": "Ваш", "probability": 0.94},
+      {"start": 8.81, "end": 9.20, "word": "текущий", "probability": 0.93},
+      {"start": 9.21, "end": 9.60, "word": "баланс", "probability": 0.92},
+      {"start": 9.61, "end": 10.10, "word": "составляет", "probability": 0.90},
+      {"start": 10.11, "end": 10.50, "word": "одну", "probability": 0.91},
+      {"start": 10.51, "end": 10.80, "word": "две", "probability": 0.90},
+      {"start": 10.81, "end": 11.10, "word": "три", "probability": 0.89},
+      {"start": 11.11, "end": 11.40, "word": "четыре", "probability": 0.88},
+      {"start": 11.41, "end": 11.80, "word": "тысячи", "probability": 0.87},
+      {"start": 11.81, "end": 12.10, "word": "рублей.", "probability": 0.86},
+      {"start": 12.11, "end": 12.34, "word": "Могу", "probability": 0.85},
+      {"start": 12.31, "end": 12.34, "word": "?", "probability": 0.80}
+    ]
+  },
+  "statistics": {
+    "total_speakers": 2,
+    "identified_speakers": 1,
+    "unknown_speakers": 1,
+    "total_segments": 3,
+    "total_words": 38,
+    "speech_duration": 12.34,
+    "silence_duration": 0.00
+  }
+}

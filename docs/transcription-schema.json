@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Transcription",
+  "type": "object",
+  "properties": {
+    "transcription": {
+      "type": "object",
+      "required": ["full_text", "confidence", "language", "segments", "words"],
+      "properties": {
+        "full_text": {
+          "type": "string",
+          "description": "Полный текст с разметкой спикеров"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Средняя уверенность транскрипции"
+        },
+        "language": {
+          "type": "string",
+          "description": "Определённый язык транскрипции"
+        },
+        "segments": {
+          "type": "array",
+          "description": "Список сегментов транскрипции с привязкой к диаризации",
+          "items": {
+            "type": "object",
+            "required": ["start", "end", "text", "speaker", "no_speech_prob", "avg_logprob"],
+            "properties": {
+              "start": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Время начала сегмента в секундах"
+              },
+              "end": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Время окончания сегмента в секундах"
+              },
+              "text": {
+                "type": "string",
+                "description": "Текст сегмента"
+              },
+              "speaker": {
+                "type": "string",
+                "description": "ID спикера из этапа диаризации"
+              },
+              "speaker_confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Уверенность привязки сегмента к спикеру"
+              },
+              "no_speech_prob": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Вероятность отсутствия речи"
+              },
+              "avg_logprob": {
+                "type": "number",
+                "description": "Средняя логарифмическая вероятность"
+              }
+            }
+          }
+        },
+        "words": {
+          "type": "array",
+          "description": "Детализированные слова с метками времени и спикером",
+          "items": {
+            "type": "object",
+            "required": ["start", "end", "word", "probability", "speaker"],
+            "properties": {
+              "start": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Время начала слова в секундах"
+              },
+              "end": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Время окончания слова в секундах"
+              },
+              "word": {
+                "type": "string",
+                "description": "Текст слова"
+              },
+              "probability": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Вероятность правильного распознавания"
+              },
+              "speaker": {
+                "type": "string",
+                "description": "ID спикера, говорившего слово"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

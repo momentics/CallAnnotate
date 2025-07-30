@@ -1,5 +1,3 @@
-# src/app/utils.py
-
 """
 Вспомогательные функции для CallAnnotate
 
@@ -111,7 +109,7 @@ def ensure_directory(path: str) -> Path:
 
 def cleanup_temp_files(directory: str, max_age_hours: Union[int, float]) -> None:
     """
-    Удаляет из директории файлы старше max_age_hours.
+    Удаляет из директории файлы и поддиректории старше max_age_hours.
     """
     now = datetime.now()
     cutoff = now - timedelta(hours=max_age_hours)
@@ -150,39 +148,6 @@ def format_duration(seconds: Union[int, float]) -> str:
     return " ".join(parts)
 
 
-
-def create_task_metadata(
-    task_id: str,
-    file_path: str,
-    filename: str,
-    priority: int,
-    websocket_client_id: Optional[str] = None
-) -> Dict[str, Any]:
-    """
-    Формирует метаданные для задачи очереди.
-
-    Args:
-        task_id: уникальный идентификатор задачи
-        file_path: полный путь к исходному аудиофайлу
-        filename: имя файла (без пути)
-        priority: приоритет задачи (1–10)
-        websocket_client_id: идентификатор WS-клиента (если есть)
-
-    Returns:
-        Словарь с метаданными задачи.
-    """
-    meta = {
-        "task_id": task_id,
-        "file_path": file_path,
-        "filename": filename,
-        "priority": priority,
-        "created_at": datetime.now().isoformat(),
-    }
-    if websocket_client_id:
-        meta["websocket_client_id"] = websocket_client_id
-    return meta
-
-
 def get_human_readable_size(num: int) -> str:
     """Возвращает размер в удобочитаемом формате (KB/MB/GB)"""
     for unit in ("B", "KB", "MB", "GB", "TB"):
@@ -192,7 +157,6 @@ def get_human_readable_size(num: int) -> str:
     return f"{num:.1f}PB"
 
 
-
 def setup_logging(cfg: Dict[str, Any]):
     """
     Настройка логирования через dictConfig.
@@ -200,7 +164,6 @@ def setup_logging(cfg: Dict[str, Any]):
     """
     log_file = cfg.get("file")
     if log_file:
-        # Создать папку для файла логов
         Path(log_file).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
 
     handlers = ["console"]
@@ -242,6 +205,7 @@ def ensure_volume_structure(volume_path: str) -> None:
         processing/
         completed/
         failed/
+        archived/
         logs/
           system/
           tasks/
@@ -256,6 +220,7 @@ def ensure_volume_structure(volume_path: str) -> None:
         "processing",
         "completed",
         "failed",
+        "archived",
         "logs/system",
         "logs/tasks",
         "models/embeddings",
@@ -273,3 +238,36 @@ def ensure_volume_structure(volume_path: str) -> None:
     except Exception as e:
         logger.error(f"Error creating volume structure at {base}: {e}")
         raise
+
+
+def create_task_metadata(
+    task_id: str,
+    file_path: str,
+    filename: str,
+    priority: int,
+    websocket_client_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Формирует метаданные для задачи очереди.
+
+    Args:
+        task_id: уникальный идентификатор задачи
+        file_path: полный путь к исходному аудиофайлу
+        filename: имя файла (без пути)
+        priority: приоритет задачи (1–10)
+        websocket_client_id: идентификатор WS-клиента (если есть)
+
+    Returns:
+        Словарь с метаданными задачи.
+    """
+    meta = {
+        "task_id": task_id,
+        "file_path": file_path,
+        "filename": filename,
+        "priority": priority,
+        "created_at": datetime.now().isoformat(),
+    }
+    if websocket_client_id:
+        meta["websocket_client_id"] = websocket_client_id
+    return meta
+

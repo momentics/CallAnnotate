@@ -1,0 +1,215 @@
+{
+  "transcription": {
+    "full_text": "[speaker_01]: Добрый день! Как я могу помочь вам сегодня?\n[speaker_02]: Здравствуйте. У меня проблема с подключением к интернету.\n[speaker_01]: Понимаю. Давайте проверим настройки вашего роутера.\n[speaker_02]: Хорошо, я готов.",
+    "confidence": 0.93,
+    "language": "ru",
+    "segments": [
+      {
+        "start": 0.000,
+        "end": 3.500,
+        "text": "Добрый день! Как я могу помочь вам сегодня?",
+        "speaker": "speaker_01",
+        "speaker_confidence": 1.000,
+        "no_speech_prob": 0.001,
+        "avg_logprob": -0.25
+      },
+      {
+        "start": 4.000,
+        "end": 8.200,
+        "text": "Здравствуйте. У меня проблема с подключением к интернету.",
+        "speaker": "speaker_02",
+        "speaker_confidence": 1.000,
+        "no_speech_prob": 0.002,
+        "avg_logprob": -0.30
+      },
+      {
+        "start": 9.000,
+        "end": 13.000,
+        "text": "Понимаю. Давайте проверим настройки вашего роутера.",
+        "speaker": "speaker_01",
+        "speaker_confidence": 1.000,
+        "no_speech_prob": 0.001,
+        "avg_logprob": -0.28
+      },
+      {
+        "start": 13.500,
+        "end": 16.000,
+        "text": "Хорошо, я готов.",
+        "speaker": "speaker_02",
+        "speaker_confidence": 1.000,
+        "no_speech_prob": 0.001,
+        "avg_logprob": -0.22
+      }
+    ],
+    "words": [
+      {
+        "start": 0.000,
+        "end": 0.500,
+        "word": "Добрый",
+        "probability": 0.95,
+        "speaker": "speaker_01"
+      },
+      {
+        "start": 0.500,
+        "end": 0.900,
+        "word": "день!",
+        "probability": 0.94,
+        "speaker": "speaker_01"
+      },
+      {
+        "start": 1.000,
+        "end": 1.400,
+        "word": "Как",
+        "probability": 0.92,
+        "speaker": "speaker_01"
+      },
+      {
+        "start": 1.400,
+        "end": 1.800,
+        "word": "я",
+        "probability": 0.90,
+        "speaker": "speaker_01"
+      },
+      {
+        "start": 1.800,
+        "end": 2.200,
+        "word": "могу",
+        "probability": 0.91,
+        "speaker": "speaker_01"
+      },
+      {
+        "start": 2.200,
+        "end": 2.600,
+        "word": "помочь",
+        "probability": 0.93,
+        "speaker": "speaker_01"
+      },
+      {
+        "start": 2.600,
+        "end": 3.000,
+        "word": "вам",
+        "probability": 0.94,
+        "speaker": "speaker_01"
+      },
+      {
+        "start": 3.000,
+        "end": 3.500,
+        "word": "сегодня?",
+        "probability": 0.92,
+        "speaker": "speaker_01"
+      },
+      {
+        "start": 4.000,
+        "end": 4.500,
+        "word": "Здравствуйте.",
+        "probability": 0.96,
+        "speaker": "speaker_02"
+      },
+      {
+        "start": 4.600,
+        "end": 5.000,
+        "word": "У",
+        "probability": 0.88,
+        "speaker": "speaker_02"
+      },
+      {
+        "start": 5.000,
+        "end": 5.300,
+        "word": "меня",
+        "probability": 0.89,
+        "speaker": "speaker_02"
+      },
+      {
+        "start": 5.300,
+        "end": 6.000,
+        "word": "проблема",
+        "probability": 0.90,
+        "speaker": "speaker_02"
+      },
+      {
+        "start": 6.000,
+        "end": 6.500,
+        "word": "с",
+        "probability": 0.87,
+        "speaker": "speaker_02"
+      },
+      {
+        "start": 6.500,
+        "end": 7.200,
+        "word": "подключением",
+        "probability": 0.91,
+        "speaker": "speaker_02"
+      },
+      {
+        "start": 7.200,
+        "end": 8.200,
+        "word": "к интернету.",
+        "probability": 0.89,
+        "speaker": "speaker_02"
+      },
+      {
+        "start": 9.000,
+        "end": 9.300,
+        "word": "Понимаю.",
+        "probability": 0.94,
+        "speaker": "speaker_01"
+      },
+      {
+        "start": 9.300,
+        "end": 9.700,
+        "word": "Давайте",
+        "probability": 0.92,
+        "speaker": "speaker_01"
+      },
+      {
+        "start": 9.700,
+        "end": 10.100,
+        "word": "проверим",
+        "probability": 0.93,
+        "speaker": "speaker_01"
+      },
+      {
+        "start": 10.100,
+        "end": 10.500,
+        "word": "настройки",
+        "probability": 0.91,
+        "speaker": "speaker_01"
+      },
+      {
+        "start": 10.500,
+        "end": 11.200,
+        "word": "вашего",
+        "probability": 0.90,
+        "speaker": "speaker_01"
+      },
+      {
+        "start": 11.200,
+        "end": 13.000,
+        "word": "роутера.",
+        "probability": 0.89,
+        "speaker": "speaker_01"
+      },
+      {
+        "start": 13.500,
+        "end": 13.900,
+        "word": "Хорошо,",
+        "probability": 0.94,
+        "speaker": "speaker_02"
+      },
+      {
+        "start": 13.900,
+        "end": 14.200,
+        "word": "я",
+        "probability": 0.90,
+        "speaker": "speaker_02"
+      },
+      {
+        "start": 14.200,
+        "end": 16.000,
+        "word": "готов.",
+        "probability": 0.92,
+        "speaker": "speaker_02"
+      }
+    ]
+  }
+}

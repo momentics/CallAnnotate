@@ -1,0 +1,189 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AnnotationResult",
+  "type": "object",
+  "required": [
+    "task_id",
+    "version",
+    "created_at",
+    "audio_metadata",
+    "processing_info",
+    "speakers",
+    "segments",
+    "transcription",
+    "statistics"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "audio_metadata": {
+      "type": "object",
+      "required": ["filename","duration","sample_rate","channels","format","bitrate","size_bytes"],
+      "properties": {
+        "filename": { "type": "string" },
+        "duration": { "type": "number" },
+        "sample_rate": { "type": "integer" },
+        "channels": { "type": "integer" },
+        "format": { "type": "string" },
+        "bitrate": { "type": "integer" },
+        "size_bytes": { "type": "integer" }
+      }
+    },
+    "processing_info": {
+      "type": "object",
+      "required": ["diarization_model","transcription_model","recognition_model","processing_time"],
+      "properties": {
+        "diarization_model": {
+          "type": "object",
+          "required": ["stage","model_name","device","framework"],
+          "properties": {
+            "stage": { "type": "string" },
+            "model_name": { "type": "string" },
+            "device": { "type": "string" },
+            "framework": { "type": "string" }
+          }
+        },
+        "transcription_model": {
+          "type": "object",
+          "required": ["stage","model_size","device","framework"],
+          "properties": {
+            "stage": { "type": "string" },
+            "model_size": { "type": "string" },
+            "device": { "type": "string" },
+            "framework": { "type": "string" }
+          }
+        },
+        "recognition_model": {
+          "type": "object",
+          "required": ["stage","model_name","device","threshold","database_size","framework"],
+          "properties": {
+            "stage": { "type": "string" },
+            "model_name": { "type": "string" },
+            "device": { "type": "string" },
+            "threshold": { "type": "number" },
+            "database_size": { "type": "integer" },
+            "framework": { "type": "string" }
+          }
+        },
+        "processing_time": {
+          "type": "object",
+          "required": ["diarization","transcription","recognition","carddav"],
+          "properties": {
+            "diarization": { "type": "number" },
+            "transcription": { "type": "number" },
+            "recognition": { "type": "number" },
+            "carddav": { "type": "number" }
+          }
+        }
+      }
+    },
+    "speakers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id","label","segments_count","total_duration","identified","confidence"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "segments_count": { "type": "integer" },
+          "total_duration": { "type": "number" },
+          "identified": { "type": "boolean" },
+          "name": { "type": ["string", "null"] },
+          "contact_info": {
+            "type": ["object", "null"],
+            "properties": {
+              "full_name": { "type": "string" },
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "phones": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "emails": {
+                "type": "array",
+                "items": { "type": "string", "format": "email" }
+              },
+              "organization": { "type": "string" }
+            }
+          },
+          "voice_embedding": { "type": ["string","null"] },
+          "confidence": { "type": "number" }
+        }
+      }
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id","start","end","duration","speaker","speaker_label","text","words","confidence"],
+        "properties": {
+          "id": { "type": "integer" },
+          "start": { "type": "number" },
+          "end": { "type": "number" },
+          "duration": { "type": "number" },
+          "speaker": { "type": "string" },
+          "speaker_label": { "type": "string" },
+          "text": { "type": "string" },
+          "words": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["start","end","word","probability"],
+              "properties": {
+                "start": { "type": "number" },
+                "end": { "type": "number" },
+                "word": { "type": "string" },
+                "probability": { "type": "number" }
+              }
+            }
+          },
+          "confidence": { "type": "number" }
+        }
+      }
+    },
+    "transcription": {
+      "type": "object",
+      "required": ["full_text","confidence","language","words"],
+      "properties": {
+        "full_text": { "type": "string" },
+        "confidence": { "type": "number" },
+        "language": { "type": "string" },
+        "words": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["start","end","word","probability"],
+            "properties": {
+              "start": { "type": "number" },
+              "end": { "type": "number" },
+              "word": { "type": "string" },
+              "probability": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "required": ["total_speakers","identified_speakers","unknown_speakers","total_segments","total_words","speech_duration","silence_duration"],
+      "properties": {
+        "total_speakers": { "type": "integer" },
+        "identified_speakers": { "type": "integer" },
+        "unknown_speakers": { "type": "integer" },
+        "total_segments": { "type": "integer" },
+        "total_words": { "type": "integer" },
+        "speech_duration": { "type": "number" },
+        "silence_duration": { "type": "number" }
+      }
+    }
+  }
+}

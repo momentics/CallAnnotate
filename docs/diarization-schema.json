@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DiarizationResult",
+  "type": "object",
+  "required": [
+    "segments",
+    "speakers",
+    "speaker_stats",
+    "total_segments",
+    "total_speakers"
+  ],
+  "properties": {
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["start", "end", "duration", "speaker", "confidence"],
+        "properties": {
+          "start": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Время начала сегмента в секундах"
+          },
+          "end": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Время окончания сегмента в секундах"
+          },
+          "duration": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Длительность сегмента (end - start)"
+          },
+          "speaker": {
+            "type": "string",
+            "description": "Идентификатор спикера"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Уверенность в диаризации сегмента"
+          }
+        }
+      }
+    },
+    "speakers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Список уникальных идентификаторов спикеров"
+      }
+    },
+    "speaker_stats": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["total_duration", "segments_count"],
+        "properties": {
+          "total_duration": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Суммарная длительность речи спикера"
+          },
+          "segments_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Количество сегментов спикера"
+          }
+        }
+      }
+    },
+    "total_segments": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Общее число сегментов"
+    },
+    "total_speakers": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Количество уникальных спикеров"
+    }
+  }
+}
