@@ -10,13 +10,14 @@ import os
 import shutil
 import logging.config
 from pathlib import Path
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional, Union, List
 from fastapi import UploadFile
 from datetime import datetime, timedelta
 
 import librosa
 
 from .schemas import AudioMetadata
+from .schemas import VoiceInfo
 
 
 class ValidationResult:
@@ -271,3 +272,21 @@ def create_task_metadata(
         meta["websocket_client_id"] = websocket_client_id
     return meta
 
+def load_known_voices_from_embeddings(embeddings_dir: str) -> List[VoiceInfo]:
+    """
+    Загружает список известных голосов из каталога с эмбеддингами.
+
+    Args:
+        embeddings_dir: путь к каталогу с *.vec файлами
+
+    Returns:
+        Список VoiceInfo
+    """
+    path = Path(embeddings_dir).expanduser().resolve()
+    voices: List[VoiceInfo] = []
+    if not path.exists() or not path.is_dir():
+        return voices
+    for f in path.glob("*.vec"):
+        name = f.stem
+        voices.append(VoiceInfo(name=name, embedding=str(f)))
+    return voices

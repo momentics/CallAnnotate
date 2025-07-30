@@ -36,7 +36,12 @@ class RecognitionStage(BaseStage):
         model_name = self.config.get("model", "speechbrain/spkrec-ecapa-voxceleb")
         device = self.config.get("device", "cpu")
         embeddings_path = self.config.get("embeddings_path")
-        
+        self.index = None
+        self.speaker_labels = {}
+
+        if embeddings_path and Path(embeddings_path).exists():
+            self._load_speaker_database(embeddings_path)
+
         self.logger.info(f"Загрузка модели распознавания: {model_name}")
         
         if self.models_registry:
@@ -68,51 +73,46 @@ class RecognitionStage(BaseStage):
         self.logger.info("Модель распознавания загружена успешно")
     
     def _load_speaker_database(self, embeddings_path: str):
-        """Загрузка базы данных голосовых эмбеддингов"""
+        """Загрузка библиотеки голосов и построение индекса FAISS"""
         try:
             embeddings_dir = Path(embeddings_path)
-            
-            # Поиск файлов эмбеддингов
             embedding_files = list(embeddings_dir.glob("*.vec")) + list(embeddings_dir.glob("*.pkl"))
-            
             if not embedding_files:
-                self.logger.warning(f"Не найдены файлы эмбеддингов в {embeddings_path}")
+                self.logger.warning(f"В каталоге эмбеддингов не найдено файлов: {embeddings_path}")
                 return
-            
+
             embeddings = []
             labels = []
-            
+
             for emb_file in embedding_files:
                 try:
                     if emb_file.suffix == '.pkl':
                         with open(emb_file, 'rb') as f:
                             embedding = pickle.load(f)
-                    else:  # .vec файл
+                    else:  # .vec
                         embedding = np.loadtxt(emb_file)
-                    
-                    # Имя спикера из имени файла
+
                     speaker_name = emb_file.stem
-                    
+
                     embeddings.append(embedding)
                     labels.append(speaker_name)
                     self.speaker_labels[len(labels) - 1] = speaker_name
-                    
+
                 except Exception as e:
-                    self.logger.error(f"Ошибка загрузки эмбеддинга {emb_file}: {e}")
-            
-            # Создание FAISS индекса
+                    self.logger.error(f"Ошибка чтения эмбеддинга {emb_file}: {e}")
+
             if faiss and embeddings:
                 embeddings_matrix = np.vstack(embeddings).astype('float32')
                 dimension = embeddings_matrix.shape[1]
-                
-                self.index = faiss.IndexFlatIP(dimension)  # Cosine similarity
+
+                self.index = faiss.IndexFlatIP(dimension)  # Косинусное сходство
                 faiss.normalize_L2(embeddings_matrix)
                 self.index.add(embeddings_matrix)
-                
+
                 self.logger.info(f"Загружено {len(embeddings)} эмбеддингов голосов")
             else:
-                self.logger.warning("FAISS не доступен или нет эмбеддингов")
-                
+                self.logger.warning("FAISS не доступен или эмбеддингов нет")
+
         except Exception as e:
             self.logger.error(f"Ошибка загрузки базы голосов: {e}")
     

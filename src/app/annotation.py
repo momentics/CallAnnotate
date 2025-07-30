@@ -167,35 +167,45 @@ class AnnotationService:
         # Обработка спикеров
         speakers_map = {}
         speaker_id = 0
-        
+
         diarization_segments = diarization_result.payload.get("segments", []) if diarization_result else []
         recognition_speakers = recognition_result.payload.get("speakers", {}) if recognition_result else {}
         carddav_speakers = carddav_result.payload.get("speakers", {}) if carddav_result else {}
-        
+
+        # Подгрузка из config.voices для расширенного сопоставления
+        known_voices = {v.name: v for v in getattr(self.config, "voices", [])}
+
         for segment in diarization_segments:
             speaker_label = segment.get("speaker", "unknown")
-            
             if speaker_label not in speakers_map:
                 speaker_id += 1
                 speaker_info = FinalSpeaker(
                     id=f"speaker_{speaker_id:02d}",
                     label=speaker_label,
                     segments_count=0,
-                    total_duration=0.0
+                    total_duration=0.0,
+                    voice_embedding=None,
+                    identified=False,
+                    confidence=0.0,
+                    name=None,
+                    contact_info=None,
                 )
-                
+
                 # Добавление информации о распознавании
                 recognition_info = recognition_speakers.get(speaker_label, {})
                 if recognition_info:
                     speaker_info.identified = recognition_info.get("identified", False)
                     speaker_info.name = recognition_info.get("name")
                     speaker_info.confidence = recognition_info.get("confidence", 0.0)
-                
+                    # Пробуем дополнить путь к эмбеддингу из известного голоса
+                    if speaker_info.name and speaker_info.name in known_voices:
+                        speaker_info.voice_embedding = known_voices[speaker_info.name].embedding
+
                 # Добавление информации из CardDAV
                 carddav_info = carddav_speakers.get(speaker_label, {})
                 if carddav_info and carddav_info.get("contact"):
                     speaker_info.contact_info = carddav_info["contact"]
-                
+
                 speakers_map[speaker_label] = speaker_info
         
         # Обработка сегментов и транскрипции

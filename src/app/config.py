@@ -73,6 +73,7 @@ class TranscriptionConfig(BaseSettings):
     language: str = Field("ru", description="Язык транскрипции или auto")
     batch_size: int = Field(16, gt=0, description="Размер пакета")
     task: str = Field("transcribe", description="Задача: transcribe или translate")
+
     metrics: MetricsConfig = Field(default_factory=MetricsConfig, description="Настройки сбора метрик")
     
     class Config:
@@ -169,6 +170,11 @@ class VoiceInfo(BaseModel):
     phone: Optional[str] = Field(None, description="Номер телефона")
     description: Optional[str] = Field(None, description="Описание")
 
+class VoiceInfoConfig(BaseModel):
+    name: str
+    embedding: str
+    phone: Optional[str] = None
+    description: Optional[str] = None
 
 class WebhookConfig(BaseModel):
     """Конфигурация веб-хуков"""
@@ -324,6 +330,8 @@ class AppSettings(BaseSettings):
     features: FeaturesConfig = Field(default_factory=FeaturesConfig)
     
     preprocess: PreprocessingConfig = Field(default_factory=PreprocessingConfig)
+
+    voices: List[VoiceInfoConfig] = Field(default_factory=list, description="Известные голоса")
 
 
     @validator('recognition')

@@ -128,8 +128,15 @@ recognition:
   model: "speechbrain/spkrec-ecapa-voxceleb"  # RECOGNITION_MODEL
   device: "cpu"                              # RECOGNITION_DEVICE
   threshold: 0.7                             # RECOGNITION_THRESHOLD
-  embeddings_path: null                      # RECOGNITION_EMBEDDINGS_PATH
+  embeddings_path: "./volume/models/embeddings" # RECOGNITION_EMBEDDINGS_PATH
   index_path: null                           # RECOGNITION_INDEX_PATH
+
+voices:
+  - name: alice_ivanova
+    embedding: "./volume/models/embeddings/alice_ivanova.vec"
+    phone: "+78001234567"
+    description: "Голос Алисы Ивановой"
+
 
 # Этап CardDAV (связывание контактов)
 carddav:

@@ -306,3 +306,19 @@ class ErrorDetail(BaseModel):
 class ErrorResponse(BaseModel):
     """Ответ с ошибкой"""
     error: ErrorDetail
+
+
+
+class VoiceInfoBase(BaseModel):
+    name: str = Field(..., description="Уникальное имя голоса")
+    embedding: str = Field(..., description="Путь к файлу эмбеддинга")
+
+class VoiceInfoCreate(VoiceInfoBase):
+    pass
+
+class VoiceInfoUpdate(BaseModel):
+    embedding: str = Field(..., description="Путь к новому файлу эмбеддинга")
+
+class VoiceInfo(VoiceInfoBase):
+    class Config:
+        orm_mode = True
