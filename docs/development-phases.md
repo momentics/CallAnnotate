@@ -73,6 +73,7 @@ CallAnnotate — модульная система автоматической 
 ---
 
 ## **Phase 7: Speaker Recognition**  
+   _Статус: выполнено_  
    - **Задачи:**  
      1. `src/app/stages/recognition.py`: интеграция ECAPA-TDNN (speechbrain) для сравнения эмбеддингов.  
      2. CRUD-REST-эндпоинты для управления «известными» голосами и загрузки эмбеддингов.  
