@@ -12,7 +12,7 @@ from .preprocessing import PreprocessingStage
 from .diarization import DiarizationStage
 from .transcription import TranscriptionStage
 from .recognition import RecognitionStage
-from .carddav import CardDAVStage
+from .carddav_stage import CardDAVStage
 
 __all__ = [
     "BaseStage",

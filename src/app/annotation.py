@@ -12,7 +12,9 @@ import inspect
 from datetime import datetime
 from typing import Dict, Any, Callable, Optional
 
-from .stages import PreprocessingStage, DiarizationStage, TranscriptionStage, RecognitionStage, CardDAVStage
+from .stages import PreprocessingStage, DiarizationStage, TranscriptionStage, RecognitionStage
+from .stages.carddav_stage import CardDAVStage
+
 from .schemas import (
     AnnotationResult, AudioMetadata, ProcessingInfo, FinalSpeaker, 
     FinalSegment, FinalTranscription, Statistics, TranscriptionWord

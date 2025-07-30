@@ -61,6 +61,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r src/requirements.txt
+          pip install pytest-aioresponses pytest-httpx
 
       - name: Run tests
         run: pytest tests/

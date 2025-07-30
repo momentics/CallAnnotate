@@ -322,3 +322,28 @@ class VoiceInfoUpdate(BaseModel):
 class VoiceInfo(VoiceInfoBase):
     class Config:
         orm_mode = True
+
+
+class ContactInfo(BaseModel):
+    uid: str = Field(..., description="UID контакта в CardDAV")
+    full_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phones: List[str] = []
+    emails: List[str] = []
+    organization: Optional[str] = None
+
+class ContactCreate(BaseModel):
+    full_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phones: List[str] = []
+    emails: List[str] = []
+    organization: Optional[str] = None
+
+class ContactUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phones: List[str] = []
+    emails: List[str] = []
+    organization: Optional[str] = None
+
