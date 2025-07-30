@@ -92,7 +92,7 @@ CallAnnotate — модульная система автоматической 
 
 ---
 
-## **Phase 8: Клиентские SDK и примеры**  
+## **Phase 9: Клиентские SDK и примеры**  
     - **Задачи:**  
       1. Генерация SDK на Python/JavaScript из OpenAPI.  
       2. Примеры использования (upload, subscribe, fetch result).  
