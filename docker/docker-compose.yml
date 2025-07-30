@@ -1,32 +1,71 @@
 # Apache-2.0 License
-# Author: akoodoy@capilot.ru  
+# Author: akoodoy@capilot.ru
 # Repository: https://github.com/momentics/CallAnnotate
-
-version: '3.8'
 
 services:
   callannotate:
     build:
       context: ..
       dockerfile: Dockerfile
+      args:
+        - WHISPER_MODEL=small
+        - BUILDKIT_INLINE_CACHE=1
+      cache_from:
+        - callannotate:latest
     container_name: callannotate
     ports:
       - "8000:8000"
     volumes:
       - ../volume:/volume
       - ../config:/app/config:ro
+      - whisper-cache:/home/callannotate/.cache/whisper
     environment:
       - PYTHONPATH=/app/src
       - CONFIG_PATH=/app/config/default.yaml
       - VOLUME_PATH=/volume
+      - WHISPER_CACHE_DIR=/home/callannotate/.cache/whisper
+      - HF_DATASETS_OFFLINE=1
+      - TRANSFORMERS_OFFLINE=1
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
       retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 3G
+        reservations:
+          cpus: '2.0'
+          memory: 1.5G
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp:noexec,nosuid,size=512m
 
 volumes:
+  whisper-cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ../cache/whisper
+
   callannotate_volume:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ../volume
 
+networks:
+  default:
+    name: callannotate-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
