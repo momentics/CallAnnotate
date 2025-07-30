@@ -72,7 +72,7 @@ CallAnnotate — модульная система автоматической 
 
 ---
 
-## **Phase 8: Speaker Recognition**  
+## **Phase 7: Speaker Recognition**  
    - **Задачи:**  
      1. `src/app/stages/recognition.py`: интеграция ECAPA-TDNN (speechbrain) для сравнения эмбеддингов.  
      2. CRUD-REST-эндпоинты для управления «известными» голосами и загрузки эмбеддингов.  
@@ -81,7 +81,7 @@ CallAnnotate — модульная система автоматической 
 
 ---
 
-## **Phase 9: Интеграция CardDAV-контактов**  
+## **Phase 8: Интеграция CardDAV-контактов**  
    - **Задачи:**  
      1. `src/app/stages/carddav_client.py`: асинхронный клиент с кэшированием и fallback.  
      2. REST-эндпоинты CRUD для контактов.  
@@ -90,7 +90,7 @@ CallAnnotate — модульная система автоматической 
 
 ---
 
-## **Phase 10: Клиентские SDK и примеры**  
+## **Phase 8: Клиентские SDK и примеры**  
     - **Задачи:**  
       1. Генерация SDK на Python/JavaScript из OpenAPI.  
       2. Примеры использования (upload, subscribe, fetch result).  
@@ -99,7 +99,7 @@ CallAnnotate — модульная система автоматической 
 
 ---
 
-## **Phase 11: Production-ready CI/CD и контейнеризация**  
+## **Phase 10: Production-ready CI/CD и контейнеризация**  
     - **Задачи:**  
       1. Кросс-платформенные Docker-образы (amd64, arm64).  
       2. Security scan зависимостей (Trivy, Dependabot).  
