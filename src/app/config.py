@@ -261,6 +261,7 @@ class PreprocessingConfig(BaseSettings):
     
     # === Конфигурация DeepFilterNet (улучшение речи) ===
     deepfilter_enabled: bool = Field(True, description="Включить DeepFilterNet обработку")
+    deepfilter_sample_rate: int = Field(48000, description="Частота дискретизации для DeepFilterNet (похоже 48kHz)")
     
     # === Параметры выходных файлов ===
     output_suffix: str = Field("_processed", description="Суффикс для обработанного файла")

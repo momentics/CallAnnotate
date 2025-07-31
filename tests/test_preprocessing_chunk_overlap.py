@@ -28,14 +28,18 @@ async def test_chunking_overlap_duration(tmp_path, monkeypatch):
     sf.write(str(wav_path), samples, sr)
 
     # конфиг: chunk 2s, overlap 1s => ожидаемые чанки [0–2], [1–3]
-    cfg = PreprocessingConfig(chunk_duration=2.0, overlap=1.0, target_rms=-20.0)
+    cfg = PreprocessingConfig(deepfilter_enabled=True, 
+                              rnnoise_enabled=True, 
+                              sox_enabled=False,
+                              chunk_duration=2.0, 
+                              overlap=1.0,
+                              chunk_overlap_method="linear",
+                              target_rms=-20.0)
     stage = PreprocessingStage(cfg.dict(), models_registry=None)
 
     # мокаем все этапы: sox, RNNoise, DeepFilterNet2
     monkeypatch.setattr("app.stages.preprocessing.init_df", lambda **kwargs: (None, None, None))
     monkeypatch.setattr("app.stages.preprocessing.enhance", lambda model, state, data: data)
-    # SoX-шаг: просто копируем вход
-    monkeypatch.setenv("SOX_SKIP", "1")  # флаг внутри stage для пропуска subprocess
     # мокаем RNNoise.filter
     class NoOp:
         def filter(self, seg): return seg

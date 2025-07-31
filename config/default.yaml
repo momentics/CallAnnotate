@@ -57,10 +57,13 @@ api:
 
 # Конфигурация этапа предобработки аудио (PreprocessingStage)
 preprocess:
+  # === Конфигурация DeepFilterNet (улучшение речи) ===
+  deepfilter_enabled: true            # Включить DeepFilterNet обработку
+  deepfilter_sample_rate: 48000       # Частота дискретизации для DeepFilterNet (похоже 48kHz)
   # === Основные параметры обработки ===
   model: "DeepFilterNet2"              # Модель для улучшения речи (DeepFilterNet2)
   device: "cpu"                        # Устройство вычислений (cpu/cuda)
-  chunk_duration: 2.0                  # Длительность чанка в секундах
+  chunk_duration: 10.0                 # Длительность чанка в секундах
   overlap: 0.5                         # Перекрытие между чанками в секундах
   target_rms: -20.0                    # Целевой RMS уровень в дБFS
   
@@ -73,9 +76,6 @@ preprocess:
   # === Конфигурация RNNoise (нейронное шумоподавление) ===
   rnnoise_enabled: true               # Включить RNNoise шумоподавление
   rnnoise_sample_rate: 48000          # Частота дискретизации для RNNoise (только 48kHz)
-  
-  # === Конфигурация DeepFilterNet (улучшение речи) ===
-  deepfilter_enabled: true            # Включить DeepFilterNet обработку
   
   # === Параметры выходных файлов ===
   output_suffix: "_processed"         # Суффикс для обработанного файла

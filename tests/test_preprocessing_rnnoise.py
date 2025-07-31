@@ -30,7 +30,7 @@ class DummyRNNoise:
 async def test_rnnoise_reduction(tmp_path, monkeypatch):
     # создаём WAV с шумом: синус + белый шум
     sr = 8000
-    duration = 1.0
+    duration = 5.0
     t = np.linspace(0, duration, int(sr * duration), False)
     sine = 0.1 * np.sin(2 * np.pi * 440 * t).astype(np.float32)
     noise = 0.1 * np.random.RandomState(0).randn(len(t)).astype(np.float32)
@@ -39,7 +39,12 @@ async def test_rnnoise_reduction(tmp_path, monkeypatch):
     sf.write(str(wav_path), samples, sr)
 
     # конфиг с одним чанком без overlap
-    cfg = PreprocessingConfig(chunk_duration=1.0, overlap=0.0, target_rms=-20.0)
+    cfg = PreprocessingConfig(deepfilter_enabled=False, 
+                              rnnoise_enabled=True, 
+                              sox_enabled=False,
+                              chunk_duration=duration/4, # четырьмя чанками
+                              overlap=0.0, 
+                              target_rms=-20.0)
     stage = PreprocessingStage(cfg.dict(), models_registry=None)
 
     # мокаем init_df/enhance, а RNNoise

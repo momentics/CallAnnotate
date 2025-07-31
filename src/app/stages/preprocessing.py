@@ -25,6 +25,7 @@ import numpy as np
 import soundfile as sf
 import torch
 from pydub import AudioSegment
+from scipy.signal import resample_poly
 
 from ..rnnoise_wrapper import RNNoise
 from .base import BaseStage
@@ -58,32 +59,37 @@ class PreprocessingStage(BaseStage):
     async def _initialize(self) -> None:
         self.logger.info("=== PreprocessingStage: старт инициализации ===")
         self.debug_mode: bool = bool(self.config.get("debug_mode", False))
+        self.deepfilter_enabled = bool(self.config.get("deepfilter_enabled", False))
 
         if init_df is None or enhance is None:
             raise RuntimeError(
                 "Не установлена зависимость deepfilternet. "
                 "Установите пакет `deepfilternet` для работы этапа preprocess."
             )
+        
+        if self.deepfilter_enabled:
 
-        model_name = self.config.get("model", "DeepFilterNet2")
-        device = self.config.get("device", "cpu")
-        if self.debug_mode:
-            self.logger.info("Инициализация DeepFilterNet: model=%s, device=%s", model_name, device)
+            model_name = self.config.get("model", "DeepFilterNet2")
+            device = self.config.get("device", "cpu")
+            if self.debug_mode:
+                self.logger.info("Инициализация DeepFilterNet: model=%s, device=%s", model_name, device)
 
-        # Универсальный вызов init_df: учитываем mocks с любым signature
-        try:
-            sig = inspect.signature(init_df)
-            # если функция не принимает позиционные обязательные args (len==0)
-            # или поддерживает **kwargs, вызываем без аргументов
-            if len(sig.parameters) == 0 or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()):
-                self.model, self.df_state, _ = init_df()  # type: ignore[arg-type]
-            elif "model" in sig.parameters and "device" in sig.parameters:
-                self.model, self.df_state, _ = init_df(model=model_name, device=device)  # type: ignore[arg-type]
-            else:
-                self.model, self.df_state, _ = init_df(model_name, device)  # type: ignore[arg-type]
-        except Exception as e:
-            self.logger.error(f"Ошибка DeepFilterNet init_df: {e}", exc_info=True)
-            raise
+            # Универсальный вызов init_df: учитываем mocks с любым signature
+            try:
+                sig = inspect.signature(init_df)
+                # если функция не принимает позиционные обязательные args (len==0)
+                # или поддерживает **kwargs, вызываем без аргументов
+                if len(sig.parameters) == 0 or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()):
+                    self.model, self.df_state, _ = init_df()  # type: ignore[arg-type]
+                elif "model" in sig.parameters and "device" in sig.parameters:
+                    self.model, self.df_state, _ = init_df(model=model_name, device=device)  # type: ignore[arg-type]
+                else:
+                    self.model, self.df_state, _ = init_df(model_name, device)  # type: ignore[arg-type]
+            except Exception as e:
+                self.logger.error(f"Ошибка DeepFilterNet init_df: {e}", exc_info=True)
+                raise
+        else:
+            self.model = None
 
         # RNNoise
         self.rnnoise: Optional[RNNoise] = None
@@ -105,13 +111,7 @@ class PreprocessingStage(BaseStage):
         # SoX
         self.sox_available = self._detect_sox()
 
-        self.logger.info(
-            "=== PreprocessingStage: инициализация завершена "
-            "(DeepFilterNet=%s | RNNoise=%s | SoX=%s) ===",
-            "ON" if self.model is not None else "OFF",
-            "ON" if self.rnnoise is not None else "OFF",
-            "ON" if self.sox_available else "OFF",
-        )
+        self.logger.info(self._get_model_info())
 
     # берет любой файл из поддерживаемых, производит шумодав
     # и выдает файл в формате PCM_16, добавляя к имени файла постфикс
@@ -147,16 +147,8 @@ class PreprocessingStage(BaseStage):
             await progress_callback(10, "Загрузка аудио")
 
         audio = AudioSegment.from_file(src)
-        #-------------
-        # этот код основывается на оригинальном sample rate channel numbers
-        #sr = audio.frame_rate
-        # этот код преобразует все что было на входе к mono 48 кГц 16 бит
-        audio = audio.set_frame_rate(48000).set_channels(1).set_sample_width(2)
-        sr = 48000
-        #-------------
-        #audio.export("output.wav", format="wav")
+        sr = audio.frame_rate
         total_ms = len(audio)
-
 
         segments: List[np.ndarray] = []
         pos = 0
@@ -169,11 +161,18 @@ class PreprocessingStage(BaseStage):
             if self.rnnoise:
                 seg = await self._apply_rnnoise(seg, idx)
 
-            seg_np = await self._apply_deepfilter(seg, sr, idx)
-            segments.append(seg_np)
+            if self.deepfilter_enabled:
+                seg_np = await self._apply_deepfilter(seg, sr, idx)
+                segments.append(seg_np)
+            else:
+                # Это является бест практикой, преобразовывать в [-1:1] float32
+                samples = np.array(seg.get_array_of_samples(), dtype=np.float32)
+                samples /= np.iinfo(seg.array_type).max
+                segments.append(samples)
 
             idx += 1
             pos += step
+
             if progress_callback and idx % max(progress_step, 1) == 0:
                 pct = 10 + int(60 * pos / total_ms)
                 await progress_callback(pct, f"preprocess chunk {idx}")
@@ -236,13 +235,26 @@ class PreprocessingStage(BaseStage):
         if self.model is None:
             return samples
 
+        sr = seg.frame_rate
+
+        DeepFilterNet_supported = int(self.config.get("deepfilter_sample_rate", 48000))
         try:
+            if sr <= DeepFilterNet_supported:
+                samples = self.upsample_audio(samples, sr, DeepFilterNet_supported)
+            else:
+                samples = self.downsample_audio(samples, sr, DeepFilterNet_supported)
+
             tensor = torch.from_numpy(samples).float()
             out = enhance(self.model, self.df_state, tensor)  # type: ignore[arg-type]
             if isinstance(out, torch.Tensor):
                 denoised = out.cpu().numpy().astype(np.float32)
             else:
                 denoised = np.asarray(out, dtype=np.float32)
+
+            if sr <= DeepFilterNet_supported:
+                denoised = self.downsample_audio(denoised, DeepFilterNet_supported, sr)
+            else:
+                denoised = self.upsample_audio(denoised, DeepFilterNet_supported, sr)
 
             # вернем деноизированный в оригинальном формате, с нормализацией
             denoised_int = (denoised * np.iinfo(seg.array_type).max).astype(seg.array_type)
@@ -302,10 +314,8 @@ class PreprocessingStage(BaseStage):
         if not self.rnnoise:
             return seg
 
+        RNN_supported = int(self.config.get("rnnoise_sample_rate", 48000))
         try:
-            if hasattr(self.rnnoise, "filter"):
-                return self.rnnoise.filter(seg)  # type: ignore[return-value]
-            
             # Это является бест практикой, преобразовывать в [-1:1] float32
             samples = np.array(seg.get_array_of_samples(), dtype=np.float32)
             samples /= np.iinfo(seg.array_type).max
@@ -313,14 +323,64 @@ class PreprocessingStage(BaseStage):
             if seg.channels > 1:
                 samples = samples.reshape(-1, seg.channels).mean(axis=1)
 
+            sr = seg.frame_rate
+
+            self.logger.info(f"RNNoise: orig_sr={sr}, samples_shape={samples.shape}")
+
+            if sr <= RNN_supported:
+                samples = self.upsample_audio(samples, sr, RNN_supported)
+                self.logger.info(f"RNNoise: upsampled to 48kHz, new_length={len(samples)}")
+            else:
+                samples = self.downsample_audio(samples, sr, RNN_supported)
+                self.logger.info(f"RNNoise: downsampled to 48kHz, new_length={len(samples)}")
+
+
+
+            if hasattr(self.rnnoise, "filter"):
+                # --- NEW CODE ---------------------------------------------------------
+                filtered = self.rnnoise.filter(seg)
+
+                # 1.  AudioSegment → float32 NumPy array in range [-1, 1]
+                if isinstance(filtered, AudioSegment):
+                    filt_samples = np.array(filtered.get_array_of_samples(),
+                                            dtype=np.float32)
+                    filt_samples /= np.iinfo(filtered.array_type).max
+                    if filtered.channels > 1:
+                        filt_samples = (
+                            filt_samples.reshape(-1, filtered.channels).mean(axis=1)
+                        )
+                    filt_sr = filtered.frame_rate
+                else:                           # already ndarray
+                    filt_samples = filtered
+                    filt_sr = RNN_supported      # rnnoise works at 48 kHz
+                # ---------------------------------------------------------------------
+
+                # 2.  Resample to original sample-rate
+                if filt_sr > sr:
+                    resampled = self.downsample_audio(filt_samples, filt_sr, sr)
+                elif filt_sr < sr:
+                    resampled = self.upsample_audio(filt_samples, filt_sr, sr)
+                else:
+                    resampled = filt_samples
+
+                # 3.  NumPy array → AudioSegment that matches the input format
+                resampled_int = (
+                    resampled * np.iinfo(seg.array_type).max
+                ).astype(seg.array_type)
+                return seg._spawn(resampled_int.tobytes())
+
             frames = []
             # пропускаем speech probability и возвращаем только фреймы
             for _, frame in self.rnnoise.denoise_chunk(samples[np.newaxis, :]):  # type: ignore[attr-defined]
-                frames.append(frame)
+                if sr <= RNN_supported:
+                    frames.append(self.downsample_audio(frame, RNN_supported, sr))
+                else:
+                    frames.append(self.upsample_audio(frame, RNN_supported, sr))
 
             if not frames:
                 return seg
 
+            # уже ресемплированы в sr
             denoised = np.concatenate(frames).astype(np.float32)
             denoised_int = (denoised * np.iinfo(seg.array_type).max).astype(seg.array_type)
 
@@ -415,3 +475,26 @@ class PreprocessingStage(BaseStage):
             "deepfilternet": self.model is not None,
             "debug": self.debug_mode,
         }
+
+
+    def upsample_audio(self, samples: np.ndarray, orig_sr: int, target_sr: int) -> np.ndarray:
+        """Апсемплирует сигнал из orig_sr до target_sr (target_sr > orig_sr) с фильтрацией"""
+        if target_sr <= orig_sr:
+            raise ValueError("target_sr должен быть больше orig_sr для апсемплинга")
+        gcd = np.gcd(orig_sr, target_sr)
+        up = target_sr // gcd
+        down = orig_sr // gcd
+        # полифазный ресемплер
+        upsampled = resample_poly(samples, up, down)
+        return upsampled.astype(np.float32)
+
+    def downsample_audio(self, samples: np.ndarray, orig_sr: int, target_sr: int) -> np.ndarray:
+        """Даунсемплирует сигнал из orig_sr до target_sr (target_sr < orig_sr) с фильтрацией"""
+        if target_sr >= orig_sr:
+            raise ValueError("target_sr должен быть меньше orig_sr для даунсемплинга")
+        gcd = np.gcd(orig_sr, target_sr)
+        up = target_sr // gcd
+        down = orig_sr // gcd
+        # полифазный ресемплер
+        downsampled = resample_poly(samples, up, down)
+        return downsampled.astype(np.float32)

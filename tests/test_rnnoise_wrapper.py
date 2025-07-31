@@ -1,103 +1,57 @@
-# src/app/rnnoise_wrapper.py
-
-# -*- coding: utf-8 -*-
-"""
-Простая обёртка над нативной библиотекой RNNoise через ctypes
-
-Автор: akoodoy@capilot.ru
-Ссылка: https://github.com/momentics/CallAnnotate
-Лицензия: Apache-2.0
-"""
-
 import ctypes
-import ctypes.util
 import numpy as np
+import pytest
 
-# Константы RNNoise
-FRAME_SIZE = 480  # 10ms at 48kHz
 
-class RNNoise:
-    """Обёртка над нативной библиотекой RNNoise"""
+# ---------------------------------------------------------------------
+#  Вспомогательный стаб C-библиотеки RNNoise
+# ---------------------------------------------------------------------
+class _DummyLib:
+    def __init__(self):
+        self._state = ctypes.c_void_p(1)
 
-    def __init__(self, sample_rate: int = 48000):
-        if sample_rate != 48000:
-            raise ValueError("RNNoise работает только с частотой 48 кГц")
-        self.sample_rate = sample_rate
+    def rnnoise_create(self):
+        return self._state
 
-        # ищем библиотеку
-        lib_path = ctypes.util.find_library('rnnoise')
-        if not lib_path:
-            for path in ['/usr/local/lib/librnnoise.so', '/usr/lib/librnnoise.so']:
-                try:
-                    self._lib = ctypes.CDLL(path)
-                    break
-                except OSError:
-                    continue
-            else:
-                raise RuntimeError("Библиотека RNNoise не найдена")
-        else:
-            self._lib = ctypes.CDLL(lib_path)
+    def rnnoise_destroy(self, _state):
+        return None
 
-        # пытаемся установить restype/argtypes, но пропускаем, если это простой метод
-        try:
-            self._lib.rnnoise_create.restype = ctypes.c_void_p
-        except (AttributeError, TypeError):
-            pass
-        try:
-            self._lib.rnnoise_destroy.argtypes = [ctypes.c_void_p]
-        except (AttributeError, TypeError):
-            pass
-        try:
-            self._lib.rnnoise_process_frame.argtypes = [
-                ctypes.c_void_p,
-                ctypes.POINTER(ctypes.c_float),
-                ctypes.POINTER(ctypes.c_float)
-            ]
-            self._lib.rnnoise_process_frame.restype = ctypes.c_float
-        except (AttributeError, TypeError):
-            pass
+    def rnnoise_process_frame(self, _state, out_frame, in_frame):
+        # копируем вход → выход + фиктивная вероятность речи
+        ctypes.memmove(out_frame, in_frame,
+                       480 * ctypes.sizeof(ctypes.c_float))
+        return ctypes.c_float(0.42)
 
-        # создаём состояние
-        self._state = self._lib.rnnoise_create()
-        if not self._state:
-            raise RuntimeError("Не удалось создать состояние RNNoise")
 
-    def __del__(self):
-        if hasattr(self, '_state') and self._state:
-            try:
-                self._lib.rnnoise_destroy(self._state)
-            except Exception:
-                pass
+# ---------------------------------------------------------------------
+#  Фикстура, подменяющая загрузку SO-библиотеки
+# ---------------------------------------------------------------------
+@pytest.fixture
+def mock_rnnoise_lib(monkeypatch):
+    monkeypatch.setattr("ctypes.util.find_library",
+                        lambda name: "/usr/lib/librnnoise_mock.so")
+    monkeypatch.setattr("ctypes.CDLL", lambda path: _DummyLib())
+    yield
 
-    def denoise_chunk(self, audio_data: np.ndarray):
-        """
-        Подавление шума в аудио чанке
-        Args:
-            audio_data: numpy массив формы (1, N) с аудиоданными
-        Yields:
-            Кортежи (speech_prob, denoised_frame)
-        """
-        if audio_data.ndim != 2 or audio_data.shape[0] != 1:
-            raise ValueError("Ожидается массив формы (1, N)")
 
-        samples = audio_data.flatten().astype(np.float32)
-        for i in range(0, len(samples), FRAME_SIZE):
-            frame = samples[i:i + FRAME_SIZE]
-            if len(frame) < FRAME_SIZE:
-                padded = np.zeros(FRAME_SIZE, dtype=np.float32)
-                padded[:len(frame)] = frame
-                frame = padded
+# ---------------------------------------------------------------------
+#  Юнит-тесты
+# ---------------------------------------------------------------------
+def test_init_success(mock_rnnoise_lib):
+    from app.rnnoise_wrapper import RNNoise
 
-            # создаём C-массивы
-            c_input = (ctypes.c_float * FRAME_SIZE)(*frame)
-            c_output = (ctypes.c_float * FRAME_SIZE)()
+    rn = RNNoise()
+    assert rn.sample_rate == 48_000
 
-            # порядок аргументов: state, input, output
-            self._lib.rnnoise_process_frame(self._state, c_input, c_output)
 
-            denoised = np.array(c_output, dtype=np.float32)
-            # обрезаем паддинг
-            if i + FRAME_SIZE > len(samples):
-                denoised = denoised[:len(samples) - i]
-            # возвращаем speech_prob не используется, ставим 0.0
-            yield 0.0, denoised
+def test_denoise_chunk_identity(mock_rnnoise_lib):
+    from app.rnnoise_wrapper import RNNoise, FRAME_SIZE
+
+    rn = RNNoise()
+    # два 10-мс фрейма тестового сигнала
+    data = np.linspace(-1.0, 1.0, FRAME_SIZE * 2, dtype=np.float32)
+    res = np.concatenate([frame for _, frame in rn.denoise_chunk(data)])
+
+    # длина сохранена, сигнал не изменился
+    assert res.shape == data.shape
+    np.testing.assert_allclose(res, data, rtol=1e-6, atol=1e-6)

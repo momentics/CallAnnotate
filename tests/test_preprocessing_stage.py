@@ -10,7 +10,7 @@ from app.config import PreprocessingConfig
 async def test_preprocessing_normalization(tmp_path, monkeypatch):
     # создаём файл с синусоидой
     sr = 8000
-    t = 1.0
+    t = 5.0
     import numpy as np
     import soundfile as sf
     samples = (0.1 * np.sin(2 * np.pi * 440 * np.linspace(0, t, int(sr*t)))).astype(np.float32)
@@ -18,7 +18,10 @@ async def test_preprocessing_normalization(tmp_path, monkeypatch):
     sf.write(str(wav), samples, sr)
 
     # конфигурация
-    cfg = PreprocessingConfig(chunk_duration=1.0, overlap=0.0, target_rms=-10.0)
+    cfg = PreprocessingConfig(deepfilter_enabled=True, rnnoise_enabled=False,
+                              chunk_duration=t/4, # четырьмя чанками 
+                              overlap=0.0, 
+                              target_rms=-10.0)
     stage = PreprocessingStage(cfg.dict(), None)
 
     # мокаем df.enhance модуль целиком

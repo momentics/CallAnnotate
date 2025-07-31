@@ -76,7 +76,8 @@ preprocess:
   
   # Конфигурация DeepFilterNet
   deepfilter_enabled: true
-  
+  deepfilter_sample_rate: 48000       # Частота дискретизации для DeepFilterNet (похоже 48kHz)
+
   # Параметры выходных файлов
   output_suffix: "_processed"
   audio_format: "wav"
