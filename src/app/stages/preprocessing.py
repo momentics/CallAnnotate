@@ -103,11 +103,7 @@ class PreprocessingStage(BaseStage):
                 self.logger.warning(f"RNNoise инициализация не удалась: {e}. Шумоподавление будет пропущено")
 
         # SoX
-        self.sox_available: bool = bool(
-            self.config.get("sox_enabled", True)
-            and os.getenv("SOX_SKIP", "0") != "1"
-            and shutil.which("sox")
-        )
+        self.sox_available = self._detect_sox()
 
         self.logger.info(
             "=== PreprocessingStage: инициализация завершена "
@@ -117,6 +113,8 @@ class PreprocessingStage(BaseStage):
             "ON" if self.sox_available else "OFF",
         )
 
+    # берет любой файл из поддерживаемых, производит шумодав
+    # и выдает файл в формате PCM_16, добавляя к имени файла постфикс
     async def _process_impl(
         self,
         file_path: str,
@@ -124,6 +122,7 @@ class PreprocessingStage(BaseStage):
         previous_results: Dict[str, Any],
         progress_callback: Optional[Callable[[int, str], None]] = None,
     ) -> Dict[str, Any]:
+        
         self.logger.info(
             "=== PreprocessingStage: начало обработки файла %s (task_id=%s) ===",
             file_path,
@@ -137,7 +136,7 @@ class PreprocessingStage(BaseStage):
         output_suffix = str(self.config.get("output_suffix", "_processed"))
         progress_step = int(self.config.get("progress_interval", 10))
 
-        # SoX
+        # SoX обработанный файл или оригинальный файл
         src = (
             await self._apply_sox(file_path, task_id, target_rms)
             if self.sox_available
@@ -148,8 +147,16 @@ class PreprocessingStage(BaseStage):
             await progress_callback(10, "Загрузка аудио")
 
         audio = AudioSegment.from_file(src)
-        sr = audio.frame_rate
+        #-------------
+        # этот код основывается на оригинальном sample rate channel numbers
+        #sr = audio.frame_rate
+        # этот код преобразует все что было на входе к mono 48 кГц 16 бит
+        audio = audio.set_frame_rate(48000).set_channels(1).set_sample_width(2)
+        sr = 48000
+        #-------------
+        #audio.export("output.wav", format="wav")
         total_ms = len(audio)
+
 
         segments: List[np.ndarray] = []
         pos = 0
@@ -176,6 +183,7 @@ class PreprocessingStage(BaseStage):
 
         if progress_callback:
             await progress_callback(75, "Склеивание чанков")
+
         merged = await self._merge_chunks(
             segments,
             overlap_ms,
@@ -185,11 +193,14 @@ class PreprocessingStage(BaseStage):
 
         if progress_callback:
             await progress_callback(90, "Финальная нормализация")
+
         merged = await self._apply_final_normalization(merged, target_rms)
 
         if progress_callback:
             await progress_callback(95, "Сохранение результата")
+
         self.logger.info("=== PreprocessingStage: сохранение результата ===")
+
         out_path = await self._save(
             merged,
             original=file_path,
@@ -198,6 +209,7 @@ class PreprocessingStage(BaseStage):
         )
 
         dt = time.perf_counter() - t0
+        
         self.logger.info(
             "=== PreprocessingStage: обработка завершена за %.3f с, результат: %s ===",
             dt,
@@ -213,8 +225,11 @@ class PreprocessingStage(BaseStage):
     # DEEPFILTERNET                                                         #
     # --------------------------------------------------------------------- #
     async def _apply_deepfilter(self, seg: AudioSegment, sr: int, idx: int) -> np.ndarray:
+
+        # это является лучшей практикой, преобразовывать в [-1:1] float32
         samples = np.array(seg.get_array_of_samples(), dtype=np.float32)
         samples /= np.iinfo(seg.array_type).max
+
         if seg.channels > 1:
             samples = samples.reshape(-1, seg.channels).mean(axis=1)
 
@@ -225,24 +240,36 @@ class PreprocessingStage(BaseStage):
             tensor = torch.from_numpy(samples).float()
             out = enhance(self.model, self.df_state, tensor)  # type: ignore[arg-type]
             if isinstance(out, torch.Tensor):
-                return out.cpu().numpy().astype(np.float32)
-            return np.asarray(out, dtype=np.float32)
+                denoised = out.cpu().numpy().astype(np.float32)
+            else:
+                denoised = np.asarray(out, dtype=np.float32)
+
+            # вернем деноизированный в оригинальном формате, с нормализацией
+            denoised_int = (denoised * np.iinfo(seg.array_type).max).astype(seg.array_type)
+            return seg._spawn(denoised_int.tobytes())
+        
         except Exception as e:
             self.logger.error("DeepFilterNet error on chunk %s: %s", idx, e, exc_info=True)
             return samples
 
     async def _apply_sox(self, file_path: str, task_id: str, target_rms_db: float) -> str:
         """Шумоподавление + нормализация через SoX."""
+
+        # профайл шума
         prof = Path(tempfile.gettempdir()) / f"{task_id}.prof"
+        # результирующий файл после обработки
         dst = Path(tempfile.gettempdir()) / f"{task_id}_sox.wav"
 
         try:
+            # получаем профиль шума
             subprocess.run(
                 ["sox", file_path, "-n", "trim", "0", "2", "noiseprof", str(prof)],
                 check=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
+
+            # обрабаываем файл профилем и нормализуем RMS
             subprocess.run(
                 [
                     "sox",
@@ -259,11 +286,15 @@ class PreprocessingStage(BaseStage):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
+            # вернем путь к файлу после шумодава
             return str(dst)
+        
         except subprocess.CalledProcessError as e:
             self.logger.warning("SoX processing failed (%s), используем оригинальный файл.", e)
+            # в случае ошибки возвращаем оригинальный путь
             return file_path
         finally:
+            # закрываем файл профиля
             prof.unlink(missing_ok=True)
 
     async def _apply_rnnoise(self, seg: AudioSegment, idx: int) -> AudioSegment:
@@ -274,20 +305,27 @@ class PreprocessingStage(BaseStage):
         try:
             if hasattr(self.rnnoise, "filter"):
                 return self.rnnoise.filter(seg)  # type: ignore[return-value]
+            
+            # Это является бест практикой, преобразовывать в [-1:1] float32
             samples = np.array(seg.get_array_of_samples(), dtype=np.float32)
             samples /= np.iinfo(seg.array_type).max
+
             if seg.channels > 1:
                 samples = samples.reshape(-1, seg.channels).mean(axis=1)
 
             frames = []
+            # пропускаем speech probability и возвращаем только фреймы
             for _, frame in self.rnnoise.denoise_chunk(samples[np.newaxis, :]):  # type: ignore[attr-defined]
                 frames.append(frame)
+
             if not frames:
                 return seg
 
             denoised = np.concatenate(frames).astype(np.float32)
             denoised_int = (denoised * np.iinfo(seg.array_type).max).astype(seg.array_type)
+
             return seg._spawn(denoised_int.tobytes())
+        
         except Exception as e:
             self.logger.warning("RNNoise error on chunk %s: %s", idx, e)
             return seg
@@ -300,42 +338,59 @@ class PreprocessingStage(BaseStage):
         method: str,
     ) -> np.ndarray:
         """Склеивание обработанных чанков."""
+        # если один сегмент, то нечего склеивать
         if len(segments) == 1:
             return segments[0]
 
+        # считаем сколько семплов оверлапится
         overlap_samples = int(overlap_ms * sample_rate / 1000)
+        # первый сегмент не оверлапится
         out = segments[0].copy()
+
+        # далее - склеивание. Либо линейное, либо оконное
         for seg in segments[1:]:
+            # длина сегмента меньше длины оверлапа
             if len(seg) <= overlap_samples:
                 continue
+            # накладывание с наложением по ханингу, иначе пропускаем ханинг
             if method == "windowed" and overlap_samples:
                 window = np.hanning(overlap_samples * 2)
                 out[-overlap_samples:] *= window[:overlap_samples]
                 seg[:overlap_samples] *= window[overlap_samples:]
+            # склеиваем подготовленные куски
             out = np.concatenate([out, seg[overlap_samples:]])
+        # по завершению возвращаем
         return out
 
     async def _apply_final_normalization(self, audio: np.ndarray, target_rms_db: float) -> np.ndarray:
         """Финальная нормализация уровня громкости."""
         current_rms = float(np.sqrt(np.mean(audio**2)))
+
         if current_rms == 0.0:
+            # тишина
             return audio
+
+        # иначе выравниваем RMS
         target_linear = 10 ** (target_rms_db / 20)
         if current_rms > target_linear:
             gain = target_linear / current_rms
             audio = np.clip(audio * gain, -1.0, 1.0)
+
+        # возвращаем выровненный результат
         return audio
 
     async def _save(self, audio: np.ndarray, original: str, suffix: str, sample_rate: int) -> str:
         """Сохранение результата на диск."""
         out_path = str(Path(original).with_stem(Path(original).stem + suffix))
+        # преобразуем итоговый формат файла после шумоподавления
         sf.write(out_path, audio, sample_rate, subtype="PCM_16")
+        # возвращаем путь до него
         return out_path
 
     def _detect_sox(self) -> bool:
         """Проверка доступности SoX."""
         return bool(
-            self.config.get("sox_enabled", True)
+            self.config.get("sox_enabled", False)
             and shutil.which("sox")
         )
 

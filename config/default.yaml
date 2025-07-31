@@ -9,7 +9,7 @@ server:
   workers: 1
   reload: false
   log_level: "info"
-  version: "1.1.0"
+  version: "1.0.0"
 
 # Секция очереди задач
 queue:
@@ -65,7 +65,7 @@ preprocess:
   target_rms: -20.0                    # Целевой RMS уровень в дБFS
   
   # === Конфигурация SoX (системный аудиопроцессор) ===
-  sox_enabled: true                    # Включить предварительную обработку SoX
+  sox_enabled: false                  # Включить предварительную обработку SoX
   sox_noise_profile_duration: 2.0     # Длительность для создания профиля шума (сек)
   sox_noise_reduction: 0.3            # Коэффициент подавления шума (0.0-1.0)
   sox_gain_normalization: true        # Применять автоматическую нормализацию усиления

@@ -1,0 +1,213 @@
+# config/default.yaml
+# Оптимизированная конфигурация для последовательной обработки записей Asterisk
+# Сценарий: 0-10 файлов/день, 10с-3ч длительность, 2 спикера, 1 известный голос
+
+# Секция сервера
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 1  # один воркер для последовательной обработки
+  reload: false
+  log_level: "info"
+  version: "1.0.0"
+
+# Секция очереди задач  
+queue:
+  volume_path: "./volume"
+  max_concurrent_tasks: 1  # строго последовательная обработка
+  max_queue_size: 20  # с запасом на накопление файлов
+  task_timeout: 14400  # 4 часа для 3-часовых записей + буфер
+  cleanup_interval: 600  # чаще проверяем очередь
+
+# Секция файлов
+files:
+  max_size: 2147483648  # 2GB для 3-часовых записей
+  allowed_formats:
+    - "wav"
+    - "mp3"
+    - "ogg"
+    - "flac"
+    - "aac"
+    - "m4a"
+    - "mp4"
+  temp_cleanup_hours: 48  # увеличено время хранения
+
+# Секция логирования
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "./volume/logs/system/app.log"
+  max_size: "100MB"  # ротация логов
+  backup_count: 5
+  external_levels:
+    uvicorn: "INFO"
+    fastapi: "INFO"
+    asyncio: "WARNING"
+
+cors:
+  origins:
+    - "*"
+  allow_credentials: true
+  allow_methods:
+    - "*"
+  allow_headers:
+    - "*"
+
+api:
+  base_path: "/api/v1"
+
+# Конфигурация этапа предобработки аудио
+preprocess:
+  model: "DeepFilterNet2"
+  device: "cpu"
+  chunk_duration: 30.0  # увеличено для длинных записей
+  overlap: 1.0  # увеличено перекрытие
+  target_rms: -20.0
+  
+  # Конфигурация SoX
+  sox_enabled: false
+  sox_noise_profile_duration: 5.0  # увеличено для лучшего профиля
+  sox_noise_reduction: 0.4  # усилено шумоподавление
+  sox_gain_normalization: true
+  
+  # Конфигурация RNNoise
+  rnnoise_enabled: true
+  rnnoise_sample_rate: 48000
+  
+  # Конфигурация DeepFilterNet
+  deepfilter_enabled: true
+  
+  # Параметры выходных файлов
+  output_suffix: "_processed"
+  audio_format: "wav"
+  bit_depth: 16
+  channels: "mono"
+  sample_rate_target: null
+  
+  # Параметры обработки
+  chunk_overlap_method: "windowed"  # лучше для длинных записей
+  processing_threads: 2  # используем 2 из 4 CPU
+  memory_limit_mb: 1536  # 1.5GB для предобработки
+  
+  # Служебные параметры
+  temp_cleanup: true
+  preserve_original: true
+  debug_mode: false
+  save_intermediate: false
+  progress_interval: 5  # чаще отчеты для длинных файлов
+
+# Секция диаризации
+diarization:
+  model: "pyannote/speaker-diarization-3.1"
+  use_auth_token: null
+  device: "cpu"
+  batch_size: 16  # снижено для экономии памяти
+  
+  # Параметры скользящего окна - ВКЛЮЧЕНО
+  window_enabled: true  # включено для длинных записей
+  window_size: 120.0  # 2 минуты окно
+  hop_size: 30.0  # 30 сек шаг
+  
+  # Ограничения спикеров (знаем что всегда 2, редко 3)
+  min_speakers: 2
+  max_speakers: 3
+
+# Этап транскрипции
+transcription:
+  model: "openai/whisper-base"  # компромисс скорость/качество
+  device: "cpu"
+  language: "ru"
+  batch_size: 8  # оптимально для 4 CPU
+  task: "transcribe"
+  
+  # Метрики
+  metrics:
+    confidence: true
+    avg_logprob: true
+    no_speech_prob: true
+    timing: true
+  
+  # Оптимизации
+  adaptive_batch: true  # адаптивный размер пакета
+  memory_efficient: true  # экономия памяти
+
+# Этап распознавания
+recognition:
+  model: "speechbrain/spkrec-ecapa-voxceleb"
+  device: "cpu"
+  threshold: 0.6  # снижен для лучшего распознавания
+  embeddings_path: "./volume/models/embeddings"
+  index_path: "./volume/models/faiss_index"
+  max_embeddings: 10  # ограничиваем загрузку
+  cache_enabled: true  # кэшируем результаты
+  cache_ttl: 3600
+
+# Информация о голосах
+voices: []
+
+# Этап CardDAV
+carddav:
+  enabled: true
+  url: null  # задается через переменные окружения
+  username: null
+  password: null
+  timeout: 60  # увеличен для больших баз контактов
+  verify_ssl: true
+  cache_enabled: true  # кэшируем контакты
+  cache_ttl: 3600  # кэш на час
+  batch_size: 100  # пакетная загрузка контактов
+  auto_create_contacts: true  # автосоздание контактов
+
+# Настройки уведомлений
+notifications:
+  webhooks:
+    enabled: true
+    timeout: 30
+    retry_count: 3
+    retry_delay: 5
+  websocket:
+    ping_interval: 30
+    ping_timeout: 10
+    close_timeout: 10
+
+# Параметры производительности
+performance:
+  cpu_cores: 4
+  memory_limit: "2.5GB"  # оставляем 0.5GB для системы
+  temp_dir: "/tmp/callannotate"
+  parallel_processing: false  # последовательная обработка
+  disk_cache_size: "1GB"
+
+# Безопасность и лимитирование
+security:
+  api_key_required: false
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 30  # снижено для Asterisk
+  file_upload:
+    virus_scan: false
+    content_validation: true
+
+# Мониторинг и метрики
+monitoring:
+  metrics_enabled: true
+  health_check_interval: 60
+  performance_logging: true
+  disk_usage_threshold: 0.85  # предупреждение при 85% заполнении
+
+# Фичи сервиса
+features:
+  real_time_processing: false  # не нужно для Asterisk
+  batch_processing: true
+  webhook_callbacks: true
+  file_download: true
+  task_cancellation: true
+  progress_tracking: true
+  caller_id_parsing: true  # новая фича для парсинга CallerID
+
+# Интеграция с Asterisk
+asterisk:
+  caller_id_pattern: "(\+?\d{10,15})_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})"
+  auto_process: true
+  watch_directory: "./volume/input"
+  processed_directory: "./volume/processed"
