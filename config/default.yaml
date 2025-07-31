@@ -103,7 +103,7 @@ diarization:
   device: "cpu"
   batch_size: 32
   # параметры скользящего окна
-  window_enabled: false   # включает режим windowed-diariazation
+  window_enabled: true   # включает режим windowed-diariazation
   window_size: 30.0       # длина окна в секундах
   hop_size: 10.0          # шаг окна в секундах
 

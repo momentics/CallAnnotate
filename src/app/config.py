@@ -50,7 +50,7 @@ class DiarizationConfig(BaseSettings):
     use_auth_token: Optional[str] = Field(None, description="HuggingFace токен")
     device: str = Field("cpu", description="Устройство для вычислений")
     batch_size: int = Field(32, gt=0, description="Размер пакета")
-    window_enabled: bool = Field(False, description="Включить оконный режим диаризации")
+    window_enabled: bool = Field(True, description="Включить оконный режим диаризации")
     window_size: float = Field(30.0, gt=0, description="Длина окна для скользящего батча в секундах")
     hop_size: float = Field(10.0, ge=0, description="Шаг окна для скользящего батча в секундах")
 
