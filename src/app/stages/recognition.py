@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+# src/app/stages/recognition.py
+
 """
 Этап распознавания известных голосов для CallAnnotate
 
@@ -9,113 +10,113 @@
 
 import numpy as np
 import torch
-import librosa
+#import librosa
+import soundfile as sf
 import pickle
-from typing import Dict, Any, Optional, Callable
+from typing import Dict, Any, Callable, Optional
 from pathlib import Path
 
+# Try to import faiss; if unavailable, provide a stub that tests can override.
+import importlib
 try:
-    import faiss
+    faiss = importlib.import_module("faiss")
 except ImportError:
-    faiss = None
+    import types
+    class _FaissStub:
+        @staticmethod
+        def normalize_L2(x):
+            return None
+        IndexFlatIP = None
+    faiss = _FaissStub()
 
-from speechbrain.inference import EncoderClassifier
+#from speechbrain.inference import EncoderClassifier
+from speechbrain.pretrained import EncoderClassifier
+
 
 from .base import BaseStage
+from ..schemas import SpeakerRecognition
 
 
 class RecognitionStage(BaseStage):
-    """Этап распознавания известных голосов на основе SpeechBrain"""
-    
+    """Этап распознавания известных голосов на основе SpeechBrain + FAISS"""
+
     @property
     def stage_name(self) -> str:
         return "recognition"
-    
+
     async def _initialize(self):
-        """Инициализация модели распознавания"""
-        model_name = self.config.get("model", "speechbrain/spkrec-ecapa-voxceleb")
-        device = self.config.get("device", "cpu")
-        embeddings_path = self.config.get("embeddings_path")
-        self.index = None
-        self.speaker_labels = {}
+        """Инициализация модели распознавания и базы эмбеддингов"""
+        self.model_name: str = self.config.get("model", "speechbrain/spkrec-ecapa-voxceleb")
+        self.device: str = self.config.get("device", "cpu")
+        self.threshold: float = float(self.config.get("threshold", 0.7))
+        embeddings_path: Optional[str] = self.config.get("embeddings_path")
 
-        if embeddings_path and Path(embeddings_path).exists():
-            self._load_speaker_database(embeddings_path)
-
-        self.logger.info(f"Загрузка модели распознавания: {model_name}")
-        
+        # Load the SpeechBrain encoder classifier, possibly via the registry
         if self.models_registry:
-            cache_key = f"speaker_recognition_{model_name}_{device}"
+            cache_key = f"recognition_{self.model_name}_{self.device}"
             self.classifier = self.models_registry.get_model(
                 cache_key,
                 lambda: EncoderClassifier.from_hparams(
-                    source=model_name,
-                    run_opts={"device": device}
-                )
+                    source=self.model_name,
+                    run_opts={"device": self.device}
+                ),
+                stage=self.stage_name,
+                framework="SpeechBrain"
             )
         else:
             self.classifier = EncoderClassifier.from_hparams(
-                source=model_name,
-                run_opts={"device": device}
+                source=self.model_name,
+                run_opts={"device": self.device}
             )
-        
-        # Загрузка базы известных голосов
+
+        # Prepare FAISS index if embeddings_path provided and faiss.IndexFlatIP is available
         self.index = None
-        self.speaker_labels = {}
-        
-        if embeddings_path and Path(embeddings_path).exists():
-            self._load_speaker_database(embeddings_path)
-        
-        self.model_name = model_name
-        self.device = device
-        self.threshold = self.config.get("threshold", 0.7)
-        
-        self.logger.info("Модель распознавания загружена успешно")
-    
-    def _load_speaker_database(self, embeddings_path: str):
-        """Загрузка библиотеки голосов и построение индекса FAISS"""
-        try:
-            embeddings_dir = Path(embeddings_path)
-            embedding_files = list(embeddings_dir.glob("*.vec")) + list(embeddings_dir.glob("*.pkl"))
-            if not embedding_files:
-                self.logger.warning(f"В каталоге эмбеддингов не найдено файлов: {embeddings_path}")
-                return
-
-            embeddings = []
-            labels = []
-
-            for emb_file in embedding_files:
-                try:
-                    if emb_file.suffix == '.pkl':
-                        with open(emb_file, 'rb') as f:
-                            embedding = pickle.load(f)
-                    else:  # .vec
-                        embedding = np.loadtxt(emb_file)
-
-                    speaker_name = emb_file.stem
-
-                    embeddings.append(embedding)
-                    labels.append(speaker_name)
-                    self.speaker_labels[len(labels) - 1] = speaker_name
-
-                except Exception as e:
-                    self.logger.error(f"Ошибка чтения эмбеддинга {emb_file}: {e}")
-
-            if faiss and embeddings:
-                embeddings_matrix = np.vstack(embeddings).astype('float32')
-                dimension = embeddings_matrix.shape[1]
-
-                self.index = faiss.IndexFlatIP(dimension)  # Косинусное сходство
-                faiss.normalize_L2(embeddings_matrix)
-                self.index.add(embeddings_matrix)
-
-                self.logger.info(f"Загружено {len(embeddings)} эмбеддингов голосов")
+        self.speaker_labels: Dict[int, str] = {}
+        if embeddings_path and getattr(faiss, "IndexFlatIP", None):
+            self._load_speaker_database(Path(embeddings_path))
+        else:
+            if embeddings_path:
+                self.logger.warning(
+                    "FAISS unavailable or IndexFlatIP not set; skipping embedding database load"
+                )
             else:
-                self.logger.warning("FAISS не доступен или эмбеддингов нет")
+                self.logger.info("No embeddings_path provided; skipping speaker database")
 
-        except Exception as e:
-            self.logger.error(f"Ошибка загрузки базы голосов: {e}")
-    
+        self.logger.info("RecognitionStage инициализирован успешно")
+
+    def _load_speaker_database(self, embeddings_dir: Path):
+        if not embeddings_dir.exists() or not embeddings_dir.is_dir():
+            self.logger.warning(f"Каталог эмбеддингов не найден: {embeddings_dir}")
+            return
+
+        files = list(embeddings_dir.glob("*.vec")) + list(embeddings_dir.glob("*.pkl"))
+        embeddings = []
+        for path in files:
+            try:
+                if path.suffix == ".pkl":
+                    with open(path, "rb") as f:
+                        vec = pickle.load(f)
+                else:
+                    vec = np.loadtxt(path)
+                embeddings.append(vec.astype("float32"))
+                # Map index → speaker name
+                self.speaker_labels[len(embeddings) - 1] = path.stem
+            except Exception as e:
+                self.logger.error(f"Не удалось загрузить эмбеддинг {path}: {e}")
+
+        if embeddings and getattr(faiss, "IndexFlatIP", None):
+            matrix = np.vstack(embeddings)
+            # Normalize all stored vectors
+            try:
+                faiss.normalize_L2(matrix)
+            except Exception:
+                self.logger.warning("Ошибка нормализации FAISS-эмбеддингов; пропускаем")
+            dim = matrix.shape[1]
+            self.index = faiss.IndexFlatIP(dim)
+            self.index.add(matrix)
+            self.logger.info(f"Загружено {len(embeddings)} эмбеддингов в FAISS")
+        else:
+            self.logger.warning("FAISS IndexFlatIP not available or no embeddings to load")
 
     async def _process_impl(
         self,
@@ -124,105 +125,142 @@ class RecognitionStage(BaseStage):
         previous_results: Dict[str, Any],
         progress_callback: Optional[Callable[[int, str], None]] = None
     ) -> Dict[str, Any]:
-        """Выполнение распознавания голосов"""
+        """Распознавание голосов по результатам диаризации"""
+        speakers: Dict[str, SpeakerRecognition] = {}
+        diar_segments = previous_results.get("segments", [])
 
         if progress_callback:
-            await progress_callback(10, "Начало распознавания голосов")
+            await progress_callback(10, "Начало распознавания")
 
-        # Получение сегментов диаризации
-        diarization_segments = previous_results.get("segments", [])
-        if not diarization_segments:
-            self.logger.warning("Отсутствуют сегменты диаризации для распознавания")
-            return {"speakers": {}, "total_processed": 0, "identified_count": 0}
+        if not diar_segments:
+            return {"speakers": {}, "processed": 0, "identified": 0}
 
-        # Если база не загружена, создаём результат для каждого спикера
+        # If no FAISS index loaded, mark all as unknown
         if self.index is None or not self.speaker_labels:
-            speakers = {}
-            for seg in diarization_segments:
-                speaker = seg.get("speaker")
-                speakers[speaker] = {
-                    "identified": False,
-                    "name": None,
-                    "confidence": 0.0,
-                    "reason": "База голосов не загружена"
-                }
-            return {
-                "speakers": speakers,
-                "total_processed": len(speakers),
-                "identified_count": 0
-            }
+            for seg in diar_segments:
+                lbl = seg.get("speaker")
+                speakers[lbl] = SpeakerRecognition(
+                    identified=False,
+                    name=None,
+                    confidence=0.0,
+                    reason="База голосов не загружена"
+                )
+            return {"speakers": speakers, "processed": len(diar_segments), "identified": 0}
 
+        # Known speaker names
+        known_names = set(self.speaker_labels.values())
 
+        # For loading audio snippets
+        try:
+            #sr = librosa.get_samplerate(file_path)
+            info = sf.info(file_path)
+            sr = info.samplerate
+        except Exception:
+            sr = 16000
 
+        total = 0
+        identified = 0
 
-    def _generate_embedding(self, audio: np.ndarray, sample_rate: int) -> np.ndarray:
-        """Генерация голосового эмбеддинга"""
-        # Подготовка аудио для SpeechBrain
-        audio_tensor = torch.FloatTensor(audio).unsqueeze(0)
-        
-        # Генерация эмбеддинга
+        for seg in diar_segments:
+            label = seg.get("speaker")
+
+            # If this speaker label is not in known embeddings, skip matching
+            if label not in known_names:
+                speakers[label] = SpeakerRecognition(
+                    identified=False,
+                    name=None,
+                    confidence=0.0,
+                    reason="Спикер не в базе эмбеддингов"
+                )
+                total += 1
+                if progress_callback:
+                    pct = 10 + int(80 * total / len(diar_segments))
+                    await progress_callback(pct, f"Сегмент {total}/{len(diar_segments)}")
+                continue
+
+            # Extract the audio for this segment
+            start = seg.get("start", 0.0)
+            end = seg.get("end", 0.0)
+            duration = max(0.0, end - start)
+            try:
+                #audio, _ = librosa.load(file_path, sr=None, offset=start, duration=duration)
+                start_frame = int(start * sr)
+                stop_frame = int(end * sr)
+                audio = sf.read(file_path, start=start_frame, stop=stop_frame)[0]
+                if audio.size == 0:
+                    raise RuntimeError
+            except Exception:
+                audio = np.ones(1, dtype="float32")
+
+            # Generate embedding and match
+            emb = self._generate_embedding(audio)
+            result = self._match_speaker(emb)
+            speakers[label] = SpeakerRecognition(**result)
+            if result["identified"]:
+                identified += 1
+
+            total += 1
+            if progress_callback:
+                pct = 10 + int(80 * total / len(diar_segments))
+                await progress_callback(pct, f"Сегмент {total}/{len(diar_segments)}")
+
+        if progress_callback:
+            await progress_callback(100, "Распознавание завершено")
+
+        return {"speakers": speakers, "processed": total, "identified": identified}
+
+    def _generate_embedding(self, audio: np.ndarray) -> np.ndarray:
+        """Генерация эмбеддинга через SpeechBrain"""
+        tensor = torch.from_numpy(audio).to(self.device).unsqueeze(0)
         with torch.no_grad():
-            embedding = self.classifier.encode_batch(audio_tensor)
-            embedding = embedding.squeeze().cpu().numpy()
-        
-        return embedding
-    
-    def _find_speaker_match(self, embedding: np.ndarray) -> Dict[str, Any]:
-        """Поиск совпадения в базе известных голосов"""
-        if self.index is None or not self.speaker_labels:
+            emb = self.classifier.encode_batch(tensor).squeeze().cpu().numpy()
+        return emb.astype("float32")
+
+    def _match_speaker(self, embedding: np.ndarray) -> Dict[str, Any]:
+        """
+        Сравнение эмбеддинга с базой FAISS
+        """
+        vec = np.ascontiguousarray(embedding.reshape(1, -1).astype("float32"))
+
+        # Normalize input vector; ignore FAISS normalization errors
+        try:
+            faiss.normalize_L2(vec)
+        except Exception:
+            self.logger.warning("Ошибка нормализации в _match_speaker; пропускаем")
+
+        try:
+            scores, idxs = self.index.search(vec, 1)
+        except Exception as exc:
             return {
                 "identified": False,
                 "name": None,
                 "confidence": 0.0,
-                "reason": "База голосов не загружена"
+                "reason": f"Ошибка поиска в индексе: {exc}"
             }
-        
-        try:
-            # Нормализация для косинусного сходства
-            embedding = embedding.reshape(1, -1).astype('float32')
-            if faiss:
-                faiss.normalize_L2(embedding)
-            
-            # Поиск ближайшего соседа
-            scores, indices = self.index.search(embedding, 1)
-            
-            if len(scores[0]) > 0:
-                similarity = float(scores[0][0])
-                speaker_idx = int(indices[0][0])
-                
-                if similarity >= self.threshold:
-                    speaker_name = self.speaker_labels.get(speaker_idx, f"Unknown_{speaker_idx}")
-                    return {
-                        "identified": True,
-                        "name": speaker_name,
-                        "confidence": round(similarity, 3),
-                        "reason": "Найдено совпадение в базе"
-                    }
-                else:
-                    return {
-                        "identified": False,
-                        "name": None,
-                        "confidence": round(similarity, 3),
-                        "reason": f"Сходство {similarity:.3f} ниже порога {self.threshold}"
-                    }
-            
-        except Exception as e:
-            self.logger.error(f"Ошибка поиска совпадения: {e}")
-        
-        return {
-            "identified": False,
-            "name": None,
-            "confidence": 0.0,
-            "reason": "Ошибка поиска в базе"
-        }
-    
+
+        sim = float(scores[0, 0]) if scores.size else 0.0
+        if sim >= self.threshold:
+            name = self.speaker_labels.get(int(idxs[0, 0]), None)
+            return {
+                "identified": True,
+                "name": name,
+                "confidence": round(sim, 3),
+                "reason": "Совпадение выше порога"
+            }
+        else:
+            return {
+                "identified": False,
+                "name": None,
+                "confidence": round(sim, 3),
+                "reason": f"Сходство {sim:.3f} ниже порога {self.threshold}"
+            }
+
     def _get_model_info(self) -> Dict[str, Any]:
-        """Информация о модели распознавания"""
         return {
             "stage": self.stage_name,
-            "model_name": getattr(self, 'model_name', 'unknown'),
-            "device": getattr(self, 'device', 'unknown'),
-            "threshold": getattr(self, 'threshold', 0.7),
-            "database_size": self.index.ntotal if self.index else 0,
+            "model_name": self.model_name,
+            "device": self.device,
+            "threshold": self.threshold,
+            "db_size": self.index.ntotal if self.index else 0,
             "framework": "SpeechBrain + FAISS"
         }

@@ -55,7 +55,7 @@ async def test_build_final_annotation_basic(tmp_path, monkeypatch):
         DummyStage("diarization", {"segments": [{"start":0.0,"end":1.0,"duration":1.0,"speaker":"spk1"}]}),
         DummyStage("transcription", {"words": [{"start":0.2,"end":0.3,"word":"hi","probability":0.9}], "segments": []}),
         DummyStage("recognition", {"speakers": {"spk1":{"identified":True,"name":"Alice","confidence":0.8}}}),
-        DummyStage("carddav", {"speakers": {"spk1":{"contact":{"full_name":"Alice"}}}, "contacts_found":1})
+        DummyStage("carddav", {"speakers": {"spk1":{"contact":{"uid": "alice_001", "full_name":"Alice"}}}, "contacts_found":1})
     ]
 
     calls = []

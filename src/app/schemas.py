@@ -1,3 +1,4 @@
+# src/app/schemas.py
 # -*- coding: utf-8 -*-
 """
 Pydantic схемы для CallAnnotate API и внутренних структур данных
@@ -15,30 +16,24 @@ from pydantic import BaseModel, Field, validator
 
 
 class TaskStatus(str, Enum):
-    """Статус задачи"""
     QUEUED = "queued"
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
 
-
-# API Request/Response схемы
 class CreateJobRequest(BaseModel):
-    """Запрос на создание задачи"""
     filename: str = Field(..., description="Имя файла в /volume/incoming/")
     priority: int = Field(5, ge=1, le=10, description="Приоритет задачи (1-10)")
 
 
 class FileInfo(BaseModel):
-    """Информация о файле"""
     filename: str
     path: str
     size_bytes: Optional[int] = None
 
 
 class CreateJobResponse(BaseModel):
-    """Ответ на создание задачи"""
     job_id: str
     status: TaskStatus
     message: str
@@ -46,6 +41,177 @@ class CreateJobResponse(BaseModel):
     file_info: FileInfo
     progress_url: str
     result_url: str
+
+
+class ProgressInfo(BaseModel):
+    percentage: int = Field(..., ge=0, le=100)
+    current_stage: str
+    stage_progress: Optional[int] = Field(None, ge=0, le=100)
+    stages_completed: List[str] = Field(default_factory=list)
+    stages_remaining: List[str] = Field(default_factory=list)
+    estimated_completion: Optional[datetime] = None
+
+
+class JobTimestamps(BaseModel):
+    created_at: Optional[datetime] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+
+
+class JobStatusResponse(BaseModel):
+    job_id: str
+    status: TaskStatus
+    message: str
+    progress: Optional[ProgressInfo] = None
+    timestamps: JobTimestamps
+    file_info: Optional[FileInfo] = None
+    result: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+
+
+class AudioMetadata(BaseModel):
+    filename: str
+    duration: float = Field(..., ge=0)
+    sample_rate: int = Field(..., gt=0)
+    channels: int = Field(..., gt=0)
+    format: str
+    bitrate: Optional[int] = None
+    size_bytes: int = Field(..., ge=0)
+
+
+class BaseStageResult(BaseModel):
+    stage_name: str
+    processing_time: float = Field(..., ge=0)
+    model_info: Dict[str, Any] = Field(default_factory=dict)
+    success: bool = True
+    error: Optional[str] = None
+
+
+class DiarizationSegment(BaseModel):
+    start: float = Field(..., ge=0)
+    end: float = Field(..., gt=0)
+    duration: float = Field(..., gt=0)
+    speaker: str
+    confidence: float = Field(0.9, ge=0.0, le=1.0)
+
+    @validator('end')
+    def end_after_start(cls, v, values):
+        if 'start' in values and v <= values['start']:
+            raise ValueError('end должен быть больше start')
+        return v
+
+    @validator('duration')
+    def duration_matches(cls, v, values):
+        if 'start' in values and 'end' in values:
+            expected = values['end'] - values['start']
+            if abs(v - expected) > 0.001:
+                raise ValueError('duration должен соответствовать end - start')
+        return v
+
+
+class TranscriptionWord(BaseModel):
+    start: float = Field(..., ge=0)
+    end: float = Field(..., gt=0)
+    word: str
+    probability: float = Field(..., ge=0.0, le=1.0)
+
+
+class TranscriptionSegment(BaseModel):
+    start: float = Field(..., ge=0)
+    end: float = Field(..., gt=0)
+    text: str
+    no_speech_prob: float = Field(0.0, ge=0.0, le=1.0)
+    avg_logprob: float
+    speaker: Optional[str] = None
+    speaker_confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
+
+
+class SpeakerRecognition(BaseModel):
+    identified: bool = Field(False)
+    name: Optional[str] = None
+    confidence: float = Field(0.0, ge=0.0, le=1.0)
+    reason: Optional[str] = None
+
+
+class ContactInfo(BaseModel):
+    uid: str = Field("", description="UID контакта в CardDAV")
+    full_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phones: List[str] = Field(default_factory=list)
+    emails: List[str] = Field(default_factory=list)
+    organization: Optional[str] = None
+
+
+class ProcessingInfo(BaseModel):
+    diarization_model: Dict[str, Any] = Field(default_factory=dict)
+    transcription_model: Dict[str, Any] = Field(default_factory=dict)
+    recognition_model: Dict[str, Any] = Field(default_factory=dict)
+    processing_time: Dict[str, float] = Field(default_factory=dict)
+
+
+class FinalSpeaker(BaseModel):
+    id: str
+    label: str
+    segments_count: int = Field(0, ge=0)
+    total_duration: float = Field(0.0, ge=0.0)
+    identified: bool = False
+    name: Optional[str] = None
+    contact_info: Optional[ContactInfo] = None
+    voice_embedding: Optional[str] = None
+    confidence: float = Field(0.0, ge=0.0, le=1.0)
+
+
+class FinalSegment(BaseModel):
+    id: int = Field(..., ge=1)
+    start: float = Field(..., ge=0.0)
+    end: float = Field(..., gt=0.0)
+    duration: float = Field(..., gt=0.0)
+    speaker: str
+    speaker_label: str
+    text: str = ""
+    words: List[TranscriptionWord] = Field(default_factory=list)
+    confidence: float = Field(0.0, ge=0.0, le=1.0)
+
+
+class FinalTranscription(BaseModel):
+    full_text: str = ""
+    confidence: float = Field(0.0, ge=0.0, le=1.0)
+    language: str
+    words: List[TranscriptionWord] = Field(default_factory=list)
+
+
+class Statistics(BaseModel):
+    total_speakers: int = Field(0, ge=0)
+    identified_speakers: int = Field(0, ge=0)
+    unknown_speakers: int = Field(0, ge=0)
+    total_segments: int = Field(0, ge=0)
+    total_words: int = Field(0, ge=0)
+    speech_duration: float = Field(0.0, ge=0.0)
+    silence_duration: float = Field(0.0, ge=0.0)
+
+
+class AnnotationResult(BaseModel):
+    task_id: str
+    version: str = "1.0.0"
+    created_at: datetime
+    audio_metadata: AudioMetadata
+    processing_info: ProcessingInfo
+    speakers: List[FinalSpeaker] = Field(default_factory=list)
+    segments: List[FinalSegment] = Field(default_factory=list)
+    transcription: FinalTranscription
+    statistics: Statistics
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
+
+
+class FileInfo(BaseModel):
+    """Информация о файле"""
+    filename: str
+    path: str
+    size_bytes: Optional[int] = None
 
 
 class ProgressInfo(BaseModel):
@@ -65,18 +231,6 @@ class JobTimestamps(BaseModel):
     completed_at: Optional[datetime] = None
 
 
-class JobStatusResponse(BaseModel):
-    """Ответ статуса задачи"""
-    job_id: str
-    status: TaskStatus
-    message: str
-    progress: Optional[ProgressInfo] = None
-    timestamps: JobTimestamps
-    file_info: Optional[FileInfo] = None
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-
-
 # Аудио метаданные и обработка
 class AudioMetadata(BaseModel):
     """Метаданные аудиофайла"""
@@ -89,38 +243,6 @@ class AudioMetadata(BaseModel):
     size_bytes: int = Field(..., ge=0, description="Размер файла в байтах")
 
 
-class BaseStageResult(BaseModel):
-    """Базовый результат этапа обработки"""
-    stage_name: str
-    processing_time: float = Field(..., ge=0, description="Время обработки в секундах")
-    model_info: Dict[str, Any] = Field(default_factory=dict)
-    success: bool = True
-    error: Optional[str] = None
-
-
-# Результаты этапов обработки
-class DiarizationSegment(BaseModel):
-    """Сегмент диаризации"""
-    start: float = Field(..., ge=0, description="Начало сегмента в секундах")
-    end: float = Field(..., gt=0, description="Конец сегмента в секундах")
-    duration: float = Field(..., gt=0, description="Длительность сегмента")
-    speaker: str = Field(..., description="Идентификатор спикера")
-    confidence: float = Field(0.9, ge=0.0, le=1.0, description="Уверенность диаризации")
-    
-    @validator('end')
-    def end_after_start(cls, v, values):
-        if 'start' in values and v <= values['start']:
-            raise ValueError('end должен быть больше start')
-        return v
-    
-    @validator('duration')
-    def duration_matches(cls, v, values):
-        if 'start' in values and 'end' in values:
-            expected_duration = values['end'] - values['start']
-            if abs(v - expected_duration) > 0.001:  # Допуск на округление
-                raise ValueError('duration должен соответствовать end - start')
-        return v
-
 
 class TranscriptionWord(BaseModel):
     """Слово с временными метками"""
@@ -130,27 +252,9 @@ class TranscriptionWord(BaseModel):
     probability: float = Field(..., ge=0.0, le=1.0, description="Вероятность распознавания")
 
 
-class TranscriptionSegment(BaseModel):
-    """Сегмент транскрипции"""
-    start: float = Field(..., ge=0)
-    end: float = Field(..., gt=0)
-    text: str = Field(..., description="Текст сегмента")
-    no_speech_prob: float = Field(0.0, ge=0.0, le=1.0)
-    avg_logprob: float = Field(..., description="Средняя логарифмическая вероятность")
-    speaker: Optional[str] = Field(None, description="Спикер (если привязан к диаризации)")
-    speaker_confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
-
-
-class SpeakerRecognition(BaseModel):
-    """Результат распознавания спикера"""
-    identified: bool = Field(False, description="Спикер идентифицирован")
-    name: Optional[str] = Field(None, description="Имя спикера")
-    confidence: float = Field(0.0, ge=0.0, le=1.0, description="Уверенность распознавания")
-    reason: Optional[str] = Field(None, description="Причина не распознавания")
-
-
 class ContactInfo(BaseModel):
     """Информация о контакте из CardDAV"""
+    uid: str = Field("", description="UID контакта в CardDAV")
     full_name: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -210,24 +314,6 @@ class Statistics(BaseModel):
     total_words: int = Field(0, ge=0)
     speech_duration: float = Field(0.0, ge=0.0)
     silence_duration: float = Field(0.0, ge=0.0)
-
-
-class AnnotationResult(BaseModel):
-    """Финальный результат аннотации"""
-    task_id: str
-    version: str = "1.0.0"
-    created_at: datetime
-    audio_metadata: AudioMetadata
-    processing_info: ProcessingInfo
-    speakers: List[FinalSpeaker] = Field(default_factory=list)
-    segments: List[FinalSegment] = Field(default_factory=list)
-    transcription: FinalTranscription
-    statistics: Statistics
-    
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
 
 
 # WebSocket схемы
@@ -321,7 +407,7 @@ class VoiceInfoUpdate(BaseModel):
 
 class VoiceInfo(VoiceInfoBase):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ContactInfo(BaseModel):

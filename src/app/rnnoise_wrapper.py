@@ -21,6 +21,9 @@ from typing import Generator, Tuple, Iterable
 
 import numpy as np
 
+import warnings
+warnings.filterwarnings("ignore", message="`torchaudio.backend.common.AudioMetaData` has been moved")
+
 try:
     from pydub import AudioSegment
 except ModuleNotFoundError:  # pydub опционален

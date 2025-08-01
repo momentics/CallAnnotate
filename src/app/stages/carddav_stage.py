@@ -4,13 +4,13 @@
 CardDAV Stage для CallAnnotate: асинхронное управление контактами, гибкая фильтрация,
 поиск по имени, телефону или email. Соответствует архитектуре stages, строгая обработка ошибок.
 Автор: akoodoy@capilot.ru
-Ссылка: https://github.com/momentics/CallAnnotate
 Лицензия: Apache-2.0
 """
 
 from typing import Any, Callable, Dict, List, Optional, Union
 import xml.etree.ElementTree as ET
 import re
+import html
 
 import httpx
 
@@ -20,7 +20,6 @@ from ..schemas import ContactCreate, ContactInfo, ContactUpdate
 class CardDAVStage(BaseStage):
     def __init__(self, config, models_registry=None):
         super().__init__(config, models_registry)
-        # Защита для тестов, когда _initialize не вызывается
         self.enabled: bool = False
         self.url: Optional[str] = None
         self.username: Optional[str] = None
@@ -114,12 +113,19 @@ class CardDAVStage(BaseStage):
         return results
 
     def _parse_multistatus(self, xml_text: str) -> List[ContactInfo]:
-        root = ET.fromstring(xml_text.replace(";", ""))
-        ns = {"D": "DAV:", "C": "urn:ietf:params:xml:ns:carddav"}
+        # 1) Разворачиваем HTML-сущности (&lt; &gt; &amp;)
+        xml = html.unescape(xml_text)
+        # 2) Приводим префиксы D: и C: к нижнему регистру
+        xml = xml.replace("<D:", "<d:").replace("</D:", "</d:")
+        xml = xml.replace("<C:", "<c:").replace("</C:", "</c:")
+        xml = xml.replace("xmlns:D=", "xmlns:d=").replace("xmlns:C=", "xmlns:c=")
+        # 3) Парсим XML с namespace
+        root = ET.fromstring(xml)
+        ns = {"d": "DAV:", "c": "urn:ietf:params:xml:ns:carddav"}
         out: List[ContactInfo] = []
-        for resp in root.findall("D:response", ns):
-            href = resp.findtext("D:href", default="", namespaces=ns)
-            adata = resp.find(".//C:address-data", ns)
+        for resp in root.findall("d:response", ns):
+            href = resp.findtext("d:href", default="", namespaces=ns)
+            adata = resp.find(".//c:address-data", ns)
             vcard_text = adata.text if adata is not None and adata.text else None
             if not vcard_text:
                 continue
@@ -167,11 +173,6 @@ class CardDAVStage(BaseStage):
         lines.append("END:VCARD")
         return "\r\n".join(lines)
 
-    def _match_name(self, speaker_name: str, contact_full_name: str) -> bool:
-        if not speaker_name or not contact_full_name:
-            return False
-        return speaker_name.strip().lower() in contact_full_name.strip().lower()
-
     async def _process_impl(
         self,
         file_path: str,
@@ -185,7 +186,7 @@ class CardDAVStage(BaseStage):
         recognition = previous_results.get("speakers", {})
         contacts = await self.list_contacts()
 
-        out = {}
+        out: Dict[str, Any] = {}
         found = 0
         for label, meta in recognition.items():
             match = None
@@ -209,8 +210,13 @@ class CardDAVStage(BaseStage):
 
             if match:
                 found += 1
-                out[label] = {"contact": match.model_dump() if hasattr(match, "model_dump") else match.dict()}
+                out[label] = {"contact": match}
             else:
                 out[label] = {"contact": None}
 
         return {"speakers": out, "contacts_found": found}
+
+    def _match_name(self, speaker_name: str, contact_full_name: str) -> bool:
+        if not speaker_name or not contact_full_name:
+            return False
+        return speaker_name.strip().lower() in contact_full_name.strip().lower()
