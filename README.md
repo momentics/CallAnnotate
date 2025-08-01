@@ -4,7 +4,6 @@
 
 CallAnnotate предоставляет разработчикам и системным администраторам гибкий серверный компонент с WebSocket и REST/JSON API, способный асинхронно обрабатывать аудиозаписи любой длительности и сложности, используя ресурсы CPU или при необходимости GPU.
 
-
 <!-- Badges -->
 [![CI Status](https://github.com/momentics/CallAnnotate/actions/workflows/ci.yml/badge.svg)](https://github.com/moment/CallAnnotate/actions/workflows/ci.yml)   [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
