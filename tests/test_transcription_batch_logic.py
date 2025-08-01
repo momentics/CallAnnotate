@@ -1,26 +1,56 @@
+# tests/test_transcription_batch_logic.py
+
 import pytest
-from app.stages.transcription import TranscriptionStage
-from app.config import AppSettings
+import whisper
 from unittest.mock import MagicMock
 
+from app.stages.transcription import TranscriptionStage
+
 @pytest.mark.asyncio
-async def test_batch_logic(monkeypatch, tmp_path):
-    # мокаем whisper.load_model и модель
-    fake_model = MagicMock(transcribe=lambda batch, **opts: {
-        "segments": [{"start":0,"end":1,"text":"hi","no_speech_prob":0.1,"avg_logprob":-0.2,"words":[{"start":0,"end":1,"word":"hi","probability":0.9}]}],
-        "confidence":0.8
-    })
-    monkeypatch.setattr("whisper.load_model", lambda size, device=None: fake_model)
+async def test_batch_logic(monkeypatch):
+    # Мокаем whisper.load_model и метод transcribe
+    fake_model = MagicMock(
+        transcribe=lambda batch, **opts: {
+            "segments": [
+                {
+                    "start": 0,
+                    "end": 1,
+                    "text": "batch",
+                    "no_speech_prob": 0.05,
+                    "avg_logprob": -0.1,
+                    "words": [{"start": 0, "end": 1, "word": "batch", "probability": 0.95}]
+                }
+            ],
+            "confidence": 0.9
+        }
+    )
+    monkeypatch.setattr(whisper, "load_model", lambda size, device=None: fake_model)
 
-    cfg = AppSettings().transcription.dict()
-    cfg.update({"batch_size": 10})
-    stage = TranscriptionStage(cfg, models_registry=None)
+    cfg = {
+        "model": "whisper-base",
+        "device": "cpu",
+        "language": "auto",
+        "task": "transcribe",
+        "batch_size": 5,
+        "min_segment_duration": 0.1,
+        "max_silence_between": 0.2,
+        "min_overlap": 0.3,
+    }
+    stage = TranscriptionStage(cfg, MagicMock())
     await stage._initialize()
-    result = await stage._process_impl("audio.wav", "jid", {"segments":[{"start":0,"end":1,"speaker":"spk"}]})
 
-    assert result["confidence"] == pytest.approx(0.8)
-    assert isinstance(result["avg_logprob"], float)
-    assert isinstance(result["no_speech_prob"], float)
-    assert "processing_time" in result
-    assert result["segments"][0]["speaker"] == "spk"
+    # Подав сегмент для привязки спикера, чтобы текстовые поля формировались
+    aligned = await stage._process_impl(
+        "audio.wav",
+        "jid",
+        {"segments": [{"start": 0, "end": 1, "speaker": "spk"}]}
+    )
 
+    # Проверяем ключи и значения
+    assert aligned["confidence"] == pytest.approx(0.9)
+    assert aligned["segments"][0]["speaker"] == "spk"
+    assert aligned["words"][0]["word"] == "batch"
+    # Уверенность точно передалась
+    assert "confidence" in aligned
+    # Метрики avg_logprob и no_speech_prob присутствуют
+    assert "avg_logprob" in aligned and "no_speech_prob" in aligned

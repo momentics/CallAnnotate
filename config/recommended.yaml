@@ -114,23 +114,30 @@ diarization:
   max_speakers: 3
 
 # Этап транскрипции
+# Этап транскрипции
 transcription:
-  model: "openai/whisper-base"  # компромисс скорость/качество
+  model: "openai/whisper-base"
   device: "cpu"
   language: "ru"
-  batch_size: 8  # оптимально для 4 CPU
+  batch_size: 8
   task: "transcribe"
-  
+
   # Метрики
   metrics:
     confidence: true
     avg_logprob: true
     no_speech_prob: true
     timing: true
-  
-  # Оптимизации
-  adaptive_batch: true  # адаптивный размер пакета
-  memory_efficient: true  # экономия памяти
+
+  # Оптимизация сегментации
+  min_segment_duration: 0.2
+  max_silence_between: 0.0
+  min_overlap: 0.3
+
+  # Оптимизации для Phase 6
+  adaptive_batch: true
+  memory_efficient: true
+
 
 # Этап распознавания
 recognition:

@@ -115,12 +115,19 @@ transcription:
   language: "ru"                     # TRANSCRIPTION_LANGUAGE ("auto" для автоопределения)
   batch_size: 16                     # TRANSCRIPTION_BATCH_SIZE
   task: "transcribe"                 # TRANSCRIPTION_TASK ("translate" для перевода)
+
   # Новые параметры для Phase 6
   metrics:
     confidence: true                 # Сбор avg confidence
     avg_logprob: true                # Сбор avg logprob
     no_speech_prob: true             # Сбор avg no_speech_prob
     timing: true                     # Сбор времени транскрипции
+
+  # Параметры для точного выравнивания сегментов
+  min_segment_duration: 0.2          # Минимальная длительность сегмента (сек)
+  max_silence_between: 0.0           # Максимальная пауза между сегментом и диаризацией (сек)
+  min_overlap: 0.3                   # Минимальное отношение перекрытия при привязке сегмента к спикеру
+
 
 
 # Этап распознавания (SpeechBrain + FAISS)

@@ -74,10 +74,22 @@ class TranscriptionConfig(BaseSettings):
     batch_size: int = Field(16, gt=0, description="Размер пакета")
     task: str = Field("transcribe", description="Задача: transcribe или translate")
 
+    # Новые параметры для точного выравнивания сегментов
+    min_segment_duration: float = Field(
+        0.2, gt=0.0, description="Минимальная длительность сегмента (сек)"
+    )
+    max_silence_between: float = Field(
+        0.0, ge=0.0, description="Максимальная пауза между сегментом и диаризацией (сек)"
+    )
+    min_overlap: float = Field(
+        0.3, ge=0.0, le=1.0, description="Минимальное отношение перекрытия при привязке сегмента к спикеру"
+    )
+
     metrics: MetricsConfig = Field(default_factory=MetricsConfig, description="Настройки сбора метрик")
     
     class Config:
         env_prefix = "TRANSCRIPTION_"
+
 
 
 class CardDAVConfig(BaseSettings):
@@ -312,7 +324,10 @@ class AppSettings(BaseSettings):
     
     # Подконфигурации
     diarization: DiarizationConfig = Field(default_factory=DiarizationConfig)
-    transcription: TranscriptionConfig = Field(default_factory=TranscriptionConfig)
+    transcription: TranscriptionConfig = Field(
+        default_factory=TranscriptionConfig,
+        description="Конфигурация этапа транскрипции"
+    )
     recognition: RecognitionConfig = Field(default_factory=RecognitionConfig)
     carddav: CardDAVConfig = Field(default_factory=CardDAVConfig)
     queue: QueueConfig = Field(default_factory=QueueConfig)
@@ -323,7 +338,8 @@ class AppSettings(BaseSettings):
 
     api: APIConfig = Field(default_factory=APIConfig)
 
-    voices: List[VoiceInfo] = Field(default_factory=list, description="Известные голоса")
+    # Список известных голосов: имя + путь к файлу эмбеддинга
+    voices: List[VoiceInfoConfig] = Field(default_factory=list, description="Известные голоса")
     notifications: NotificationsConfig = Field(default_factory=NotificationsConfig)
     performance: PerformanceConfig = Field(default_factory=PerformanceConfig)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
@@ -331,8 +347,6 @@ class AppSettings(BaseSettings):
     features: FeaturesConfig = Field(default_factory=FeaturesConfig)
     
     preprocess: PreprocessingConfig = Field(default_factory=PreprocessingConfig)
-
-    voices: List[VoiceInfoConfig] = Field(default_factory=list, description="Известные голоса")
 
 
     @validator('recognition')
