@@ -71,8 +71,6 @@ class PreprocessingStage(BaseStage):
 
             model_name = self.config.get("model", "DeepFilterNet2")
             device = self.config.get("device", "cpu")
-            if self.debug_mode:
-                self.logger.info("Инициализация DeepFilterNet: model=%s, device=%s", model_name, device)
 
             # Универсальный вызов init_df: учитываем mocks с любым signature
             try:
@@ -85,8 +83,10 @@ class PreprocessingStage(BaseStage):
                     self.model, self.df_state, _ = init_df(model=model_name, device=device)  # type: ignore[arg-type]
                 else:
                     self.model, self.df_state, _ = init_df(model_name, device)  # type: ignore[arg-type]
-            except Exception as e:
-                self.logger.error(f"Ошибка DeepFilterNet init_df: {e}", exc_info=True)
+                self.logger.info(f"DeepFilterNet инициализировано с sample_rate={int(self.config.get("deepfilter_sample_rate", 48000))}, model={model_name}, device={device}")
+            except Exception as e: 
+                self._log_deepfilternet_error(e)
+                self.deepfilter_enabled = False
                 raise
         else:
             self.model = None
@@ -106,7 +106,7 @@ class PreprocessingStage(BaseStage):
                 if self.debug_mode:
                     self.logger.info(f"RNNoise инициализировано с sample_rate={self.rnnoise.sample_rate}")
             except Exception as e:
-                self.logger.warning(f"RNNoise инициализация не удалась: {e}. Шумоподавление будет пропущено")
+                self._log_rnnoise_error(e)
 
         # SoX
         self.sox_available = self._detect_sox()
@@ -460,13 +460,13 @@ class PreprocessingStage(BaseStage):
     def _log_rnnoise_error(self, exc: Exception) -> None:
         """Логирование ошибок при инициализации RNNoise."""
         self.logger.warning(
-            "RNNoise инициализация не удалась: %s. Шумоподавление будет пропущено", exc
+            "RNNoise инициализация не удалась: %s. Шумоподавление RNNoise будет пропущено", exc
         )
 
     def _log_deepfilternet_error(self, exc: Exception) -> None:
         """Логирование ошибок при инициализации deepfilternet."""
         self.logger.warning(
-            "DeepFilterNet инициализация не удалась: %s. Шумоподавление будет пропущено", exc
+            "DeepFilterNet инициализация не удалась: %s. Шумоподавление DeepFilterNet будет пропущено", exc
         )
 
     def _get_model_info(self) -> Dict[str, Any]:

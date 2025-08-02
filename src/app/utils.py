@@ -36,8 +36,6 @@ def get_supported_audio_formats() -> Dict[str, str]:
         ".ogg": "audio/ogg",
         ".flac": "audio/flac",
         ".aac": "audio/aac",
-        ".m4a": "audio/mp4",
-        ".mp4": "audio/mp4",
     }
 
 

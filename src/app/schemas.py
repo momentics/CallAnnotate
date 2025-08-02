@@ -28,6 +28,7 @@ class CreateJobRequest(BaseModel):
 
 
 class FileInfo(BaseModel):
+    """Информация о файле"""
     filename: str
     path: str
     size_bytes: Optional[int] = None
@@ -42,8 +43,8 @@ class CreateJobResponse(BaseModel):
     progress_url: str
     result_url: str
 
-
 class ProgressInfo(BaseModel):
+    """Информация о прогрессе"""
     percentage: int = Field(..., ge=0, le=100)
     current_stage: str
     stage_progress: Optional[int] = Field(None, ge=0, le=100)
@@ -53,6 +54,7 @@ class ProgressInfo(BaseModel):
 
 
 class JobTimestamps(BaseModel):
+    """Временные метки задачи"""
     created_at: Optional[datetime] = None
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
@@ -69,14 +71,17 @@ class JobStatusResponse(BaseModel):
     error: Optional[str] = None
 
 
+# Аудио метаданные и обработка
 class AudioMetadata(BaseModel):
+    """Метаданные аудиофайла"""
     filename: str
-    duration: float = Field(..., ge=0)
-    sample_rate: int = Field(..., gt=0)
-    channels: int = Field(..., gt=0)
-    format: str
-    bitrate: Optional[int] = None
-    size_bytes: int = Field(..., ge=0)
+    duration: float = Field(..., ge=0, description="Длительность в секундах")
+    sample_rate: int = Field(..., gt=0, description="Частота дискретизации")
+    channels: int = Field(..., gt=0, description="Количество каналов")
+    format: str = Field(..., description="Формат файла")
+    bitrate: Optional[int] = Field(None, gt=0, description="Битрейт")
+    size_bytes: int = Field(..., ge=0, description="Размер файла в байтах")
+
 
 
 class BaseStageResult(BaseModel):
@@ -110,10 +115,12 @@ class DiarizationSegment(BaseModel):
 
 
 class TranscriptionWord(BaseModel):
-    start: float = Field(..., ge=0)
-    end: float = Field(..., gt=0)
-    word: str
-    probability: float = Field(..., ge=0.0, le=1.0)
+    """Слово с временными метками"""
+    start: float = Field(..., ge=0, description="Начало слова в секундах")
+    end: float = Field(..., gt=0, description="Конец слова в секундах")
+    word: str = Field(..., description="Текст слова")
+    probability: float = Field(..., ge=0.0, le=1.0, description="Вероятность распознавания")
+
 
 
 class TranscriptionSegment(BaseModel):
@@ -148,108 +155,6 @@ class ContactInfo(BaseModel):
     phones: List[str] = Field(default_factory=list)
     emails: List[str] = Field(default_factory=list)
     organization: Optional[str] = None
-
-class FinalSpeaker(BaseModel):
-    id: str
-    label: str
-    segments_count: int = Field(0, ge=0)
-    total_duration: float = Field(0.0, ge=0.0)
-    identified: bool = False
-    name: Optional[str] = None
-    contact_info: Optional[ContactInfo] = None
-    voice_embedding: Optional[str] = None
-    confidence: float = Field(0.0, ge=0.0, le=1.0)
-
-
-class FinalSegment(BaseModel):
-    id: int = Field(..., ge=1)
-    start: float = Field(..., ge=0.0)
-    end: float = Field(..., gt=0.0)
-    duration: float = Field(..., gt=0.0)
-    speaker: str
-    speaker_label: str
-    text: str = ""
-    words: List[TranscriptionWord] = Field(default_factory=list)
-    confidence: float = Field(0.0, ge=0.0, le=1.0)
-
-
-class FinalTranscription(BaseModel):
-    full_text: str = ""
-    confidence: float = Field(0.0, ge=0.0, le=1.0)
-    language: str
-    words: List[TranscriptionWord] = Field(default_factory=list)
-
-
-class Statistics(BaseModel):
-    total_speakers: int = Field(0, ge=0)
-    identified_speakers: int = Field(0, ge=0)
-    unknown_speakers: int = Field(0, ge=0)
-    total_segments: int = Field(0, ge=0)
-    total_words: int = Field(0, ge=0)
-    speech_duration: float = Field(0.0, ge=0.0)
-    silence_duration: float = Field(0.0, ge=0.0)
-
-
-class AnnotationResult(BaseModel):
-    task_id: str
-    version: str = "1.0.0"
-    created_at: datetime
-    audio_metadata: AudioMetadata
-    processing_info: ProcessingInfo
-    speakers: List[FinalSpeaker] = Field(default_factory=list)
-    segments: List[FinalSegment] = Field(default_factory=list)
-    transcription: FinalTranscription
-    statistics: Statistics
-
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat()}
-
-
-
-class FileInfo(BaseModel):
-    """Информация о файле"""
-    filename: str
-    path: str
-    size_bytes: Optional[int] = None
-
-
-class ProgressInfo(BaseModel):
-    """Информация о прогрессе"""
-    percentage: int = Field(..., ge=0, le=100)
-    current_stage: str
-    stage_progress: Optional[int] = Field(None, ge=0, le=100)
-    stages_completed: List[str] = Field(default_factory=list)
-    stages_remaining: List[str] = Field(default_factory=list)
-    estimated_completion: Optional[datetime] = None
-
-
-class JobTimestamps(BaseModel):
-    """Временные метки задачи"""
-    created_at: Optional[datetime] = None
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-
-
-# Аудио метаданные и обработка
-class AudioMetadata(BaseModel):
-    """Метаданные аудиофайла"""
-    filename: str
-    duration: float = Field(..., ge=0, description="Длительность в секундах")
-    sample_rate: int = Field(..., gt=0, description="Частота дискретизации")
-    channels: int = Field(..., gt=0, description="Количество каналов")
-    format: str = Field(..., description="Формат файла")
-    bitrate: Optional[int] = Field(None, gt=0, description="Битрейт")
-    size_bytes: int = Field(..., ge=0, description="Размер файла в байтах")
-
-
-
-class TranscriptionWord(BaseModel):
-    """Слово с временными метками"""
-    start: float = Field(..., ge=0, description="Начало слова в секундах")
-    end: float = Field(..., gt=0, description="Конец слова в секундах")
-    word: str = Field(..., description="Текст слова")
-    probability: float = Field(..., ge=0.0, le=1.0, description="Вероятность распознавания")
-
 
 
 class FinalSpeaker(BaseModel):
@@ -286,6 +191,7 @@ class FinalTranscription(BaseModel):
     words: List[TranscriptionWord] = Field(default_factory=list)
 
 
+
 class Statistics(BaseModel):
     """Статистика обработки"""
     total_speakers: int = Field(0, ge=0)
@@ -295,6 +201,21 @@ class Statistics(BaseModel):
     total_words: int = Field(0, ge=0)
     speech_duration: float = Field(0.0, ge=0.0)
     silence_duration: float = Field(0.0, ge=0.0)
+
+
+class AnnotationResult(BaseModel):
+    task_id: str
+    version: str = "1.0.0"
+    created_at: datetime
+    audio_metadata: AudioMetadata
+    processing_info: ProcessingInfo
+    speakers: List[FinalSpeaker] = Field(default_factory=list)
+    segments: List[FinalSegment] = Field(default_factory=list)
+    transcription: FinalTranscription
+    statistics: Statistics
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
 
 # WebSocket схемы
