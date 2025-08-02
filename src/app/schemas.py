@@ -304,9 +304,6 @@ class VoiceInfoBase(BaseModel):
 class VoiceInfoCreate(VoiceInfoBase):
     pass
 
-class VoiceInfoUpdate(BaseModel):
-    embedding: str = Field(..., description="Путь к новому файлу эмбеддинга")
-
 class VoiceInfo(VoiceInfoBase):
     class Config:
         from_attributes = True
