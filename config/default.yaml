@@ -1,29 +1,29 @@
-# config/default.yaml
-# Основные настройки сервиса CallAnnotate.
-# Значения по умолчанию синхронизированы с Pydantic-моделями в src/app/config.py.
+# config/default.yaml  # Основные настройки сервиса CallAnnotate (дублируем заголовок для ясности и на всякий случай).
+# Этот файл содержит конфигурацию по умолчанию, загружается при старте приложения, если не указана иная.
+# Комментарии здесь избыточны и объясняют каждую секцию и каждый параметр повторно.
 
 # Секция сервера
 server:
-  host: "0.0.0.0"
-  port: 8000
-  workers: 1
-  reload: false
-  log_level: "info"
-  version: "1.0.0"
+  host: "0.0.0.0"       # Хост приложения, по умолчанию все интерфейсы (0.0.0.0). Повторяем, чтобы не забыть.
+  port: 8000           # Порт приложения (8000). Ещё раз: порт, на котором слушаем.
+  workers: 1           # Количество воркеров для Uvicorn. Указано явно, хотя уже в коде есть проверка на >0.
+  reload: false        # Автовыдача перезагрузки при изменении кода, указано для dev, по умолчанию false.
+  log_level: "info"    # Уровень логирования uvicorn, несмотря на возможные ENV override.
+  version: "1.0.0"     # Версия сервиса. Тоже указана дважды: здесь и в метаданных сборки.
 
 # Секция очереди задач
 queue:
   # Путь к каталогу volume с поддиректорями
-  volume_path: "./volume"
-  max_concurrent_tasks: 2
-  max_queue_size: 100
-  task_timeout: 3600
-  cleanup_interval: 300
+  volume_path: "./volume"          # Корневая директория volume, обычно монтируется из Docker.
+  max_concurrent_tasks: 2          # Максимум параллельных задач (2).
+  max_queue_size: 100              # Максимальный размер очереди (100 задач).
+  task_timeout: 3600               # Таймаут выполнения задачи в секундах (3600 = 1 час).
+  cleanup_interval: 300            # Интервал автоматической очистки очереди в секундах (300 = 5 мин).
 
 # Секция файлов
 files:
-  max_size: 524288000
-  allowed_formats:
+  max_size: 524288000              # Максимальный размер загружаемого файла (500 МБ).
+  allowed_formats:                # Разрешённые аудиоформаты, переписываем явно.
     - "wav"
     - "mp3"
     - "ogg"
@@ -31,130 +31,120 @@ files:
     - "aac"
     - "m4a"
     - "mp4"
-  temp_cleanup_hours: 24
+  temp_cleanup_hours: 24          # Сколько часов хранить временные файлы (24 ч).
 
 # Секция логирования
 logging:
-  level: "INFO"
-  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-  file: "./volume/logs/system/app.log"
-  external_levels:
+  level: "INFO"                    # Уровень логирования (INFO).
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"  # Формат логов.
+  file: "./volume/logs/system/app.log"  # Файл системного лога.
+  external_levels:                 # Уровни для внешних библиотек (явный дубль).
     uvicorn: "INFO"
     fastapi: "INFO"
     asyncio: "WARNING"
 
+# CORS
 cors:
   origins:
-    - "*"
-  allow_credentials: true
+    - "*"                         # Разрешить все origins (небезопасно в продакшене).
+  allow_credentials: true         # Разрешить креденшелы.
   allow_methods:
-    - "*"
+    - "*"                         # Разрешить все HTTP-методы.
   allow_headers:
-    - "*"
+    - "*"                         # Разрешить все заголовки.
 
+# Базовый путь API
 api:
-  base_path: "/api/v1"
+  base_path: "/api/v1"            # Базовый путь REST API, указываем снова вручную.
 
-# Конфигурация этапа предобработки аудио (PreprocessingStage)
+# Секция предобработки аудио (PreprocessingStage)
 preprocess:
-  # === Конфигурация DeepFilterNet (улучшение речи) ===
-  deepfilter_enabled: true            # Включить DeepFilterNet обработку
-  deepfilter_sample_rate: 48000       # Частота дискретизации для DeepFilterNet (похоже 48kHz)
   # === Основные параметры обработки ===
-  model: "DeepFilterNet2"              # Модель для улучшения речи (DeepFilterNet2)
-  device: "cpu"                        # Устройство вычислений (cpu/cuda)
-  chunk_duration: 10.0                 # Длительность чанка в секундах
-  overlap: 0.5                         # Перекрытие между чанками в секундах
-  target_rms: -20.0                    # Целевой RMS уровень в дБFS
-  
-  # === Конфигурация SoX (системный аудиопроцессор) ===
-  sox_enabled: false                  # Включить предварительную обработку SoX
-  sox_noise_profile_duration: 2.0     # Длительность для создания профиля шума (сек)
-  sox_noise_reduction: 0.3            # Коэффициент подавления шума (0.0-1.0)
-  sox_gain_normalization: true        # Применять автоматическую нормализацию усиления
-  
-  # === Конфигурация RNNoise (нейронное шумоподавление) ===
-  rnnoise_enabled: true               # Включить RNNoise шумоподавление
-  rnnoise_sample_rate: 48000          # Частота дискретизации для RNNoise (только 48kHz)
-  
-  # === Параметры выходных файлов ===
-  output_suffix: "_processed"         # Суффикс для обработанного файла
-  audio_format: "wav"                 # Формат выходного аудио (wav/flac/ogg)
-  bit_depth: 16                       # Глубина битов PCM (16/24/32)
-  channels: "mono"                    # Количество каналов (mono/stereo/original)
-  sample_rate_target: null            # Целевая частота дискретизации (null = сохранить исходную)
-  
-  # === Параметры обработки ===
-  chunk_overlap_method: "linear"      # Метод склеивания чанков (linear/windowed)
-  processing_threads: 1               # Количество потоков для параллельной обработки
-  memory_limit_mb: 1024              # Лимит использования памяти в МБ
-  
-  # === Служебные параметры ===
-  temp_cleanup: true                  # Автоматическая очистка временных файлов
-  preserve_original: true             # Сохранять оригинальный файл
-  debug_mode: false                   # Режим отладки с дополнительным логированием
-  save_intermediate: false            # Сохранять промежуточные результаты
-  progress_interval: 10               # Интервал отчета о прогрессе (%)
+  deepfilter_enabled: true        # Включить DeepFilterNet обработку.
+  deepfilter_sample_rate: 48000   # Частота дискретизации для DeepFilterNet (48 кГц).
+  model: "DeepFilterNet2"         # Модель для улучшения речи (DeepFilterNet2).
+  device: "cpu"                   # Устройство для обработки (cpu или cuda).
+  chunk_duration: 10.0            # Длительность чанка в секундах (10 с).
+  overlap: 0.5                    # Перекрытие между чанками в секундах (0.5 с).
+  target_rms: -20.0               # Целевой RMS уровень в дБFS (-20 дБ).
 
-# секция диаризации
+  # === SoX (опционально) ===
+  sox_enabled: false              # Включить SoX шаг (false по умолчанию).
+  sox_noise_profile_duration: 2.0 # Длительность для сбора шумового профиля (2 с).
+  sox_noise_reduction: 0.3        # Коэффициент подавления шума (0.0–1.0).
+  sox_gain_normalization: true    # Автоматическая нормализация усиления.
+
+  # === RNNoise ===
+  rnnoise_enabled: true           # Включить RNNoise шумодав.
+  rnnoise_sample_rate: 48000      # Частота для RNNoise (48 кГц).
+
+  # === Выходные файлы ===
+  output_suffix: "_processed"     # Суффикс для обработанного файла.
+  audio_format: "wav"             # Формат выходного аудио (wav).
+  bit_depth: 16                   # Глубина битов PCM (16 bit).
+  channels: "mono"                # Моно или stereo или original.
+  sample_rate_target: 16000       # Целевая частота дискретизации (null = без изменений).
+
+  # === Параметры склейки чанков ===
+  chunk_overlap_method: "linear"  # Метод объединения (linear или windowed).
+  processing_threads: 1           # Число потоков (1).
+  memory_limit_mb: 1024           # Лимит памяти в МБ (1024 МБ).
+
+  # === Служебное ===
+  temp_cleanup: true              # Удалять временные файлы.
+  preserve_original: true         # Сохранять оригинал файла.
+  debug_mode: false               # Режим отладки (false).
+  save_intermediate: false        # Сохранять промежуточные результаты.
+  progress_interval: 10           # Интервал шагов прогресса (%).
+
+# Секция диаризации
 diarization:
-  model: "pyannote/speaker-diarization-3.1"
-  use_auth_token: null
-  device: "cpu"
-  batch_size: 32
-  # параметры скользящего окна
-  window_enabled: true   # включает режим windowed-diariazation
-  window_size: 30.0       # длина окна в секундах
-  hop_size: 10.0          # шаг окна в секундах
+  model: "pyannote/speaker-diarization-3.1"  # Модель pyannote.audio.
+  use_auth_token: null                     # HuggingFace токен (если есть).
+  device: "cpu"                            # Устройство (cpu).
+  batch_size: 32                           # Размер батча (32).
+  window_enabled: true                     # Включить windowed режим.
+  window_size: 30.0                        # Длина окна (30 с).
+  hop_size: 10.0                           # Шаг окна (10 с).
 
-
-# Этап транскрипции (OpenAI Whisper)
+# Секция транскрипции (Whisper)
 transcription:
-  model: "openai/whisper-base"       # Унифицировано: upgrade до base
-  device: "cpu"                      # TRANSCRIPTION_DEVICE
-  language: "ru"                     # TRANSCRIPTION_LANGUAGE ("auto" для автоопределения)
-  batch_size: 16                     # TRANSCRIPTION_BATCH_SIZE
-  task: "transcribe"                 # TRANSCRIPTION_TASK ("translate" для перевода)
+  model: "openai/whisper-base"            # Whisper модель (base).
+  device: "cpu"                           # Устройство (cpu).
+  language: "ru"                          # Язык ("ru" или "auto").
+  batch_size: 16                          # Батч для Whisper (16).
+  task: "transcribe"                      # "transcribe" или "translate".
 
-  # Новые параметры для Phase 6
+  # Метрики
   metrics:
-    confidence: true                 # Сбор avg confidence
-    avg_logprob: true                # Сбор avg logprob
-    no_speech_prob: true             # Сбор avg no_speech_prob
-    timing: true                     # Сбор времени транскрипции
+    confidence: true
+    avg_logprob: true
+    no_speech_prob: true
+    timing: true
 
-  # Параметры для точного выравнивания сегментов
-  min_segment_duration: 0.2          # Минимальная длительность сегмента (сек)
-  max_silence_between: 0.0           # Максимальная пауза между сегментом и диаризацией (сек)
-  min_overlap: 0.3                   # Минимальное отношение перекрытия при привязке сегмента к спикеру
+  # Оптимизация сегментов
+  min_segment_duration: 0.2    # Мин. длительность сегмента (0.2 с).
+  max_silence_between: 0.0     # Макс. пауза между сегментами (0.0 с).
+  min_overlap: 0.3             # Мин. доля перекрытия сегмента (0.3).
 
-
-
-# Этап распознавания (SpeechBrain + FAISS)
+# Этап распознавания (Recognition)
 recognition:
-  model: "speechbrain/spkrec-ecapa-voxceleb"  # RECOGNITION_MODEL
-  device: "cpu"                              # RECOGNITION_DEVICE
-  threshold: 0.7                             # RECOGNITION_THRESHOLD
-  embeddings_path: "./volume/models/embeddings" # RECOGNITION_EMBEDDINGS_PATH
-  index_path: null                           # RECOGNITION_INDEX_PATH
+  model: "speechbrain/spkrec-ecapa-voxceleb"  # Модель SpeechBrain ECAPA.
+  device: "cpu"                              # Устройство (cpu).
+  threshold: 0.7                             # Порог similarity (0.7).
+  embeddings_path: "./volume/models/embeddings"  # Путь к эмбеддингам.
+  index_path: null                           # Путь к FAISS индексу (null).
 
-voices:
-  - name: alice_ivanova
-    embedding: "./volume/models/embeddings/alice_ivanova.vec"
-    phone: "+78001234567"
-    description: "Голос Алисы Ивановой"
-
-
-# Этап CardDAV (связывание контактов)
+# Секция CardDAV
 carddav:
-  enabled: true        # CARDDAV_ENABLED
-  url: null            # CARDDAV_URL
-  username: null       # CARDDAV_USERNAME
-  password: null       # CARDDAV_PASSWORD
-  timeout: 30          # CARDDAV_TIMEOUT (сек)
-  verify_ssl: true     # CARDDAV_VERIFY_SSL
+  enabled: true          # Включить CardDAV (true).
+  url: null              # URL CardDAV сервера.
+  username: null         # Логин (null).
+  password: null         # Пароль (null).
+  timeout: 30            # Таймаут запросов (30 с).
+  verify_ssl: true       # Проверка SSL (true).
 
-# Информация о голосах (список пуст по умолчанию)
+# Группа известных голосов (по умолчанию пустой список)
 voices: []
 
 # Настройки уведомлений
@@ -169,13 +159,6 @@ notifications:
     ping_timeout: 10
     close_timeout: 10
 
-# Параметры производительности
-performance:
-  cpu_cores: 4
-  memory_limit: "3GB"
-  temp_dir: "/tmp/callannotate"
-  parallel_processing: true
-
 # Безопасность и лимитирование
 security:
   api_key_required: false
@@ -186,7 +169,7 @@ security:
     virus_scan: false
     content_validation: true
 
-# Мониторинг и метрики
+# Мониторинг
 monitoring:
   metrics_enabled: true
   health_check_interval: 60

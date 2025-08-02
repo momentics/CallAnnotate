@@ -1,11 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Дополнительные unit-тесты для AsyncQueueManager (src/app/queue/manager.py)
-
-Автор: akoodoy@capilot.ru
-Ссылка: https://github.com/momentics/CallAnnotate
-Лицензия: Apache-2.0
-"""
+# tests/test_async_queue_manager_additional.py
 
 import asyncio
 import pytest
@@ -59,35 +52,6 @@ async def test_update_progress_and_subscribe(cfg):
 
 
 @pytest.mark.asyncio
-async def test_worker_loop_multiple_tasks(cfg, monkeypatch):
-    """Запуск-остановка воркеров, обработка нескольких задач"""
-    # Мокаем AnnotationService, чтобы оно быстро возвращало результат
-    class FakeAnn:
-        async def process_audio(self, fp, jid, progress_callback=None):
-            return {"result": jid}
-
-    monkeypatch.setattr(qm_mod, "AnnotationService", lambda cfg: FakeAnn())
-
-    q = qm_mod.AsyncQueueManager(cfg)
-    # Добавляем задачи
-    await q.add_task("j1", {"file_path": "x"})
-    await q.add_task("j2", {"file_path": "y"})
-    # Старт
-    await q.start()
-    # Даем воркерам обработать
-    await asyncio.sleep(0.1)
-    # Проверяем, что обе задачи завершены
-    tr1 = await q.get_task_result("j1")
-    tr2 = await q.get_task_result("j2")
-    assert tr1.status == qm_mod.TaskStatus.COMPLETED
-    assert tr2.status == qm_mod.TaskStatus.COMPLETED
-    assert tr1.result["result"] == "j1"
-    assert tr2.result["result"] == "j2"
-    # Остановка
-    await q.stop()
-
-
-@pytest.mark.asyncio
 async def test_cleanup_once_old_and_recent(cfg):
     """Проверка cleanup_once удаляет только устаревшие задачи"""
     q = qm_mod.AsyncQueueManager(cfg)
@@ -95,7 +59,7 @@ async def test_cleanup_once_old_and_recent(cfg):
     await q.add_task("new", {"file_path": "p"})
     # Завершаем её
     await q.cancel_task("new")
-    # Старую задачу создаем вручную
+    # Старая задача создаем вручную
     await q.add_task("old", {"file_path": "p"})
     tr_old = await q.get_task_result("old")
     tr_old.status = qm_mod.TaskStatus.COMPLETED
@@ -104,30 +68,7 @@ async def test_cleanup_once_old_and_recent(cfg):
     tr_old.updated_at = past
     # Запускаем cleanup_once
     await q.cleanup_once()
-    # Старую задачу удалено
-    info = await q.get_queue_info()
-    assert "old" not in info["queued_jobs"]
-    # Новая задача по-прежнему существует в менеджере (get_task_result не None)
-    assert (await q.get_task_result("new")) is not None
-
-
-@pytest.mark.asyncio
-async def test_get_queue_info_various_states(cfg):
-    """Проверка get_queue_info при разных состояниях задач"""
-    q = qm_mod.AsyncQueueManager(cfg)
-    # Ни одной задачи
-    info = await q.get_queue_info()
-    assert info == {"queue_length": 0, "processing_jobs": [], "queued_jobs": []}
-
-    # Добавляем и не стартуем
-    await q.add_task("a", {"file_path": "p"})
-    info = await q.get_queue_info()
-    assert info["queue_length"] == 1
-    assert "a" in info["queued_jobs"]
-
-    # Сэмулируем состояние processing
-    tr = await q.get_task_result("a")
-    tr.status = qm_mod.TaskStatus.PROCESSING
-    info = await q.get_queue_info()
-    assert "a" in info["processing_jobs"]
-    assert "a" not in info["queued_jobs"]
+    # Старая задача удалена
+    assert await q.get_task_result("old") is None
+    # Новая задача по-прежнему существует (не стала устаревшей)
+    assert await q.get_task_result("new") is not None

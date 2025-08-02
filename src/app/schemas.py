@@ -132,8 +132,15 @@ class SpeakerRecognition(BaseModel):
     confidence: float = Field(0.0, ge=0.0, le=1.0)
     reason: Optional[str] = None
 
+class ProcessingInfo(BaseModel):
+    """Информация о процессе обработки"""
+    diarization_model: Dict[str, Any] = Field(default_factory=dict)
+    transcription_model: Dict[str, Any] = Field(default_factory=dict)
+    recognition_model: Dict[str, Any] = Field(default_factory=dict)
+    processing_time: Dict[str, float] = Field(default_factory=dict)
 
 class ContactInfo(BaseModel):
+    """Информация о контакте из CardDAV"""
     uid: str = Field("", description="UID контакта в CardDAV")
     full_name: Optional[str] = None
     first_name: Optional[str] = None
@@ -141,14 +148,6 @@ class ContactInfo(BaseModel):
     phones: List[str] = Field(default_factory=list)
     emails: List[str] = Field(default_factory=list)
     organization: Optional[str] = None
-
-
-class ProcessingInfo(BaseModel):
-    diarization_model: Dict[str, Any] = Field(default_factory=dict)
-    transcription_model: Dict[str, Any] = Field(default_factory=dict)
-    recognition_model: Dict[str, Any] = Field(default_factory=dict)
-    processing_time: Dict[str, float] = Field(default_factory=dict)
-
 
 class FinalSpeaker(BaseModel):
     id: str
@@ -251,24 +250,6 @@ class TranscriptionWord(BaseModel):
     word: str = Field(..., description="Текст слова")
     probability: float = Field(..., ge=0.0, le=1.0, description="Вероятность распознавания")
 
-
-class ContactInfo(BaseModel):
-    """Информация о контакте из CardDAV"""
-    uid: str = Field("", description="UID контакта в CardDAV")
-    full_name: Optional[str] = None
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    phones: List[str] = Field(default_factory=list)
-    emails: List[str] = Field(default_factory=list)
-    organization: Optional[str] = None
-
-
-class ProcessingInfo(BaseModel):
-    """Информация о процессе обработки"""
-    diarization_model: Dict[str, Any] = Field(default_factory=dict)
-    transcription_model: Dict[str, Any] = Field(default_factory=dict)
-    recognition_model: Dict[str, Any] = Field(default_factory=dict)
-    processing_time: Dict[str, float] = Field(default_factory=dict)
 
 
 class FinalSpeaker(BaseModel):
@@ -409,15 +390,6 @@ class VoiceInfo(VoiceInfoBase):
     class Config:
         from_attributes = True
 
-
-class ContactInfo(BaseModel):
-    uid: str = Field(..., description="UID контакта в CardDAV")
-    full_name: Optional[str] = None
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    phones: List[str] = []
-    emails: List[str] = []
-    organization: Optional[str] = None
 
 class ContactCreate(BaseModel):
     full_name: Optional[str] = None

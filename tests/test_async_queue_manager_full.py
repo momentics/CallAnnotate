@@ -11,7 +11,7 @@ import app.queue.manager as qm_mod
 def cfg(tmp_path, monkeypatch):
     vol = tmp_path / "vol"
     monkeypatch.setenv("VOLUME_PATH", str(vol))
-    data = {
+    return {
         "queue": {
             "volume_path": str(vol),
             "max_concurrent_tasks": 1,
@@ -20,7 +20,6 @@ def cfg(tmp_path, monkeypatch):
             "cleanup_interval": 1
         }
     }
-    return data
 
 @pytest.mark.asyncio
 async def test_worker_lifecycle_and_cleanup(cfg, monkeypatch):
@@ -47,12 +46,11 @@ async def test_worker_lifecycle_and_cleanup(cfg, monkeypatch):
     assert tr.status == qm_mod.TaskStatus.COMPLETED
     assert tr.result == {"ok": True}
 
-    # демонтируем старые задачи
-    old_time = (datetime.utcnow() - timedelta(days=8)).isoformat()
-    tr.updated_at = old_time
-
+    # помечаем как устаревшую
+    tr.updated_at = (datetime.utcnow() - timedelta(days=8)).isoformat()
+    # вызываем разовую очистку
     await q.cleanup_once()
-    info = await q.get_queue_info()
-    assert info["queue_length"] == 0
+    # задачи больше нет
+    assert await q.get_task_result("t1") is None
 
     await q.stop()

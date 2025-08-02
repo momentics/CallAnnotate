@@ -439,7 +439,10 @@ class PreprocessingStage(BaseStage):
         # возвращаем выровненный результат
         return audio
 
-    async def _save(self, audio: np.ndarray, original: str, suffix: str, sample_rate: int) -> str:
+    async def _save(self, audio: np.ndarray, 
+                    original: str, 
+                    suffix: str, 
+                    sample_rate: int) -> str:
         """Сохранение результата на диск."""
         out_path = str(Path(original).with_stem(Path(original).stem + suffix))
         # преобразуем итоговый формат файла после шумоподавления
@@ -498,3 +501,4 @@ class PreprocessingStage(BaseStage):
         # полифазный ресемплер
         downsampled = resample_poly(samples, up, down)
         return downsampled.astype(np.float32)
+

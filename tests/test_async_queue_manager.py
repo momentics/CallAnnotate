@@ -71,15 +71,14 @@ async def test_start_and_cleanup(tmp_cfg, monkeypatch):
     assert tr2.status == qm_mod.TaskStatus.COMPLETED
 
     # simulate old tasks
-    cutoff = datetime.utcnow() - timedelta(days=8)
-    tr1.updated_at = cutoff.isoformat()
-    tr2.updated_at = cutoff.isoformat()
+    cutoff = (datetime.utcnow() - timedelta(days=8)).isoformat()
+    tr1.updated_at = cutoff
+    tr2.updated_at = cutoff
 
-    # invoke one-off cleanup
+    # explicit cleanup_once
     await q.cleanup_once()
+    # now tasks removed
+    assert await q.get_task_result("j1") is None
+    assert await q.get_task_result("j2") is None
 
-    info = await q.get_queue_info()
-    assert info["queue_length"] == 0
-
-    # shutdown
     await q.stop()

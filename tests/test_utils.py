@@ -13,7 +13,6 @@ from app.utils import (
     extract_audio_metadata,
     ensure_directory,
     cleanup_temp_files,
-    format_duration,
     get_supported_audio_formats,
 )
 
@@ -68,10 +67,6 @@ def test_ensure_directory_and_cleanup(tmp_path):
     cleanup_temp_files(str(d), max_age_hours=24)
     assert not old.exists()
 
-def test_format_duration():
-    assert format_duration(30) == "30.0с"
-    assert format_duration(90) == "1м 30с"
-    assert format_duration(3661) == "1ч 1м 1с"
 
 def test_get_supported_audio_formats():
     fm = get_supported_audio_formats()

@@ -178,14 +178,6 @@ notifications:
     ping_timeout: 10
     close_timeout: 10
 
-# Параметры производительности
-performance:
-  cpu_cores: 4
-  memory_limit: "2.5GB"  # оставляем 0.5GB для системы
-  temp_dir: "/tmp/callannotate"
-  parallel_processing: false  # последовательная обработка
-  disk_cache_size: "1GB"
-
 # Безопасность и лимитирование
 security:
   api_key_required: false

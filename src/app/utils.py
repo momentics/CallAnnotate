@@ -129,34 +129,6 @@ def cleanup_temp_files(directory: str, max_age_hours: Union[int, float]) -> None
             continue
 
 
-def format_duration(seconds: Union[int, float]) -> str:
-    """
-    Форматирует длительность: если меньше минуты — "Z.Zс", иначе "Xч Yм Zс".
-    """
-    total_sec = float(seconds)
-    hours = int(total_sec // 3600)
-    minutes = int((total_sec % 3600) // 60)
-    secs = total_sec - hours * 3600 - minutes * 60
-    parts = []
-    if hours:
-        parts.append(f"{hours}ч")
-    if minutes:
-        parts.append(f"{minutes}м")
-    if hours or minutes:
-        parts.append(f"{int(secs)}с")
-    else:
-        parts.append(f"{secs:.1f}с")
-    return " ".join(parts)
-
-
-def get_human_readable_size(num: int) -> str:
-    """Возвращает размер в удобочитаемом формате (KB/MB/GB)"""
-    for unit in ("B", "KB", "MB", "GB", "TB"):
-        if num < 1024.0:
-            return f"{num:3.1f}{unit}"
-        num /= 1024.0
-    return f"{num:.1f}PB"
-
 
 def setup_logging(cfg: Dict[str, Any]):
     """
@@ -272,21 +244,3 @@ def create_task_metadata(
         meta["websocket_client_id"] = websocket_client_id
     return meta
 
-def load_known_voices_from_embeddings(embeddings_dir: str) -> List[VoiceInfo]:
-    """
-    Загружает список известных голосов из каталога с эмбеддингами.
-
-    Args:
-        embeddings_dir: путь к каталогу с *.vec файлами
-
-    Returns:
-        Список VoiceInfo
-    """
-    path = Path(embeddings_dir).expanduser().resolve()
-    voices: List[VoiceInfo] = []
-    if not path.exists() or not path.is_dir():
-        return voices
-    for f in path.glob("*.vec"):
-        name = f.stem
-        voices.append(VoiceInfo(name=name, embedding=str(f)))
-    return voices

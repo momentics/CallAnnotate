@@ -209,13 +209,6 @@ class NotificationsConfig(BaseModel):
     websocket: WebSocketConfig = Field(default_factory=WebSocketConfig)
 
 
-class PerformanceConfig(BaseModel):
-    """Конфигурация производительности"""
-    cpu_cores: int = Field(4, gt=0, description="Количество ядер CPU")
-    memory_limit: str = Field("3GB", description="Лимит памяти")
-    temp_dir: str = Field("/tmp/callannotate", description="Временная директория")
-    parallel_processing: bool = Field(True, description="Параллельная обработка")
-
 
 class RateLimitingConfig(BaseModel):
     """Конфигурация ограничения скорости"""
@@ -257,14 +250,14 @@ class PreprocessingConfig(BaseSettings):
     # === Основные параметры обработки ===
     model: str = Field("DeepFilterNet2", description="Модель для улучшения речи (DeepFilterNet2)")
     device: str = Field("cpu", description="Устройство вычислений (cpu/cuda)")
-    chunk_duration: float = Field(2.0, gt=0, description="Длительность чанка в секундах")
+    chunk_duration: float = Field(10.0, gt=0, description="Длительность чанка в секундах")
     overlap: float = Field(0.5, ge=0, description="Перекрытие между чанками в секундах")
     target_rms: float = Field(-20.0, description="Целевой RMS уровень в дБFS")
     
     # === Конфигурация SoX (системный аудиопроцессор) ===
-    sox_enabled: bool = Field(True, description="Включить предварительную обработку SoX")
-    sox_noise_profile_duration: float = Field(2.0, gt=0, description="Длительность для создания профиля шума (сек)")
-    sox_noise_reduction: float = Field(0.3, ge=0.0, le=1.0, description="Коэффициент подавления шума (0.0-1.0)")
+    sox_enabled: bool = Field(False, description="Включить предварительную обработку SoX")
+    sox_noise_profile_duration: float = Field(5.0, gt=0, description="Длительность для создания профиля шума (сек)")
+    sox_noise_reduction: float = Field(0.4, ge=0.0, le=1.0, description="Коэффициент подавления шума (0.0-1.0)")
     sox_gain_normalization: bool = Field(True, description="Применять автоматическую нормализацию усиления")
     
     # === Конфигурация RNNoise (нейронное шумоподавление) ===
@@ -280,7 +273,7 @@ class PreprocessingConfig(BaseSettings):
     audio_format: str = Field("wav", description="Формат выходного аудио (wav/flac/ogg)")
     bit_depth: int = Field(16, gt=0, description="Глубина битов PCM (16/24/32)")
     channels: str = Field("mono", description="Количество каналов (mono/stereo/original)")
-    sample_rate_target: Optional[int] = Field(None, description="Целевая частота дискретизации (null = сохранить исходную)")
+    sample_rate_target: Optional[int] = Field(16000, description="Целевая частота дискретизации (null = сохранить исходную)")
     
     # === Параметры обработки ===
     chunk_overlap_method: str = Field("linear", description="Метод склеивания чанков (linear/windowed)")
@@ -292,7 +285,7 @@ class PreprocessingConfig(BaseSettings):
     preserve_original: bool = Field(True, description="Сохранять оригинальный файл")
     debug_mode: bool = Field(False, description="Режим отладки с дополнительным логированием")
     save_intermediate: bool = Field(False, description="Сохранять промежуточные результаты")
-    progress_interval: int = Field(10, gt=0, le=100, description="Интервал отчета о прогрессе (%)")
+    progress_interval: int = Field(5, gt=0, le=100, description="Интервал отчета о прогрессе (%)")
 
     @field_validator("audio_format")
     def validate_audio_format(cls, v):
@@ -341,7 +334,6 @@ class AppSettings(BaseSettings):
     # Список известных голосов: имя + путь к файлу эмбеддинга
     voices: List[VoiceInfoConfig] = Field(default_factory=list, description="Известные голоса")
     notifications: NotificationsConfig = Field(default_factory=NotificationsConfig)
-    performance: PerformanceConfig = Field(default_factory=PerformanceConfig)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
     monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
     features: FeaturesConfig = Field(default_factory=FeaturesConfig)

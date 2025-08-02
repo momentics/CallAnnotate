@@ -6,8 +6,10 @@
 import pathlib
 import yaml
 
+
 from app.config import (
     DiarizationConfig,
+    TranscriptionConfig,
     load_settings,
     RecognitionConfig,
     load_settings_from_yaml,
@@ -41,16 +43,37 @@ def test_load_basic_yaml(tmp_path, monkeypatch):
         "cors": {"origins": ["https://a"]},
         "voices": [],
         "notifications": {},
-        "performance": {},
         "security": {},
         "monitoring": {},
         "features": {},
     }
     path = write_yaml(tmp_path, data)
     settings = load_settings_from_yaml(path)
+    # Server settings
+    assert settings.server.host == "127.0.0.1"
     assert settings.server.port == 9000
+    # Logging settings
     assert settings.logging.level == "DEBUG"
+    # Components types
     assert isinstance(settings.diarization, DiarizationConfig)
+    assert settings.diarization.model == "m"
+    assert isinstance(settings.transcription, TranscriptionConfig)
+    assert settings.transcription.model == "t"
+    assert isinstance(settings.recognition, RecognitionConfig)
+    assert settings.recognition.model == "r"
+    # CardDAV toggle
+    assert settings.carddav.enabled is False
+    # Queue settings
+    assert settings.queue.max_concurrent_tasks == 1
+    assert settings.queue.max_queue_size == 10
+    # Files settings
+    assert settings.files.max_size == 123
+    # CORS settings
+    assert settings.cors.origins == ["https://a"]
+    # Defaults for others
+    assert settings.notifications.webhooks.enabled is True
+    assert settings.security.rate_limiting.enabled is True
+    assert settings.features.batch_processing is True
 
 def test_load_settings_env_override(monkeypatch):
     monkeypatch.setenv("SERVER_HOST", "0.0.0.0")
