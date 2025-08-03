@@ -60,8 +60,9 @@ class ModelRegistry:
                         "memory_usage": self._estimate_model_memory(model),
                         **metadata
                     }
-                    
-                    self.logger.info(f"Модель {key} загружена успешно. Память {self._model_info[key]["memory_usage"]} из {self.get_memory_usage()["total_memory_mb"]}")
+                    memory_usage = self._model_info[key]["memory_usage"]
+                    total_memory_mb = self.get_memory_usage()["total_memory_mb"]
+                    self.logger.info(f"Модель {key} загружена успешно. Память {memory_usage} из {total_memory_mb}")
                     
                 except Exception as e:
                     self.logger.error(f"Ошибка загрузки модели {key}: {e}")
