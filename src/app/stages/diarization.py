@@ -19,6 +19,7 @@ DiarizationStage ― переосмысленная реализация мод�
 from __future__ import annotations
 
 import math
+import os
 import logging
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Callable, Any
@@ -87,6 +88,15 @@ class DiarizationStage(BaseStage):
     async def _initialize(self) -> None:
         self.logger: logging.Logger = logging.getLogger(__name__)
         self.cfg = DiarizationCfg.from_dict(self.config)
+
+        if not self.cfg.use_auth_token:
+            env_token = os.getenv("HF_TOKEN")
+            if env_token:
+                self.cfg.use_auth_token = env_token
+                self.logger.info(
+                    "HF_TOKEN найден в переменных окружения и будет использован для загрузки модели диаризации."
+                )
+
         self.logger.info(f"Loading diarization model '{self.cfg.model}' (device={self.cfg.device})...")
         try:
             if self.models_registry:
