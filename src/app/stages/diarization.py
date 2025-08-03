@@ -25,7 +25,8 @@ from typing import Dict, List, Optional, Callable, Any
 
 import torch
 from pyannote.audio import Pipeline
-from pyannote.core import Annotation, Segment
+from pyannote.core import Annotation
+from pyannote.core import Segment
 
 from .base import BaseStage
 
@@ -175,7 +176,20 @@ class DiarizationStage(BaseStage):
                         Segment(ws, we),
                     )
                 else:
-                    ann = self.pipeline(file_path, start=ws, end=we)  # type: ignore
+                    #ann = self.pipeline(file_path, start=ws, end=we)  # type: ignore
+
+                    from pyannote.audio import Audio      # локальный импорт
+
+                    # 1. вырезаем нужный кусок в память
+                    audio = Audio(sample_rate=16_000, mono=True)
+                    waveform, sr = audio.crop(file_path, Segment(ws, we))
+
+                    # 2. подаём его в pipeline как дикт с waveform
+                    ann = self.pipeline(
+                        {"waveform": waveform, "sample_rate": sr}
+                    )
+
+
             except Exception as ex:
                 self.logger.error(f"Error in diarization crop step: {ex}")
                 continue

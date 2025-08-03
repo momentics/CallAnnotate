@@ -62,8 +62,8 @@ preprocess:
   deepfilter_sample_rate: 48000   # Частота дискретизации для DeepFilterNet (48 кГц).
   model: "DeepFilterNet2"         # Модель для улучшения речи (DeepFilterNet2).
   device: "cpu"                   # Устройство для обработки (cpu или cuda).
-  chunk_duration: 10.0            # Длительность чанка в секундах (10 с).
-  overlap: 0.5                    # Перекрытие между чанками в секундах (0.5 с).
+  chunk_duration: 30.0            # Длительность чанка в секундах (10 с).
+  overlap: 0.2                      # Перекрытие между чанками в секундах (0.5 с).
   target_rms: -20.0               # Целевой RMS уровень в дБFS (-20 дБ).
 
   # === SoX (опционально) ===
@@ -84,7 +84,7 @@ preprocess:
   sample_rate_target: 16000       # Целевая частота дискретизации (null = без изменений).
 
   # === Параметры склейки чанков ===
-  chunk_overlap_method: "linear"  # Метод объединения (linear или windowed).
+  chunk_overlap_method: "windowed"  # Метод объединения (linear или windowed).
   processing_threads: 1           # Число потоков (1).
   memory_limit_mb: 1024           # Лимит памяти в МБ (1024 МБ).
 
@@ -98,7 +98,8 @@ preprocess:
 # Секция диаризации
 diarization:
   model: "pyannote/speaker-diarization-3.1"  # Модель pyannote.audio.
-  use_auth_token: null                     # HuggingFace токен (если есть).
+  use_auth_token: null
+                                           # HuggingFace токен (если есть).
   device: "cpu"                            # Устройство (cpu).
   batch_size: 32                           # Размер батча (32).
   window_enabled: true                     # Включить windowed режим.

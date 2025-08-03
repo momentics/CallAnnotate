@@ -83,6 +83,7 @@ class TranscriptionStage(BaseStage):
             "temperature": 0.0,
             "word_timestamps": True,
             "verbose": False,
+            "fp16": False,
         }
         if progress_callback:
             await progress_callback(10, "Transcription started")

@@ -16,5 +16,6 @@ docker-compose.override.yml
 
 volume/logs/system/*.log
 volume/logs/tasks/*.log
+tests/fixtures/*_processed.*
 
 #volume/models/embeddings

@@ -57,16 +57,27 @@ class AnnotationService:
             await self._update_progress(progress_callback, 5, "Метаданные аудио извлечены")
 
             context: Dict[str, Any] = {}
-            stage_progress = [10, 35, 65, 85]
+            #stage_progress = [10, 35, 65, 85]
+
+            # Деля интервал [10, 90] на len(self.stages) равных шагов
+            num_stages = len(self.stages)
+            # контрольные точки: 0%, 10%, ..., 90%, 100%
+            boundaries = [int(10 + i * (80 / num_stages)) for i in range(num_stages + 1)]
+            # Пример для 5 этапов: [10,26,42,58,74,90]
+ 
+
 
             for i, stage in enumerate(self.stages):
-                start = stage_progress[i]
-                end = stage_progress[i+1] if i+1 < len(stage_progress) else 90
+                #start = stage_progress[i]
+                #end = stage_progress[i+1] if i+1 < len(stage_progress) else 90
+                start = boundaries[i]
+                end = boundaries[i+1]
 
                 await self._update_progress(progress_callback, start, f"Начало этапа {stage.stage_name}")
 
                 async def stage_cb(pct: int, msg: str):
                     overall = start + int((end - start) * pct / 100)
+
                     await self._update_progress(progress_callback, overall, msg)
 
                 result = await stage.process(

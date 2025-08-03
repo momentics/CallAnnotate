@@ -161,9 +161,18 @@ class PreprocessingStage(BaseStage):
             if self.rnnoise:
                 seg = await self._apply_rnnoise(seg, idx)
 
+
             if self.deepfilter_enabled:
-                seg_np = await self._apply_deepfilter(seg, sr, idx)
-                segments.append(seg_np)
+                # apply deepfilter, then convert to numpy array
+                filtered = await self._apply_deepfilter(seg, sr, idx)
+                # `filtered` may be AudioSegment or numpy array
+                if hasattr(filtered, "get_array_of_samples"):
+                    # convert AudioSegment to float32 numpy array in [-1,1]
+                    arr = np.array(filtered.get_array_of_samples(), dtype=np.float32)
+                    arr /= np.iinfo(filtered.array_type).max
+                    segments.append(arr)
+                else:
+                    segments.append(filtered)
             else:
                 # Это является бест практикой, преобразовывать в [-1:1] float32
                 samples = np.array(seg.get_array_of_samples(), dtype=np.float32)
@@ -244,10 +253,13 @@ class PreprocessingStage(BaseStage):
             else:
                 samples = self.downsample_audio(samples, sr, DeepFilterNet_supported)
 
-            tensor = torch.from_numpy(samples).float()
-            out = enhance(self.model, self.df_state, tensor)  # type: ignore[arg-type]
+            tensor = torch.from_numpy(samples).unsqueeze(0).float()
+            # shape becomes (1, N) – (каналы, сэмплы)
+            out = enhance(self.model, self.df_state, tensor)
+
             if isinstance(out, torch.Tensor):
-                denoised = out.cpu().numpy().astype(np.float32)
+                # out now has shape (1, N); squeeze back
+                denoised = out.squeeze(0).cpu().numpy().astype(np.float32)
             else:
                 denoised = np.asarray(out, dtype=np.float32)
 
@@ -391,6 +403,61 @@ class PreprocessingStage(BaseStage):
             return seg
 
     async def _merge_chunks(
+        self,
+        segments: List[np.ndarray],
+        overlap_ms: int,
+        sample_rate: int,
+        method: str,
+    ) -> np.ndarray:
+        """Merge processed audio chunks.
+
+        Args:
+            segments: List of 1-D numpy arrays representing audio chunks.
+            overlap_ms: Overlap duration between chunks in milliseconds.
+            sample_rate: Sample rate of the audio in Hz.
+            method: "linear" for simple overlap-and-concatenate,
+                    "windowed" to apply a Hanning window in the overlap region.
+
+        Returns:
+            A single 1-D numpy array representing the merged audio.
+        """
+        # If only one segment, return it unchanged
+        if len(segments) == 1:
+            return segments[0]
+
+        # Calculate number of samples corresponding to overlap_ms
+        overlap_samples = int(overlap_ms * sample_rate / 1000)
+
+        # Start with the first chunk unchanged
+        output = segments[0].copy()
+
+        # Precompute Hanning window if needed
+        if method == "windowed" and overlap_samples > 0:
+            # Create a Hanning window twice as long, split into two halves
+            hann = np.hanning(overlap_samples * 2)
+            win_a = hann[:overlap_samples]
+            win_b = hann[overlap_samples:]
+
+        # Iterate through subsequent chunks
+        for chunk in segments[1:]:
+            # If chunk shorter than overlap, skip blending
+            if len(chunk) <= overlap_samples:
+                continue
+
+            if method == "windowed" and overlap_samples > 0:
+                # Apply windowed overlap-add:
+                # taper end of output and start of chunk
+                output_end = output[-overlap_samples:].copy()
+                chunk_start = chunk[:overlap_samples].copy()
+                output[-overlap_samples:] = output_end * win_a
+                chunk[:overlap_samples] = chunk_start * win_b
+            # Concatenate, skipping overlap_samples from the start of chunk
+            output = np.concatenate([output, chunk[overlap_samples:]])
+
+        return output
+
+
+    async def _merge_chunks1(
         self,
         segments: List[np.ndarray],
         overlap_ms: int,
