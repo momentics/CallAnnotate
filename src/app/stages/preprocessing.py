@@ -83,7 +83,7 @@ class PreprocessingStage(BaseStage):
                     self.model, self.df_state, _ = init_df(model=model_name, device=device)  # type: ignore[arg-type]
                 else:
                     self.model, self.df_state, _ = init_df(model_name, device)  # type: ignore[arg-type]
-                self.logger.info(f"DeepFilterNet инициализировано с sample_rate={int(self.config.get("deepfilter_sample_rate", 48000))}, model={model_name}, device={device}")
+                self.logger.info(f"DeepFilterNet инициализировано с sample_rate={self.config.get("deepfilter_sample_rate", 48000)}, model={model_name}, device={device}")
             except Exception as e: 
                 self._log_deepfilternet_error(e)
                 self.deepfilter_enabled = False
