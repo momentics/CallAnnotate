@@ -64,7 +64,7 @@ class RNNoise:  # pylint: disable=too-few-public-methods
     """
 
     def __init__(self, sample_rate: int = _SAMPLE_RATE,
-                 *, allow_passthrough: bool = False):
+                 allow_passthrough: bool = False):
         if sample_rate != _SAMPLE_RATE:
             raise ValueError("RNNoise работает только с частотой 48 кГц")
         self.sample_rate = sample_rate
@@ -79,9 +79,10 @@ class RNNoise:  # pylint: disable=too-few-public-methods
                     self._lib = ctypes.CDLL(cand)
                     break
             else:
-                if not allow_passthrough:
+                if allow_passthrough:
+                    self._lib = _PassthroughLib()  # type: ignore
+                else:
                     raise RuntimeError("Библиотека RNNoise не найдена")
-                self._lib = _PassthroughLib()          # type: ignore
 
         # Настройка прототипов (для _PassthroughLib это no-op)
         for _ in (None,):
