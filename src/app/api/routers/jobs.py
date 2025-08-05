@@ -1,5 +1,3 @@
-# src/app/api/routers/jobs.py
-
 import os
 import uuid
 from datetime import datetime
@@ -9,13 +7,12 @@ from ...schemas import CreateJobRequest, CreateJobResponse, JobStatusResponse, T
 from ...utils import validate_audio_file_path, create_task_metadata
 from ..deps import get_queue
 
-router = APIRouter()
+router = APIRouter(tags=["Jobs"])
 
 @router.post(
-    "",
+    "/api/v1/jobs",
     response_model=CreateJobResponse,
     status_code=status.HTTP_201_CREATED,
-    tags=["Jobs"],
 )
 async def create_job(req: CreateJobRequest, request: Request, q=Depends(get_queue)):
     base_volume = Path(os.getenv("VOLUME_PATH", q._cfg["queue"]["volume_path"])).resolve()
@@ -39,12 +36,11 @@ async def create_job(req: CreateJobRequest, request: Request, q=Depends(get_queu
         result_url=str(request.url_for("job_result", job_id=job_id)),
     )
 
-@router.get("/{job_id}", response_model=JobStatusResponse, name="job_status", tags=["Jobs"])
+@router.get("/api/v1/jobs/{job_id}", response_model=JobStatusResponse, name="job_status")
 async def job_status(job_id: str, q=Depends(get_queue)):
     tr = await q.get_task_result(job_id)
     if not tr:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "not found")
-
     status_str = tr.status if isinstance(tr.status, str) else tr.status.value
     return JobStatusResponse(
         job_id=tr.task_id,
@@ -59,22 +55,14 @@ async def job_status(job_id: str, q=Depends(get_queue)):
         file_info=None
     )
 
-@router.get("/{job_id}/result", name="job_result", tags=["Jobs"])
+@router.get("/api/v1/jobs/{job_id}/result", name="job_result")
 async def job_result(job_id: str, q=Depends(get_queue)):
     tr = await q.get_task_result(job_id)
     if not tr:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "not found")
-    # если результат ещё None, возвращаем заглушку с обязательным полем transcription и базовыми полями
-    result = tr.result or {
-        "transcription": {
-            "confidence": 0.0,
-            "segments": [],
-            "processing_time": 0.0
-        }
-    }
-    return result
+    return tr.result or {}
 
-@router.delete("/{job_id}", tags=["Jobs"])
+@router.delete("/api/v1/jobs/{job_id}")
 async def job_cancel(job_id: str, q=Depends(get_queue)):
     if not await q.cancel_task(job_id):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "not found")

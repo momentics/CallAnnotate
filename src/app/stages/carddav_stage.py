@@ -14,12 +14,14 @@ import html
 
 import httpx
 
+from ..config import AppSettings
+
 from .base import BaseStage
 from ..schemas import ContactCreate, ContactInfo, ContactUpdate
 
 class CardDAVStage(BaseStage):
-    def __init__(self, config, models_registry=None):
-        super().__init__(config, models_registry)
+    def __init__(self, cfg, config, models_registry=None):
+        super().__init__(cfg, config, models_registry)
         self.enabled: bool = False
         self.url: Optional[str] = None
         self.username: Optional[str] = None

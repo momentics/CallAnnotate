@@ -10,11 +10,13 @@ import os
 import shutil
 import logging.config
 from pathlib import Path
-from typing import Dict, Any, Optional, Union, List
+from typing import Dict, Any, Optional, Union
 from fastapi import UploadFile
 from datetime import datetime, timedelta
 
 import librosa
+
+from  .config import AppSettings
 
 from .schemas import AudioMetadata
 from .schemas import VoiceInfo
@@ -38,7 +40,6 @@ def get_supported_audio_formats() -> Dict[str, str]:
         ".aac": "audio/aac",
     }
 
-
 def validate_audio_file(upload: UploadFile) -> ValidationResult:
     """
     Проверка UploadFile на корректный аудиофайл по расширению.
@@ -48,7 +49,6 @@ def validate_audio_file(upload: UploadFile) -> ValidationResult:
     if ext not in get_supported_audio_formats():
         return ValidationResult(False, f"Unsupported audio format '{ext}'")
     return ValidationResult(True)
-
 
 def validate_audio_file_path(path: str) -> ValidationResult:
     """
@@ -65,38 +65,6 @@ def validate_audio_file_path(path: str) -> ValidationResult:
         return ValidationResult(False, "File is empty")
     return ValidationResult(True)
 
-
-def extract_audio_metadata(path: str) -> AudioMetadata:
-    """
-    Извлечение базовых метаданных аудио: размер и реальная длительность через librosa.
-    """
-    v = validate_audio_file_path(path)
-    if not v.is_valid:
-        raise FileNotFoundError(v.error)
-    p = Path(path)
-    stat = p.stat()
-
-    try:
-        audio, sample_rate = librosa.load(path, sr=None)
-        length = len(audio)
-        channels = 1
-        duration = length / sample_rate
-    except Exception:
-        sample_rate = 16000
-        channels = 1
-        duration = stat.st_size / (16000 * 1 * 2)
-
-    return AudioMetadata(
-        filename=p.name,
-        duration=round(duration, 2),
-        sample_rate=int(sample_rate),
-        channels=channels,
-        format=p.suffix.lstrip('.'),
-        bitrate=None,
-        size_bytes=stat.st_size
-    )
-
-
 def ensure_directory(path: str) -> Path:
     """
     Убеждается в наличии директории, создаёт её при отсутствии.
@@ -104,7 +72,6 @@ def ensure_directory(path: str) -> Path:
     p = Path(path)
     p.mkdir(parents=True, exist_ok=True)
     return p
-
 
 def cleanup_temp_files(directory: str, max_age_hours: Union[int, float]) -> None:
     """
@@ -126,64 +93,131 @@ def cleanup_temp_files(directory: str, max_age_hours: Union[int, float]) -> None
         except Exception:
             continue
 
+def create_task_metadata(
+    task_id: str,
+    file_path: str,
+    filename: str,
+    priority: int,
+    client_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Формирует метаданные задачи для QueueManager.
+    """
+    meta: Dict[str, Any] = {
+        "task_id": task_id,
+        "file_path": file_path,
+        "filename": filename,
+        "priority": priority,
+    }
+    if client_id is not None:
+        meta["client_id"] = client_id
+    return meta
 
+def remove_intermediate_files(temp_dir: str):
+    """
+    Удаляет все файлы предобработки (*_processed.wav) и содержимое temp_dir.
+    """
+    for root, _, files in os.walk(temp_dir, topdown=False):
+        for f in files:
+            if f.endswith("_processed.wav"):
+                try:
+                    os.remove(os.path.join(root, f))
+                except Exception:
+                    pass
+    if os.path.isdir(temp_dir):
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
-def setup_logging(cfg: Dict[str, Any]):
+def setup_logging(cfg: AppSettings):
     """
     Настройка логирования через dictConfig.
-    Создаёт каталоги для файловых хендлеров перед применением конфигурации.
+    Если cfg['file'] задан (не None), логируется по этому пути и имени файла.
+    Иначе — в <VOLUME_PATH>/logs/callannotate.log.
+    Поддерживается ротация.
     """
-    log_file = cfg.get("file")
-    if log_file:
-        Path(log_file).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
+    #volume = os.getenv("VOLUME_PATH", "./volume")
+
+    volume = Path(cfg.queue.volume_path).expanduser().resolve()
+
+    # выбор файла для логов
+    if cfg.logging.file:
+        log_file = cfg.logging.file
+    else:
+        # лог в едином файле callannotate.log под volume/logs
+        log_file = os.path.join(volume, "logs", "callannotate.log")
+        cfg.logging.file = log_file
+
+    # создаём директорию
+    path = Path(log_file)
+    path.parent.mkdir(parents=True, exist_ok=True)
 
     handlers = ["console"]
     cfg_dict = {
         "version": 1,
         "disable_existing_loggers": False,
-        "formatters": {"default": {"format": cfg.get("format")}},
+        "formatters": {"default": {"format": cfg.logging.format}},
         "handlers": {
             "console": {
                 "class": "logging.StreamHandler",
                 "formatter": "default",
-                "level": cfg.get("level", "INFO").upper()
+                "level": cfg.logging.level.upper()
             }
         },
         "root": {
-            "level": cfg.get("level", "INFO").upper(),
-            "handlers": handlers
+            "level": cfg.logging.level.upper(),
+            "handlers": handlers.copy()
         }
     }
-    if log_file:
+
+    # File handler с ротацией
+    if cfg.logging.rotation.enabled:
+        # TimedRotatingFileHandler
+        cfg_dict["handlers"]["file"] = {
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "formatter": "default",
+            "level": cfg.logging.level.upper(),
+            "filename": log_file,
+            "when": cfg.logging.rotation.when,
+            "interval": cfg.logging.rotation.interval,
+            "backupCount": cfg.logging.rotation.backup_count,
+            "encoding": "utf-8"
+        }
+        cfg_dict["root"]["handlers"].append("file")
+    else:
+        # обычный FileHandler
         cfg_dict["handlers"]["file"] = {
             "class": "logging.FileHandler",
             "formatter": "default",
-            "level": cfg.get("level", "INFO").upper(),
-            "filename": log_file
+            "level": cfg.logging.level.upper(),
+            "filename": log_file,
+            "encoding": "utf-8"
         }
         cfg_dict["root"]["handlers"].append("file")
 
     logging.config.dictConfig(cfg_dict)
 
+def extract_audio_metadata(path: str) -> AudioMetadata:
+    from .schemas import AudioMetadata
+    p = Path(path)
+    stat = p.stat()
+    try:
+        audio, sample_rate = librosa.load(path, sr=None)
+        duration = len(audio) / sample_rate
+        channels = 1
+    except Exception:
+        sample_rate = 16000
+        channels = 1
+        duration = stat.st_size / (16000 * 1 * 2)
+    return AudioMetadata(
+        filename=p.name,
+        duration=round(duration, 2),
+        sample_rate=int(sample_rate),
+        channels=channels,
+        format=p.suffix.lstrip("."),
+        bitrate=None,
+        size_bytes=stat.st_size,
+    )
 
 def ensure_volume_structure(volume_path: str) -> None:
-    """
-    Создаёт полную структуру каталогов volume для CallAnnotate.
-
-    Структура:
-      volume/
-        incoming/
-        processing/
-        completed/
-        failed/
-        archived/
-        logs/
-          system/
-          tasks/
-        models/
-          embeddings/
-        temp/
-    """
     logger = logging.getLogger(__name__)
     base = Path(volume_path).expanduser().resolve()
     subdirs = [
@@ -191,54 +225,13 @@ def ensure_volume_structure(volume_path: str) -> None:
         "processing",
         "completed",
         "failed",
-        "archived",
-        "logs/system",
-        "logs/tasks",
+        "logs",
         "models/embeddings",
         "temp",
     ]
-
-    try:
-        base.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Volume base directory ensured: {base}")
-        for sub in subdirs:
-            path = base / sub
-            path.mkdir(parents=True, exist_ok=True)
-            logger.debug(f"Created subdirectory: {path}")
-        logger.info(f"Volume structure created at {base}")
-    except Exception as e:
-        logger.error(f"Error creating volume structure at {base}: {e}")
-        raise
-
-
-def create_task_metadata(
-    task_id: str,
-    file_path: str,
-    filename: str,
-    priority: int,
-    websocket_client_id: Optional[str] = None
-) -> Dict[str, Any]:
-    """
-    Формирует метаданные для задачи очереди.
-
-    Args:
-        task_id: уникальный идентификатор задачи
-        file_path: полный путь к исходному аудиофайлу
-        filename: имя файла (без пути)
-        priority: приоритет задачи (1–10)
-        websocket_client_id: идентификатор WS-клиента (если есть)
-
-    Returns:
-        Словарь с метаданными задачи.
-    """
-    meta = {
-        "task_id": task_id,
-        "file_path": file_path,
-        "filename": filename,
-        "priority": priority,
-        "created_at": datetime.now().isoformat(),
-    }
-    if websocket_client_id:
-        meta["websocket_client_id"] = websocket_client_id
-    return meta
-
+    base.mkdir(parents=True, exist_ok=True)
+    logger.debug(f"Ensured volume base directory: {base}")
+    for sub in subdirs:
+        path = base / sub
+        path.mkdir(parents=True, exist_ok=True)
+        logger.debug(f"Created subdirectory: {path}")

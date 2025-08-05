@@ -1,5 +1,3 @@
-# src/app/api/routers/health.py
-
 from datetime import datetime
 import os
 from fastapi import APIRouter, Depends, Request
@@ -28,13 +26,7 @@ async def health(request: Request, queue=Depends(get_queue)) -> HealthResponse:
 
 @router.get("/info", response_model=InfoResponse, tags=["Service"])
 async def info(request: Request) -> InfoResponse:
-    # При отсутствии state.volume_path используем переменную окружения VOLUME_PATH
-    raw_vol = (
-        request.app.state.volume_path
-        if hasattr(request.app.state, "volume_path")
-        else os.getenv("VOLUME_PATH", CFG.queue.volume_path)
-    )
-    # Normalize to POSIX-style path for consistent forward slashes
+    raw_vol = request.app.state.volume_path
     vol = Path(raw_vol).as_posix()
     return InfoResponse(
         service="CallAnnotate",
@@ -51,3 +43,4 @@ async def info(request: Request) -> InfoResponse:
         },
         api_endpoints={"rest": f"{CFG.api.base_path}", "ws": f"/ws/{{client_id}}"},
     )
+

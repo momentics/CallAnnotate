@@ -8,6 +8,8 @@
 """
 from __future__ import annotations
 
+import os
+from pathlib import Path
 import statistics
 import time
 from typing import Any, Callable, Dict, List, Optional
@@ -17,9 +19,12 @@ from app.models_registry import ModelRegistry  # подключаем для п�
 
 from ..stages.base import BaseStage
 
+from ..models_registry import models_registry
 
 class TranscriptionStage(BaseStage):
     """Этап транскрипции на базе OpenAI Whisper."""
+    def __init__(self, cfg, config, models_registry=None):
+        super().__init__(cfg, config, models_registry)
 
     # Допуск при сравнении длительностей (сек.).
     _EPS: float = 1e-6
@@ -48,14 +53,27 @@ class TranscriptionStage(BaseStage):
             self.config.get("min_overlap", 0.3)
         )
 
-        self.logger.info("Loading Whisper model '%s' on %s", model_size, device)
-        # Используем models_registry только если это наш ModelRegistry
+        cache_dir = Path(self.volume_path) / "models"
+        os.environ["HF_HOME"] = str(cache_dir)
+        os.environ["TRANSFORMERS_CACHE"] = str(cache_dir)
+        os.environ["TORCH_HOME"] = str(cache_dir)
+
+        self.model = models_registry.get_model(self.logger,
+            f"whisper_{model_size}_{device}",
+            lambda: whisper.load_model(model_size, device=device),
+            stage="transcription",
+            framework="OpenAI Whisper"
+        )
+
+
+        # загрузка модели whisper из локального кеша
+        self.logger.info("Loading Whisper model '%s' from offline cache", model_size)
         if isinstance(self.models_registry, ModelRegistry):
             cache_key = f"whisper_{model_size}_{device}"
-            self.model = self.models_registry.get_model(
+            self.model = self.models_registry.get_model(self.logger,
                 cache_key,
                 lambda: whisper.load_model(model_size, device=device),
-                stage=self.stage_name,
+                stage="transcription",
                 framework="OpenAI Whisper",
             )
         else:
@@ -133,7 +151,7 @@ class TranscriptionStage(BaseStage):
             speaker_id = None
             speaker_conf = 0.0
 
-            # Если есть диаризация — ищем лучший спикер
+            # Если есть диаризация — ищем лучшего спикера
             if diar_segments:
                 best_overlap = 0.0
                 best_sp = None

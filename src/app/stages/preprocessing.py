@@ -1,5 +1,4 @@
 # src/app/stages/preprocessing.py
-
 # -*- coding: utf-8 -*-
 """
 Этап предобработки аудио: SoX-поддержка, чанковая нормализация,
@@ -16,10 +15,10 @@ import inspect
 import os
 import shutil
 import subprocess
-import tempfile
 import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
+from xml.dom import NotFoundErr
 
 import numpy as np
 import soundfile as sf
@@ -29,6 +28,7 @@ from scipy.signal import resample_poly
 
 from ..rnnoise_wrapper import RNNoise
 from .base import BaseStage
+from ..models_registry import models_registry
 
 # Поддержка разных расположений функций init_df / enhance в DeepFilterNet
 init_df: Optional[Callable] = None
@@ -51,12 +51,20 @@ for _path in (
 
 class PreprocessingStage(BaseStage):
     """SoX → RNNoise → DeepFilterNet → нормализация"""
+    def __init__(self, cfg, config, models_registry=None):
+        super().__init__(cfg, config, models_registry)
+        self._cfg = cfg
 
     @property
     def stage_name(self) -> str:
         return "preprocess"
 
     async def _initialize(self) -> None:
+        cache_dir = Path(self.volume_path) / "models"
+        os.environ["HF_HOME"] = str(cache_dir)
+        os.environ["TRANSFORMERS_CACHE"] = str(cache_dir)
+        os.environ["TORCH_HOME"] = str(cache_dir)
+
         self.logger.info("=== PreprocessingStage: старт инициализации ===")
         self.debug_mode: bool = bool(self.config.get("debug_mode", False))
         self.deepfilter_enabled = bool(self.config.get("deepfilter_enabled", False))
@@ -69,34 +77,37 @@ class PreprocessingStage(BaseStage):
                 "Не установлена зависимость deepfilternet. "
                 "Установите пакет `deepfilternet` для работы этапа preprocess."
             )
-        
-        if self.deepfilter_enabled:
 
+        if self.deepfilter_enabled:
             model_name = self.config.get("model", "DeepFilterNet2")
             device = self.config.get("device", "cpu")
-            
 
-            # Универсальный вызов init_df: учитываем mocks с любым signature
             try:
                 sig = inspect.signature(init_df)
-                # если функция не принимает позиционные обязательные args (len==0)
-                # или поддерживает **kwargs, вызываем без аргументов
-                if len(sig.parameters) == 0 or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()):
+                if len(sig.parameters) == 0 or any(
+                    p.kind == inspect.Parameter.VAR_KEYWORD
+                    for p in sig.parameters.values()
+                ):
                     self.model, self.df_state, _ = init_df()  # type: ignore[arg-type]
                 elif "model" in sig.parameters and "device" in sig.parameters:
-                    self.model, self.df_state, _ = init_df(model=model_name, device=device)  # type: ignore[arg-type]
+                    self.model, self.df_state, _ = init_df(
+                        model=model_name, device=device  # type: ignore[arg-type]
+                    )
                 else:
-                    self.model, self.df_state, _ = init_df(model_name, device)  # type: ignore[arg-type]
-                
-                self.logger.info(f"DeepFilterNet инициализировано с sample_rate={self.deepfilter_sample_rate}, model={model_name}, device={device}")
-            except Exception as e: 
+                    self.model, self.df_state, _ = init_df(
+                        model_name, device  # type: ignore[arg-type]
+                    )
+                self.logger.info(
+                    f"DeepFilterNet инициализировано с sample_rate="
+                    f"{self.deepfilter_sample_rate}, model={model_name}, device={device}"
+                )
+            except Exception as e:
                 self._log_deepfilternet_error(e)
                 self.deepfilter_enabled = False
                 raise
         else:
             self.model = None
 
-        # RNNoise
         self.rnnoise: Optional[RNNoise] = None
         if self.config.get("rnnoise_enabled", True):
             try:
@@ -108,17 +119,16 @@ class PreprocessingStage(BaseStage):
                     if hasattr(self.rnnoise, "sample_rate"):
                         self.rnnoise.sample_rate = self.rnnoise_sample_rate
                 if self.debug_mode:
-                    self.logger.info(f"RNNoise инициализировано с sample_rate={self.rnnoise.sample_rate}")
+                    self.logger.info(
+                        f"RNNoise инициализировано с sample_rate={self.rnnoise.sample_rate}"
+                    )
             except Exception as e:
                 self._log_rnnoise_error(e)
 
-        # SoX
         self.sox_available = self._detect_sox()
 
         self.logger.info(self._get_model_info())
 
-    # берет любой файл из поддерживаемых, производит шумодав
-    # и выдает файл в формате PCM_16, добавляя к имени файла постфикс
     async def _process_impl(
         self,
         file_path: str,
@@ -126,7 +136,7 @@ class PreprocessingStage(BaseStage):
         previous_results: Dict[str, Any],
         progress_callback: Optional[Callable[[int, str], None]] = None,
     ) -> Dict[str, Any]:
-        
+
         self.logger.info(
             "=== PreprocessingStage: начало обработки файла %s (task_id=%s) ===",
             file_path,
@@ -140,7 +150,7 @@ class PreprocessingStage(BaseStage):
         output_suffix = str(self.config.get("output_suffix", "_processed"))
         progress_step = int(self.config.get("progress_interval", 10))
 
-        # SoX обработанный файл или оригинальный файл
+        # подмена на sox
         src = (
             await self._apply_sox(file_path, task_id, target_rms)
             if self.sox_available
@@ -165,20 +175,15 @@ class PreprocessingStage(BaseStage):
             if self.rnnoise:
                 seg = await self._apply_rnnoise(seg, idx)
 
-
             if self.deepfilter_enabled:
-                # apply deepfilter, then convert to numpy array
                 filtered = await self._apply_deepfilter(seg, sr, idx)
-                # `filtered` may be AudioSegment or numpy array
                 if hasattr(filtered, "get_array_of_samples"):
-                    # convert AudioSegment to float32 numpy array in [-1,1]
                     arr = np.array(filtered.get_array_of_samples(), dtype=np.float32)
                     arr /= np.iinfo(filtered.array_type).max
                     segments.append(arr)
                 else:
                     segments.append(filtered)
             else:
-                # Это является бест практикой, преобразовывать в [-1:1] float32
                 samples = np.array(seg.get_array_of_samples(), dtype=np.float32)
                 samples /= np.iinfo(seg.array_type).max
                 segments.append(samples)
@@ -213,25 +218,28 @@ class PreprocessingStage(BaseStage):
 
         self.logger.info("=== PreprocessingStage: сохранение результата ===")
 
-        out_path = await self._save(
-            merged,
-            original=file_path,
-            suffix=output_suffix,
-            sample_rate=sr,
-        )
-
-        dt = time.perf_counter() - t0
-        
-        self.logger.info(
-            "=== PreprocessingStage: обработка завершена за %.3f с, результат: %s ===",
-            dt,
-            out_path,
-        )
+        # Save processed WAV into the *same* processing directory
+        processing_dir = Path(self.volume_path) / "processing"
+        processing_dir.mkdir(parents=True, exist_ok=True)
+        out_filename = Path(file_path).stem + output_suffix + Path(file_path).suffix
+        out_path = processing_dir / out_filename
+        sf.write(str(out_path), merged, sr, subtype="PCM_16")
 
         if progress_callback:
-            await progress_callback(100, "Preprocess завершён")
+            await progress_callback(100, "Preprocess completed")
 
-        return {"processed_path": out_path, "processing_time": round(dt, 3)}
+        # Return both the processed_path and original for downstream stages
+        try:
+            if str(out_path) != src:
+                os.rempve(src)
+        except NotFoundErr:
+            pass
+    
+        return {
+            "processed_path": str(out_path),
+            "original_path": file_path,
+            "processing_time": round(time.perf_counter() - t0, 3)
+        }
 
     # --------------------------------------------------------------------- #
     # DEEPFILTERNET                                                         #
@@ -282,10 +290,11 @@ class PreprocessingStage(BaseStage):
     async def _apply_sox(self, file_path: str, task_id: str, target_rms_db: float) -> str:
         """Шумоподавление + нормализация через SoX."""
 
+        
         # профайл шума
-        prof = Path(tempfile.gettempdir()) / f"{task_id}.prof"
+        prof = Path(self._cfg.queue.volume_path) / "temp"/ f"{task_id}.prof"
         # результирующий файл после обработки
-        dst = Path(tempfile.gettempdir()) / f"{task_id}_sox.wav"
+        dst = Path(self._cfg.queue.volume_path) / "temp" / f"{task_id}_sox.wav"
 
         try:
             # получаем профиль шума

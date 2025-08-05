@@ -6,12 +6,17 @@
 Автор: akoodoy@capilot.ru
 Ссылка: https://github.com/momentics/CallAnnotate
 Лицензия: Apache-2.0
-"""
 
+Исправлено: теперь сохраняется весь результат StageResult для корректного доступа к model_info.
+"""
 import logging
 import inspect
+import shutil
+from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Callable, Optional
+
+from .config import AppSettings
 
 from .stages import PreprocessingStage, DiarizationStage, TranscriptionStage, RecognitionStage
 from .stages.carddav_stage import CardDAVStage
@@ -21,27 +26,25 @@ from .schemas import (
     FinalSegment, FinalTranscription, Statistics, TranscriptionWord, ContactInfo
 )
 from .models_registry import models_registry
-from .utils import extract_audio_metadata
-
+from .utils import extract_audio_metadata, ensure_directory
 
 class AnnotationService:
     """Основной сервис аннотации аудиофайлов с использованием этапной архитектуры"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: AppSettings):
+        
+        self.config = config
+        from .utils import setup_logging
+        setup_logging(config)
+
         self.logger = logging.getLogger(__name__)
 
-        if isinstance(config, dict):
-            from .config import AppSettings
-            self.config = AppSettings(**config)
-        else:
-            self.config = config
-
         self.stages = [
-            PreprocessingStage(self.config.preprocess.dict(), models_registry),
-            DiarizationStage(self.config.diarization.dict(), models_registry),
-            TranscriptionStage(self.config.transcription.dict(), models_registry),
-            RecognitionStage(self.config.recognition.dict(), models_registry),
-            CardDAVStage(self.config.carddav.dict(), models_registry)
+            PreprocessingStage(self.config, self.config.preprocess.dict(), models_registry),
+            DiarizationStage(self.config, self.config.diarization.dict(), models_registry),
+            TranscriptionStage(self.config, self.config.transcription.dict(), models_registry),
+            RecognitionStage(self.config, self.config.recognition.dict(), models_registry),
+            CardDAVStage(self.config, self.config.carddav.dict(), models_registry)
         ]
         self.logger.info("AnnotationService инициализирован с архитектурой этапов")
 
@@ -52,37 +55,45 @@ class AnnotationService:
         progress_callback: Optional[Callable[[int, str], None]] = None
     ) -> Dict[str, Any]:
         try:
+            src = Path(file_path)
+            vol_path = Path(self.config.queue.volume_path).expanduser().resolve()
+            incoming = vol_path / "incoming"
+            ensure_directory(str(incoming))
+            if src.resolve().parent != incoming:
+                incoming_file = incoming / src.name
+                shutil.copy(src, incoming_file)
+                file_path = str(incoming_file)
+            else:
+                file_path = str(src)
+
             await self._update_progress(progress_callback, 0, "Начало обработки аудио")
             audio_metadata = extract_audio_metadata(file_path)
             await self._update_progress(progress_callback, 5, "Метаданные аудио извлечены")
 
             context: Dict[str, Any] = {}
-            #stage_progress = [10, 35, 65, 85]
 
-            # Деля интервал [10, 90] на len(self.stages) равных шагов
             num_stages = len(self.stages)
-            # контрольные точки: 0%, 10%, ..., 90%, 100%
             boundaries = [int(10 + i * (80 / num_stages)) for i in range(num_stages + 1)]
-            # Пример для 5 этапов: [10,26,42,58,74,90]
- 
 
+            proc = Path(self.config.queue.volume_path) / "processing"
+            proc.mkdir(parents=True, exist_ok=True)
+            processing_path = proc / Path(file_path).name
+            shutil.move(file_path, processing_path)
+            file_path = str(processing_path)
 
             for i, stage in enumerate(self.stages):
-                #start = stage_progress[i]
-                #end = stage_progress[i+1] if i+1 < len(stage_progress) else 90
                 start = boundaries[i]
-                end = boundaries[i+1]
-
+                end = boundaries[i + 1]
                 await self._update_progress(progress_callback, start, f"Начало этапа {stage.stage_name}")
 
                 async def stage_cb(pct: int, msg: str):
                     overall = start + int((end - start) * pct / 100)
-
                     await self._update_progress(progress_callback, overall, msg)
 
                 result = await stage.process(
                     file_path, task_id, context, stage_cb
                 )
+                # Сохраняем весь объект StageResult, а не только payload
                 context[stage.stage_name] = result
 
                 await self._update_progress(progress_callback, end, f"Этап {stage.stage_name} завершен")
@@ -90,7 +101,6 @@ class AnnotationService:
             await self._update_progress(progress_callback, 95, "Сборка финального результата")
             final = self._build_final_annotation(task_id, audio_metadata, context)
             await self._update_progress(progress_callback, 100, "Аннотация завершена")
-
             return final.dict()
 
         except Exception as e:
@@ -115,29 +125,29 @@ class AnnotationService:
         audio_metadata: AudioMetadata,
         context: Dict[str, Any]
     ) -> AnnotationResult:
-        diar = context.get("diarization")
-        trans = context.get("transcription")
-        recog = context.get("recognition")
-        card = context.get("carddav")
+        diar_result = context.get("diarization")
+        trans_result = context.get("transcription")
+        recog_result = context.get("recognition")
+        carddav_result = context.get("carddav")
 
         processing_info = ProcessingInfo(
-            diarization_model=diar.model_info if diar else {},
-            transcription_model=trans.model_info if trans else {},
-            recognition_model=recog.model_info if recog else {},
+            diarization_model=diar_result.model_info if diar_result else {},
+            transcription_model=trans_result.model_info if trans_result else {},
+            recognition_model=recog_result.model_info if recog_result else {},
             processing_time={
-                "diarization": diar.processing_time if diar else 0.0,
-                "transcription": trans.processing_time if trans else 0.0,
-                "recognition": recog.processing_time if recog else 0.0,
-                "carddav": card.processing_time if card else 0.0
+                "diarization": diar_result.processing_time if diar_result else 0.0,
+                "transcription": trans_result.processing_time if trans_result else 0.0,
+                "recognition": recog_result.processing_time if recog_result else 0.0,
+                "carddav": carddav_result.processing_time if carddav_result else 0.0
             }
         )
 
         speakers_map: Dict[str, FinalSpeaker] = {}
         counter = 0
 
-        diar_segments = diar.payload.get("segments", []) if diar else []
-        recog_speakers = recog.payload.get("speakers", {}) if recog else {}
-        card_speakers = card.payload.get("speakers", {}) if card else {}
+        diar_segments = diar_result.payload.get("segments", []) if diar_result else []
+        recog_speakers = recog_result.payload.get("speakers", {}) if recog_result else {}
+        card_speakers = carddav_result.payload.get("speakers", {}) if carddav_result else {}
 
         known = {v.name: v for v in getattr(self.config, "voices", [])}
 
@@ -168,7 +178,7 @@ class AnnotationService:
                 cd = card_speakers.get(label) or {}
                 contact = cd.get("contact")
                 if contact:
-                    contact.setdefault("uid", "") 
+                    contact.setdefault("uid", "")
                     fs.contact_info = ContactInfo(**contact)
 
                 speakers_map[label] = fs
@@ -178,7 +188,7 @@ class AnnotationService:
         total_words = 0
         speech_dur = 0.0
 
-        trans_words = trans.payload.get("words", []) if trans else []
+        trans_words = trans_result.payload.get("words", []) if trans_result else []
 
         for seg in diar_segments:
             label = seg.get("speaker", "unknown")
@@ -218,8 +228,8 @@ class AnnotationService:
 
         final_transcription = FinalTranscription(
             full_text="\n".join(full_text_parts),
-            confidence=trans.payload.get("confidence", 0.0) if trans else 0.0,
-            language=trans.payload.get("language", "unknown") if trans else "unknown",
+            confidence=trans_result.payload.get("confidence", 0.0) if trans_result else 0.0,
+            language=trans_result.payload.get("language", "unknown") if trans_result else "unknown",
             words=[TranscriptionWord(**w) for w in trans_words]
         )
 
@@ -245,9 +255,8 @@ class AnnotationService:
             created_at=datetime.now(),
             audio_metadata=audio_metadata.dict(),
             processing_info=processing_info.dict(),
-            speakers=[fs.dict() for fs in final_speakers], 
+            speakers=[fs.dict() for fs in final_speakers],
             segments=[seg.dict() for seg in final_segments],
             transcription=final_transcription.dict(),
             statistics=stats.dict()
         )
-

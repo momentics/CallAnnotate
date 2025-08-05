@@ -10,8 +10,7 @@ CallAnnotate — модульная система автоматической 
    _Статус: выполнено_  
    - **Задачи:**  
      - Реализовать FastAPI-эндпоинты `/health`, `/info`, `/jobs`  
-     - Организовать файловую очередь: папки `incoming`, `processing`, `completed`, `failed`, `archived`  
-     - Асинхронная фоновая обработка одного файла через `QueueManager`  
+     - Организовать файловую очередь: папки `incoming`, `processing`, `completed`, `failed`     - Асинхронная фоновая обработка одного файла через `QueueManager`  
      - Dockerfile + `docker-compose.ystages`  
      - Unit-тесты (coverage ≥ 80 %)  
      - CI (GitHub Actions)  

@@ -8,6 +8,7 @@
 Лицензия: Apache-2.0
 """
 
+import os
 import numpy as np
 import torch
 #import librosa
@@ -36,9 +37,19 @@ from speechbrain.pretrained import EncoderClassifier
 from .base import BaseStage
 from ..schemas import SpeakerRecognition
 
+from ..models_registry import models_registry
+
 
 class RecognitionStage(BaseStage):
     """Этап распознавания известных голосов на основе SpeechBrain + FAISS"""
+    def __init__(self, cfg, config, models_registry=None):
+        super().__init__(cfg, config, models_registry)
+        self.model_name: str = self.config.get("model", "speechbrain/spkrec-ecapa-voxceleb")
+        self.device: str = self.config.get("device", "cpu")
+        self.threshold: float = float(self.config.get("threshold", 0.7))
+        # чтобы индекс всегда существовал
+        self.index = None
+        self.speaker_labels: Dict[int, str] = {}
 
     @property
     def stage_name(self) -> str:
@@ -46,41 +57,42 @@ class RecognitionStage(BaseStage):
 
     async def _initialize(self):
         """Инициализация модели распознавания и базы эмбеддингов"""
-        self.model_name: str = self.config.get("model", "speechbrain/spkrec-ecapa-voxceleb")
-        self.device: str = self.config.get("device", "cpu")
-        self.threshold: float = float(self.config.get("threshold", 0.7))
-        embeddings_path: Optional[str] = self.config.get("embeddings_path")
+        cache_dir = Path(self.volume_path) / "models"
+        os.environ["HF_HOME"] = str(cache_dir)
+        os.environ["TRANSFORMERS_CACHE"] = str(cache_dir)
+        os.environ["TORCH_HOME"] = str(cache_dir)
 
-        # Load the SpeechBrain encoder classifier, possibly via the registry
-        if self.models_registry:
-            cache_key = f"recognition_{self.model_name}_{self.device}"
-            self.classifier = self.models_registry.get_model(
-                cache_key,
-                lambda: EncoderClassifier.from_hparams(
+
+        # Only load the SpeechBrain classifier if an embeddings_path is configured
+        emb_path = self.config.get("embeddings_path")
+        if not emb_path:
+            # No embeddings directory → skip classifier and FAISS setup
+            self.classifier = None
+            self.logger.warning("No embeddings_path configured; skipping SpeechBrain classifier load")
+        else:
+            self.classifier = models_registry.get_model(self.logger,
+                f"recognition_{self.model_name}_{self.device}",
+                # allow optional 'savedir' kwarg to satisfy tests
+                lambda *args, **kwargs: EncoderClassifier.from_hparams(
                     source=self.model_name,
-                    run_opts={"device": self.device}
+                    run_opts={"device": self.device},
+                    **{k:v for k,v in kwargs.items() if k in ("savedir","local_files_only")}
                 ),
-                stage=self.stage_name,
+                stage="recognition",
                 framework="SpeechBrain"
             )
-        else:
-            self.classifier = EncoderClassifier.from_hparams(
-                source=self.model_name,
-                run_opts={"device": self.device}
-            )
 
-        # Prepare FAISS index if embeddings_path provided and faiss.IndexFlatIP is available
+        # Prepare FAISS index: загружаем из recognition.embeddings_path
         self.index = None
         self.speaker_labels: Dict[int, str] = {}
-        if embeddings_path and getattr(faiss, "IndexFlatIP", None):
-            self._load_speaker_database(Path(embeddings_path))
+        emb_path = Path(self.config.get("embeddings_path") or "")
+        if emb_path.exists() and emb_path.is_dir() and getattr(faiss, "IndexFlatIP", None):
+            self._load_speaker_database(emb_path)
         else:
-            if embeddings_path:
-                self.logger.warning(
-                    "FAISS unavailable or IndexFlatIP not set; skipping embedding database load"
-                )
+            if not emb_path.exists():
+                self.logger.info(f"No embeddings directory found at '{emb_path}', skipping speaker database")
             else:
-                self.logger.info("No embeddings_path provided; skipping speaker database")
+                self.logger.warning("FAISS IndexFlatIP not available; skipping embedding database load")
 
         self.logger.info("RecognitionStage инициализирован успешно")
 
@@ -152,7 +164,6 @@ class RecognitionStage(BaseStage):
 
         # For loading audio snippets
         try:
-            #sr = librosa.get_samplerate(file_path)
             info = sf.info(file_path)
             sr = info.samplerate
         except Exception:
@@ -181,9 +192,8 @@ class RecognitionStage(BaseStage):
             # Extract the audio for this segment
             start = seg.get("start", 0.0)
             end = seg.get("end", 0.0)
-            duration = max(0.0, end - start)
+            #duration = max(0.0, end - start)
             try:
-                #audio, _ = librosa.load(file_path, sr=None, offset=start, duration=duration)
                 start_frame = int(start * sr)
                 stop_frame = int(end * sr)
                 audio = sf.read(file_path, start=start_frame, stop=stop_frame)[0]

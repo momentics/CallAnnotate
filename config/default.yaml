@@ -35,7 +35,12 @@ files:
 logging:
   level: "INFO"                    # Уровень логирования (INFO).
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"  # Формат логов.
-  file: "./volume/logs/system/app.log"  # Файл системного лога.
+  file: null                       # Путь к файлу логов (null — по умолчанию лога нет).
+  rotation:
+    enabled: true                  # Включить ротацию логов
+    when: "midnight"               # Когда ротировать (секунда/мин/час/daily)
+    interval: 1                    # Интервал ротации (1 день)
+    backup_count: 7                # Количество удерживаемых старых файлов
   external_levels:                 # Уровни для внешних библиотек (явный дубль).
     uvicorn: "INFO"
     fastapi: "INFO"
@@ -55,12 +60,17 @@ cors:
 api:
   base_path: "/api/v1"            # Базовый путь REST API, указываем снова вручную.
 
+# Единый кэш моделей в volume
+models:
+  cache_dir: "./volume/models"
+
+
 # Секция предобработки аудио (PreprocessingStage)
 preprocess:
+  model: "DeepFilterNet2"         # Модель для улучшения речи (DeepFilterNet2).
   # === Основные параметры обработки ===
   deepfilter_enabled: true        # Включить DeepFilterNet обработку.
   deepfilter_sample_rate: 48000   # Частота дискретизации для DeepFilterNet (48 кГц).
-  model: "DeepFilterNet2"         # Модель для улучшения речи (DeepFilterNet2).
   device: "cpu"                   # Устройство для обработки (cpu или cuda).
   chunk_duration: 30.0            # Длительность чанка в секундах (10 с).
   overlap: 0.2                      # Перекрытие между чанками в секундах (0.5 с).

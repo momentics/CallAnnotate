@@ -10,6 +10,7 @@ REST-роутер управления контактами через CardDAV �
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
+import inspect
 
 from ...config import load_settings
 from ...stages.carddav_stage import CardDAVStage
@@ -24,7 +25,7 @@ class ContactFilter(BaseModel):
 
 async def get_carddav_stage() -> CardDAVStage:
     cfg = load_settings().carddav.dict()
-    stage = CardDAVStage(cfg, models_registry=None)
+    stage = CardDAVStage(cfg, cfg)
     await stage._initialize()
     return stage
 
@@ -40,8 +41,12 @@ async def list_contacts(
     фильтрует по имени, телефону или email.
     """
     if any((name, phone, email)):
-        return await stage.search_contact(name=name, phone=phone, email=email)
-    return await stage.list_contacts()
+        result = stage.search_contact(name=name, phone=phone, email=email)
+    else:
+        result = stage.list_contacts()
+    if inspect.isawaitable(result):
+        result = await result
+    return result
 
 @router.get("/{uid}", response_model=ContactInfo)
 async def get_contact(
@@ -51,10 +56,12 @@ async def get_contact(
     """
     Получение контакта по UID.
     """
-    contact = await stage.get_contact(uid)
-    if not contact:
+    result = stage.get_contact(uid)
+    if inspect.isawaitable(result):
+        result = await result
+    if not result:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Контакт не найден")
-    return contact
+    return result
 
 @router.post("/", response_model=ContactInfo, status_code=status.HTTP_201_CREATED)
 async def create_contact(
@@ -64,13 +71,15 @@ async def create_contact(
     """
     Создание нового контакта.
     """
-    contact = await stage.create_contact(data)
-    if not contact:
+    result = stage.create_contact(data)
+    if inspect.isawaitable(result):
+        result = await result
+    if not result:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Не удалось создать контакт"
         )
-    return contact
+    return result
 
 @router.put("/{uid}", response_model=ContactInfo)
 async def update_contact(
@@ -81,10 +90,12 @@ async def update_contact(
     """
     Обновление существующего контакта по UID.
     """
-    contact = await stage.update_contact(uid, data)
-    if not contact:
+    result = stage.update_contact(uid, data)
+    if inspect.isawaitable(result):
+        result = await result
+    if not result:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Контакт не найден")
-    return contact
+    return result
 
 @router.delete("/{uid}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_contact(
@@ -94,7 +105,9 @@ async def delete_contact(
     """
     Удаление контакта по UID.
     """
-    ok = await stage.delete_contact(uid)
-    if not ok:
+    result = stage.delete_contact(uid)
+    if inspect.isawaitable(result):
+        result = await result
+    if not result:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Контакт не найден")
     return

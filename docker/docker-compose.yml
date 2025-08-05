@@ -18,12 +18,12 @@ services:
     volumes:
       - ../volume:/volume
       - ../config:/app/config:ro
-      - whisper-cache:/home/callannotate/.cache/whisper
+      #- whisper-cache:/home/callannotate/.cache/whisper
     environment:
       - PYTHONPATH=/app/src
       - CONFIG_PATH=/app/config/default.yaml
       - VOLUME_PATH=/volume
-      - WHISPER_CACHE_DIR=/home/callannotate/.cache/whisper
+      - WHISPER_CACHE_DIR=/volume/models/cache/whisper
       - HF_DATASETS_OFFLINE=1
       - TRANSFORMERS_OFFLINE=1
     restart: unless-stopped

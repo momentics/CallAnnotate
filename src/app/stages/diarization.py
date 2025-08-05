@@ -22,6 +22,7 @@ import math
 import os
 import logging
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Dict, List, Optional, Callable, Any
 
 import torch
@@ -29,8 +30,10 @@ from pyannote.audio import Pipeline
 from pyannote.core import Annotation
 from pyannote.core import Segment
 
-from .base import BaseStage
+from ..config import AppSettings
 
+from .base import BaseStage
+from ..models_registry import models_registry
 
 @dataclass
 class DiarizationCfg:
@@ -76,9 +79,10 @@ class DiarizationCfg:
 
 
 class DiarizationStage(BaseStage):
-    def __init__(self, config: Dict[str, Any], models_registry=None):
-        super().__init__(config, models_registry)
+    def __init__(self, cfg, config, models_registry=None):
+        super().__init__(cfg, config, models_registry)
         self.cfg = DiarizationCfg.from_dict(config)
+        # чтобы self.pipeline всегда было у объекта
         self.pipeline: Optional[Pipeline] = None
 
     @property
@@ -86,36 +90,44 @@ class DiarizationStage(BaseStage):
         return "diarization"
 
     async def _initialize(self) -> None:
-        self.logger: logging.Logger = logging.getLogger(__name__)
+        cache_dir = Path(self.volume_path) / "models"
+        os.environ["HF_HOME"] = str(cache_dir)
+        os.environ["TRANSFORMERS_CACHE"] = str(cache_dir)
+        os.environ["TORCH_HOME"] = str(cache_dir)
+
+        self.pipeline = None
         self.cfg = DiarizationCfg.from_dict(self.config)
 
-        if not self.cfg.use_auth_token:
-            env_token = os.getenv("HF_TOKEN")
-            if env_token:
-                self.cfg.use_auth_token = env_token
-                self.logger.info(
-                    "HF_TOKEN найден в переменных окружения и будет использован для загрузки модели диаризации."
-                )
-
+        # Токен не требуется при offline; удаляем any auth
+        self.cfg.use_auth_token = None
         self.logger.info(f"Loading diarization model '{self.cfg.model}' (device={self.cfg.device})...")
         try:
+            # если указан локальный путь к модели, используем его
+            model_src = self.config.get("diarization_model_path") or self.cfg.model
+            self.logger.info(f"Loading diarization model offline from '{model_src}' on {self.cfg.device}")
+
             if self.models_registry:
-                cache_key = f"pyannote_{self.cfg.model}_{self.cfg.device}"
-                pipeline = self.models_registry.get_model(
+                cache_key = f"pyannote_{model_src}_{self.cfg.device}"
+
+                pipeline = self.models_registry.get_model(self.logger,
                     cache_key,
                     lambda: self._load_pipeline(),
                     stage="diarization",
                     framework="pyannote.audio",
                 )
+                # для тестов не вызываем .to(), просто сохраняем
+                self.pipeline = pipeline
             else:
-                pipeline = self._load_pipeline()
-            # Move pipeline to device in-place, preserving methods
+                pipeline = Pipeline.from_pretrained(model_src, local_files_only=True)
             pipeline.to(torch.device(self.cfg.device))
             self.pipeline = pipeline
+
             self.logger.info(f"DiarizationStage initialised (window_enabled={self.cfg.window_enabled})")
         except Exception as e:
             self.logger.exception(f"Failed to initialize Pyannote pipeline: {e}")
             self.pipeline = None
+
+        
 
     def _load_pipeline(self) -> Pipeline:
         pipeline = Pipeline.from_pretrained(

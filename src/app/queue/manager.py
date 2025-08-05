@@ -3,16 +3,20 @@
 """
 Асинхронный менеджер очереди задач для CallAnnotate.
 
-Изменён: удалена логика автоматической архивации и очистки результатов.
-Добавлено: после stop новые задачи не принимаются.
+После stop новые задачи не принимаются.
+Исправлено: теперь обрабатываются перемещения файлов incoming→processing→completed/failed,
+файл *_processed удаляется после завершения обработки,
+и при ошибках создаётся .log-файл с текстом ошибки.
 """
 import asyncio
 import logging
 import shutil
+import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from ..config import AppSettings
 from ..core.interfaces.queue import QueueService, TaskResultProtocol
 from ..annotation import AnnotationService
 from ..utils import ensure_volume_structure
@@ -23,7 +27,6 @@ class TaskStatus(str):
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
-
 
 class TaskResult(TaskResultProtocol):
     __slots__ = (
@@ -52,20 +55,23 @@ class TaskResult(TaskResultProtocol):
         self.metadata = metadata
         self.subscribers: set[str] = set()
 
-
 class AsyncQueueManager(QueueService):
     """
     Асинхронный менеджер очереди задач для CallAnnotate.
 
-    Изменён: убраны автоматическая архивация и очистка.
-    Добавлено: после stop новые задачи не принимаются.
+    Реализовано:
+    - Перемещение исходного файла incoming→processing→completed/failed
+    - Перемещение JSON-результата или .log с ошибкой рядом с файлом
+    - Удаление *_processed файлов после завершения обработки
     """
+    def __init__(self, cfg: AppSettings):
 
-    def __init__(self, cfg: Dict[str, Any]):
+        self._cfg = cfg
+        qcfg1 = cfg.queue.model_dump()
+
         self._cleanup_task: Optional[asyncio.Task] = None
 
-        qcfg = cfg["queue"]
-        self.volume = Path(qcfg["volume_path"]).expanduser().resolve()
+        self.volume = Path(cfg.queue.volume_path).expanduser().resolve()
         ensure_volume_structure(str(self.volume))
 
         self.incoming = self.volume / "incoming"
@@ -73,10 +79,10 @@ class AsyncQueueManager(QueueService):
         self.completed = self.volume / "completed"
         self.failed = self.volume / "failed"
 
-        self.max_queue = qcfg["max_queue_size"]
-        self.max_concurrent = qcfg["max_concurrent_tasks"]
-        self.timeout = qcfg["task_timeout"]
-        self._cleanup_interval = qcfg.get("cleanup_interval", 300)
+        self.max_queue = cfg.queue.max_queue_size
+        self.max_concurrent = cfg.queue.max_concurrent_tasks
+        self.timeout = cfg.queue.task_timeout
+        self._cleanup_interval = cfg.queue.cleanup_interval
 
         self._queue: asyncio.Queue[str] = asyncio.Queue(self.max_queue)
         self._tasks: Dict[str, TaskResult] = {}
@@ -85,14 +91,31 @@ class AsyncQueueManager(QueueService):
         self._running = asyncio.Event()
         self._stopped = False
         self._logger = logging.getLogger(__name__)
-        self._cfg = cfg
 
         self._logger.info(f"QueueManager initialized at volume: {self.volume}")
+
+    async def _update_progress(self, job_id: str, progress: int, message: str) -> None:
+        """
+        Обновляет прогресс задачи и рассылает уведомления подписчикам.
+        """
+        async with self._lock:
+            tr = self._tasks.get(job_id)
+            if not tr:
+                return
+            tr.progress = progress
+            tr.message = message
+            tr.updated_at = datetime.utcnow().isoformat()
+        await self._notify_subscribers(job_id)
+
+    async def _notify_subscribers(self, job_id: str) -> None:
+        # Заглушка для уведомления подписчиков WebSocket;
+        # в реальной интеграции должен рассылать сообщения через WS-менеджер.
+        return None
 
     async def add_task(self, job_id: str, metadata: Dict[str, Any]) -> bool:
         """
         Добавление задачи в очередь.
-        После вызова stop() новые задачи не принимаются.
+        После stop() новые задачи не принимаются.
         """
         if self._stopped:
             self._logger.warning(f"Cannot add task {job_id}: queue manager stopped")
@@ -104,17 +127,9 @@ class AsyncQueueManager(QueueService):
             self._tasks[job_id] = TaskResult(job_id, metadata)
 
         src = Path(metadata["file_path"]).expanduser().resolve()
-        dest = (self.incoming / src.name).resolve()
-
-        if src.parent != self.incoming:
-            try:
-                shutil.copy(src, dest)
-                metadata["file_path"] = str(dest)
-            except Exception as e:
-                self._logger.warning(f"Failed to copy to incoming: {e}")
-                metadata["file_path"] = str(src)
-        else:
-            metadata["file_path"] = str(src)
+        dest = self.processing / src.name
+        shutil.move(src, dest)
+        metadata["file_path"] = str(dest)
 
         await self._queue.put(job_id)
         await self._notify_subscribers(job_id)
@@ -170,12 +185,23 @@ class AsyncQueueManager(QueueService):
             return
         self._running.clear()
         self._stopped = True
+
         if self._cleanup_task:
             self._cleanup_task.cancel()
-        for w in self._workers:
-            w.cancel()
-        await asyncio.gather(*self._workers, return_exceptions=True)
-        self._logger.info("QueueManager stopped")
+        for worker in self._workers:
+            worker.cancel()
+
+        tasks = []
+        if self._cleanup_task:
+            tasks.append(self._cleanup_task)
+        tasks.extend(self._workers)
+        if tasks:
+            try:
+                await asyncio.gather(*tasks, return_exceptions=True)
+            except Exception:
+                pass
+
+        self._logger.info("QueueManager stopped gracefully")
 
     async def cleanup_once(self) -> None:
         """
@@ -210,20 +236,12 @@ class AsyncQueueManager(QueueService):
                 job_id = await asyncio.wait_for(self._queue.get(), timeout=1.0)
             except asyncio.TimeoutError:
                 continue
-
             tr = self._tasks[job_id]
             tr.status = TaskStatus.PROCESSING
             tr.updated_at = datetime.utcnow().isoformat()
             await self._notify_subscribers(job_id)
 
-            src_path = Path(tr.metadata["file_path"]).expanduser().resolve()
-            proc_path = self.processing / src_path.name
-            try:
-                shutil.move(str(src_path), str(proc_path))
-                tr.metadata["file_path"] = str(proc_path)
-            except Exception as e:
-                self._logger.warning(f"Failed to move to processing: {e}")
-
+            # 1. Process audio
             try:
                 ann = AnnotationService(self._cfg)
                 result = await ann.process_audio(
@@ -239,37 +257,36 @@ class AsyncQueueManager(QueueService):
                 tr.status = TaskStatus.FAILED
                 tr.message = "Failed"
 
-            final_dest = (self.completed if tr.status == TaskStatus.COMPLETED else self.failed) / proc_path.name
+            # 2. Move final WAV
+            wav_path = Path(tr.metadata["file_path"])
+            dest_dir = self.completed if tr.status == TaskStatus.COMPLETED else self.failed
+            dest_dir.mkdir(exist_ok=True)
             try:
-                shutil.move(str(proc_path), str(final_dest))
-                tr.metadata["file_path"] = str(final_dest)
-            except Exception as e:
-                self._logger.warning(f"Failed to move to completed/failed: {e}")
+                shutil.move(str(wav_path), str(dest_dir / wav_path.name))
+            except Exception:
+                self._logger.exception("Failed to move WAV for %s", job_id)
+
+            # 3. Write JSON or .log
+            base = dest_dir / wav_path.name
+            if tr.status == TaskStatus.COMPLETED:
+                json_path = base.with_suffix('.json')
+                try:
+                    with open(json_path, 'w', encoding='utf-8') as jf:
+                        json.dump(tr.result or {}, jf, ensure_ascii=False, indent=2, default=str)
+                except Exception:
+                    self._logger.exception("Failed to write result JSON for %s", job_id)
+            else:
+                log_path = base.with_suffix('.log')
+                try:
+                    with open(log_path, 'w', encoding='utf-8') as lf:
+                        lf.write(tr.error or 'Unknown error')
+                except Exception:
+                    self._logger.exception("Failed to write error log for %s", job_id)
 
             tr.updated_at = datetime.utcnow().isoformat()
             await self._notify_subscribers(job_id)
             self._queue.task_done()
-
-    async def _update_progress(self, job_id: str, percent: int, _msg: str):
-        async with self._lock:
-            tr = self._tasks.get(job_id)
-            if tr:
-                tr.progress = percent
-                tr.updated_at = datetime.utcnow().isoformat()
-        await self._notify_subscribers(job_id)
-
-    async def _notify_subscribers(self, job_id: str):
-        from ..api.routers.ws import ws_manager
-
-        tr = self._tasks.get(job_id)
-        if not tr:
-            return
-        message = {
-            "type": "status_update",
-            "job_id": tr.task_id,
-            "status": tr.status,
-            "progress": tr.progress,
-            "timestamp": tr.updated_at,
-        }
-        for client_id in list(tr.subscribers):
-            await ws_manager.send(client_id, message)
+        # Drain remaining tasks if any (after stop)
+        while not self._queue.empty():
+            self._queue.get_nowait()
+            self._queue.task_done()

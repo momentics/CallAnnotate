@@ -24,6 +24,10 @@ class APIConfig(BaseModel):
     class Config:
         env_prefix = "API_"
 
+class ModelsConfig(BaseModel):
+    cache_dir: str = "./volume/models"
+
+
 class RecognitionConfig(BaseSettings):
     """Конфигурация этапа распознавания голосов"""
     model: str = Field("speechbrain/spkrec-ecapa-voxceleb", description="Модель SpeechBrain")
@@ -142,6 +146,14 @@ class FilesConfig(BaseSettings):
     class Config:
         env_prefix = "FILES_"
 
+class RotationConfig(BaseModel):
+    enabled: bool = Field(False, description="Включить ротацию логов")
+    when: str = Field("midnight", description="Когда ротировать (sec/min/hour/daily)")
+    interval: int = Field(1, description="Интервал ротации")
+    backup_count: int = Field(7, description="Количество удерживаемых файлов")
+
+    class Config:
+        extra = "ignore"
 
 class LoggingConfig(BaseSettings):
     """Конфигурация логирования"""
@@ -151,6 +163,7 @@ class LoggingConfig(BaseSettings):
         description="Формат логов"
     )
     file: Optional[str] = Field(None, description="Файл для логов")
+    rotation: RotationConfig = Field(default_factory=RotationConfig, description="Параметры ротации логов")
     external_levels: Dict[str, str] = Field(
         default_factory=lambda: {
             "uvicorn": "INFO",
@@ -159,10 +172,10 @@ class LoggingConfig(BaseSettings):
         },
         description="Уровни для внешних библиотек"
     )
-    
+
     class Config:
         env_prefix = "LOGGING_"
-
+        extra = "ignore"
 
 class CORSConfig(BaseSettings):
     """Конфигурация CORS"""
@@ -314,69 +327,65 @@ class PreprocessingConfig(BaseSettings):
 
 class AppSettings(BaseSettings):
     """Основные настройки приложения"""
-    
-    # Подконфигурации
-    diarization: DiarizationConfig = Field(default_factory=DiarizationConfig)
-    transcription: TranscriptionConfig = Field(
-        default_factory=TranscriptionConfig,
-        description="Конфигурация этапа транскрипции"
-    )
-    recognition: RecognitionConfig = Field(default_factory=RecognitionConfig)
-    carddav: CardDAVConfig = Field(default_factory=CardDAVConfig)
-    queue: QueueConfig = Field(default_factory=QueueConfig)
-    server: ServerConfig = Field(default_factory=ServerConfig)
-    files: FilesConfig = Field(default_factory=FilesConfig)
-    logging: LoggingConfig = Field(default_factory=LoggingConfig)
-    cors: CORSConfig = Field(default_factory=CORSConfig)
+    api: APIConfig = APIConfig()
+    server: ServerConfig = ServerConfig()
+    queue: QueueConfig = QueueConfig()
+    files: FilesConfig = FilesConfig()
+    logging: LoggingConfig = LoggingConfig()
+    cors: CORSConfig = CORSConfig()
+    models: ModelsConfig = ModelsConfig()
+    diarization: DiarizationConfig = DiarizationConfig()
+    transcription: TranscriptionConfig = TranscriptionConfig()
+    recognition: RecognitionConfig = RecognitionConfig()
+    carddav: CardDAVConfig = CardDAVConfig()
+    voices: List[VoiceInfoConfig] = []
+    notifications: NotificationsConfig = NotificationsConfig()
+    security: SecurityConfig = SecurityConfig()
+    monitoring: MonitoringConfig = MonitoringConfig()
+    features: FeaturesConfig = FeaturesConfig()
+    preprocess: PreprocessingConfig = PreprocessingConfig()
 
-    api: APIConfig = Field(default_factory=APIConfig)
-
-    # Список известных голосов: имя + путь к файлу эмбеддинга
-    voices: List[VoiceInfoConfig] = Field(default_factory=list, description="Известные голоса")
-    notifications: NotificationsConfig = Field(default_factory=NotificationsConfig)
-    security: SecurityConfig = Field(default_factory=SecurityConfig)
-    monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
-    features: FeaturesConfig = Field(default_factory=FeaturesConfig)
-    
-    preprocess: PreprocessingConfig = Field(default_factory=PreprocessingConfig)
-
-
-    @validator('recognition')
-    def validate_recognition_paths(cls, v):
-        """Валидация путей для распознавания"""
-        if v.embeddings_path and not Path(v.embeddings_path).exists():
-            # Создаем директорию если её нет  
-            Path(v.embeddings_path).mkdir(parents=True, exist_ok=True)
-        return v
-    
     class Config:
         env_file = ".env"
         case_sensitive = False
 
 
-def load_settings_from_yaml(yaml_path: str) -> AppSettings:
-    """Загрузка настроек из YAML файла"""
-    
-    if not Path(yaml_path).exists():
-        raise FileNotFoundError(f"Файл конфигурации не найден: {yaml_path}")
-    
-    with open(yaml_path, 'r', encoding='utf-8') as f:
-        yaml_data = yaml.safe_load(f)
-    
-    # Преобразование YAML в формат для Pydantic
-    return AppSettings(**yaml_data)
+def _deep_merge(base: dict, override: dict) -> dict:
+    """
+    Рекурсивно сливает два словаря:
+    - значения из override переопределяют base,
+    - вложенные dict-значения объединяются рекурсивно.
+    """
+    result = base.copy()
+    for key, value in override.items():
+        if (
+            key in result
+            and isinstance(result[key], dict)
+            and isinstance(value, dict)
+        ):
+            result[key] = _deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
 
+def load_settings_from_yaml(yaml_path: str) -> AppSettings:
+    with open(yaml_path, 'r', encoding='utf-8') as f:
+        yaml_data = yaml.safe_load(f) or {}
+    defaults = AppSettings().model_dump()
+    merged = _deep_merge(defaults, yaml_data)
+    settings = AppSettings(**merged)
+    return settings
 
 def load_settings(config_path: Optional[str] = None) -> AppSettings:
-    """Загрузка настроек с приоритетом: переменные окружения > YAML > значения по умолчанию"""
-    
-    # Определение пути к конфигурации
     if config_path is None:
         config_path = os.getenv("CONFIG_PATH", "config/default.yaml")
-    
-    # Загрузка из YAML если файл существует
     if Path(config_path).exists():
-        return load_settings_from_yaml(config_path)
+        settings = load_settings_from_yaml(config_path)
     else:
-        # Использование значений по умолчанию и переменных окружения
-        return AppSettings()
+        settings = AppSettings()
+    vol = Path(settings.queue.volume_path).expanduser().resolve()
+    vol.mkdir(parents=True, exist_ok=True)
+    models_cache = Path(settings.models.cache_dir).expanduser().resolve()
+    models_cache.mkdir(parents=True, exist_ok=True)
+    return settings
+

@@ -14,8 +14,8 @@ docker-compose.override.yml
 .env
 .coverage
 
-volume/logs/system/*.log
-volume/logs/tasks/*.log
+volume/logs/*.log
 tests/fixtures/*_processed.*
 
 #volume/models/embeddings
+volume/processing/*.wav
