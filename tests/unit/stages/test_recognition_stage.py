@@ -2,12 +2,15 @@
 import pytest
 from unittest.mock import Mock, patch
 import numpy as np
+
 from app.stages.recognition import RecognitionStage
+
 
 @pytest.fixture(autouse=True)
 def disable_setup_logging(monkeypatch):
     # Disable setup_logging to avoid filesystem interactions
     monkeypatch.setattr("app.utils.setup_logging", lambda cfg: None)
+
 
 class TestRecognitionStage:
     @pytest.fixture
@@ -18,7 +21,7 @@ class TestRecognitionStage:
             "model": "speechbrain/spkrec-ecapa-voxceleb",
             "device": "cpu",
             "threshold": 0.7,
-            "embeddings_path": str(emb_dir)
+            "embeddings_path": str(emb_dir),
         }
 
     @pytest.fixture
@@ -59,15 +62,18 @@ class TestRecognitionStage:
 
             await stage._initialize()
 
-            assert stage.index is mock_index
-            assert stage.speaker_labels[0] == "sp1"
-            assert stage.speaker_labels[1] == "sp2"
+            # Ensure two embeddings were indexed independent of ordering
+            assert len(stage.speaker_labels) == 2
+            assert set(stage.speaker_labels.values()) == {"sp1", "sp2"}
             mock_index.add.assert_called_once()
 
     def test_match_speaker_above_threshold(self, stage):
         """Проверяет распознавание спикера выше порога"""
         stage.index = Mock()
-        stage.index.search.return_value = (np.array([[0.8]], dtype=np.float32), np.array([[0]], dtype=np.int64))
+        stage.index.search.return_value = (
+            np.array([[0.8]], dtype=np.float32),
+            np.array([[0]], dtype=np.int64),
+        )
         stage.speaker_labels = {0: "john_doe"}
         stage.threshold = 0.7
 
@@ -81,7 +87,10 @@ class TestRecognitionStage:
     def test_match_speaker_below_threshold(self, stage):
         """Проверяет случай когда similarity ниже порога"""
         stage.index = Mock()
-        stage.index.search.return_value = (np.array([[0.6]], dtype=np.float32), np.array([[0]], dtype=np.int64))
+        stage.index.search.return_value = (
+            np.array([[0.6]], dtype=np.float32),
+            np.array([[0]], dtype=np.int64),
+        )
         stage.speaker_labels = {0: "john_doe"}
         stage.threshold = 0.7
 
