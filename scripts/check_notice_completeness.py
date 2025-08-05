@@ -56,9 +56,6 @@ REQUIRED_PACKAGES = [
     "python-dateutil",
     "pytz",
     "click",
-    "pytest",
-    "pytest-asyncio",
-    "pytest-mock",
 ]
 
 def load_requirements(path: Path) -> set[str]:

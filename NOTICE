@@ -140,16 +140,4 @@ click
 Copyright © 2014–2025 Pallets Projects
 License: BSD-3-Clause
 
-pytest
-Copyright © 2015–2025 pytest-dev community
-License: MIT
-
-pytest-asyncio
-Copyright © 2017–2025 pytest-dev community
-License: MIT
-
-pytest-mock
-Copyright © 2018–2025 pytest-dev community
-License: MIT
-
 For complete license texts, see the LICENSE file and individual component documentation.
