@@ -1,3 +1,5 @@
+# src/app/rnnoise_wrapper.py
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Лёгкая обёртка над C-библиотекой RNNoise с возможностью
@@ -9,8 +11,7 @@
   (pydub) и возвращающий денойз-копию.
 
 При отсутствии `librnnoise.so` конструктор по умолчанию бросает
-RuntimeError.  Для юнит-тестов можно передать
-`allow_passthrough=True`, тогда будет использован «noop»-стаб.
+RuntimeError, но если allow_passthrough=True, используется стаб.
 """
 from __future__ import annotations
 
@@ -35,13 +36,13 @@ _SAMPLE_RATE = 48_000
 
 class _PassthroughLib:
     """Минимальный стаб, имитирующий C-API RNNoise и делающий «ничего»."""
-    def rnnoise_create(self) -> ctypes.c_void_p:                      # noqa
+    def rnnoise_create(self) -> ctypes.c_void_p:
         return ctypes.c_void_p(1)
 
-    def rnnoise_destroy(self, _state: ctypes.c_void_p) -> None:       # noqa
+    def rnnoise_destroy(self, _state: ctypes.c_void_p) -> None:
         return None
 
-    def rnnoise_process_frame(self, _state: ctypes.c_void_p,          # noqa
+    def rnnoise_process_frame(self, _state: ctypes.c_void_p,
                               out_frame: ctypes.POINTER(ctypes.c_float),
                               in_frame: ctypes.POINTER(ctypes.c_float)
                               ) -> ctypes.c_float:
@@ -50,7 +51,7 @@ class _PassthroughLib:
         return ctypes.c_float(0.0)
 
 
-class RNNoise:  # pylint: disable=too-few-public-methods
+class RNNoise:
     """
     Тонкая Python-обёртка над RNNoise.
 
@@ -59,15 +60,20 @@ class RNNoise:  # pylint: disable=too-few-public-methods
     sample_rate : int
         Допустимо лишь 48000 Гц.
     allow_passthrough : bool
-        True ― не падать при отсутствии SO, использовать no-op реализацию
+        Если True ― не падать при отсутствии SO, использовать no-op реализацию
         (полезно для CI-тестов).
     """
-
     def __init__(self, sample_rate: int = _SAMPLE_RATE,
                  allow_passthrough: bool = False):
         if sample_rate != _SAMPLE_RATE:
             raise ValueError("RNNoise работает только с частотой 48 кГц")
         self.sample_rate = sample_rate
+
+        # При требовании passthrough сразу используем стаб
+        if allow_passthrough:
+            self._lib = _PassthroughLib()  # type: ignore
+            self._state = self._lib.rnnoise_create()
+            return
 
         lib_path = ctypes.util.find_library("rnnoise")
         if lib_path:
@@ -79,43 +85,28 @@ class RNNoise:  # pylint: disable=too-few-public-methods
                     self._lib = ctypes.CDLL(cand)
                     break
             else:
-                if allow_passthrough:
-                    self._lib = _PassthroughLib()  # type: ignore
-                else:
-                    raise RuntimeError("Библиотека RNNoise не найдена")
+                raise RuntimeError("Библиотека RNNoise не найдена")
 
-        # Настройка прототипов (для _PassthroughLib это no-op)
-        for _ in (None,):
-            try:
-                self._lib.rnnoise_create.restype = ctypes.c_void_p
-                self._lib.rnnoise_destroy.argtypes = [ctypes.c_void_p]
-                self._lib.rnnoise_process_frame.argtypes = [
-                    ctypes.c_void_p,
-                    ctypes.POINTER(ctypes.c_float),
-                    ctypes.POINTER(ctypes.c_float),
-                ]
-                self._lib.rnnoise_process_frame.restype = ctypes.c_float
-            except AttributeError:
-                break
+        # Настройка прототипов
+        self._lib.rnnoise_create.restype = ctypes.c_void_p
+        self._lib.rnnoise_destroy.argtypes = [ctypes.c_void_p]
+        self._lib.rnnoise_process_frame.argtypes = [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+        ]
+        self._lib.rnnoise_process_frame.restype = ctypes.c_float
 
         self._state = self._lib.rnnoise_create()
         if not self._state:
             raise RuntimeError("Не удалось создать состояние RNNoise")
-
-    # --------------------------------------------------------------- #
-    #  Special methods                                                #
-    # --------------------------------------------------------------- #
 
     def __del__(self):
         if getattr(self, "_state", None):
             try:
                 self._lib.rnnoise_destroy(self._state)
             finally:
-                self._state = None            # type: ignore[attr-defined]
-
-    # --------------------------------------------------------------- #
-    #  Public API                                                     #
-    # --------------------------------------------------------------- #
+                self._state = None  # type: ignore[attr-defined]
 
     def denoise_chunk(self, audio_data: np.ndarray
                       ) -> Generator[Tuple[float, np.ndarray], None, None]:
@@ -154,11 +145,9 @@ class RNNoise:  # pylint: disable=too-few-public-methods
                 den = den[:total - pos]
             yield prob, den.copy()
 
-    # ----------------------- Convenience --------------------------- #
-
     def filter(self, segment: "AudioSegment"):  # type: ignore[valid-type]
         """
-        Деноис аудио-сегмента pydub.  При несоответствии частоты
+        Деноис аудио-сегмента pydub. При несоответствии частоты
         или отсутствии pydub возвращает исходный сегмент.
         """
         if AudioSegment is None or segment.frame_rate != self.sample_rate:
