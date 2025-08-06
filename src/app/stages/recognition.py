@@ -271,6 +271,6 @@ class RecognitionStage(BaseStage):
             "model_name": self.model_name,
             "device": self.device,
             "threshold": self.threshold,
-            "db_size": self.index.ntotal if self.index else 0,
+            "database_size": self.index.ntotal if self.index else 0,
             "framework": "SpeechBrain + FAISS"
         }

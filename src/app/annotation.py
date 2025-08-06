@@ -13,7 +13,7 @@ import logging
 import inspect
 import shutil
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Callable, Optional
 
 from .config import AppSettings
@@ -135,10 +135,10 @@ class AnnotationService:
             transcription_model=trans_result.model_info if trans_result else {},
             recognition_model=recog_result.model_info if recog_result else {},
             processing_time={
-                "diarization": diar_result.processing_time if diar_result else 0.0,
-                "transcription": trans_result.processing_time if trans_result else 0.0,
-                "recognition": recog_result.processing_time if recog_result else 0.0,
-                "carddav": carddav_result.processing_time if carddav_result else 0.0
+                "diarization": round(diar_result.processing_time, 3) if diar_result else 0.0,
+                "transcription": round(trans_result.processing_time, 3) if trans_result else 0.0,
+                "recognition": round(recog_result.processing_time, 3) if recog_result else 0.0,
+                "carddav": round(carddav_result.processing_time, 3) if carddav_result else 0.0
             }
         )
 
@@ -194,11 +194,11 @@ class AnnotationService:
             label = seg.get("speaker", "unknown")
             start = seg.get("start", 0.0)
             end = seg.get("end", 0.0)
-            duration = end - start
+            duration = round((end - start), 3)
 
             sp = speakers_map[label]
             sp.segments_count += 1
-            sp.total_duration += duration
+            sp.total_duration = round((sp.total_duration + duration), 3)
 
             words = []
             text = ""
@@ -217,7 +217,7 @@ class AnnotationService:
                 id=len(final_segments) + 1,
                 start=start,
                 end=end,
-                duration=duration,
+                duration=round(duration, 3),
                 speaker=sp.id,
                 speaker_label=label,
                 text=text,
@@ -242,8 +242,8 @@ class AnnotationService:
             unknown_speakers=len(final_speakers) - ident_cnt,
             total_segments=len(final_segments),
             total_words=total_words,
-            speech_duration=speech_dur,
-            silence_duration=max(0, audio_metadata.duration - speech_dur)
+            speech_duration=round(speech_dur, 3),
+            silence_duration=round(max(0, audio_metadata.duration - round(speech_dur, 3)), 3)
         )
 
         version = getattr(self.config, "server", None)
@@ -252,7 +252,7 @@ class AnnotationService:
         return AnnotationResult(
             task_id=task_id,
             version=ver_str,
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc).isoformat(),
             audio_metadata=audio_metadata.dict(),
             processing_info=processing_info.dict(),
             speakers=[fs.dict() for fs in final_speakers],

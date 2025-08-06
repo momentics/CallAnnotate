@@ -207,13 +207,16 @@ def extract_audio_metadata(path: str) -> AudioMetadata:
         sample_rate = 16000
         channels = 1
         duration = stat.st_size / (16000 * 1 * 2)
+
+    bitrate = int(stat.st_size * 8 / duration) if duration > 0 else None
+    
     return AudioMetadata(
         filename=p.name,
         duration=round(duration, 2),
         sample_rate=int(sample_rate),
         channels=channels,
         format=p.suffix.lstrip("."),
-        bitrate=None,
+        bitrate=bitrate,
         size_bytes=stat.st_size,
     )
 
