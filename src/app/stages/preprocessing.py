@@ -17,7 +17,7 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 from xml.dom import NotFoundErr
 
 import numpy as np
@@ -28,7 +28,7 @@ from scipy.signal import resample_poly
 
 from ..rnnoise_wrapper import RNNoise
 from .base import BaseStage
-from ..models_registry import models_registry
+
 
 # Поддержка разных расположений функций init_df / enhance в DeepFilterNet
 init_df: Optional[Callable] = None
@@ -65,7 +65,7 @@ class PreprocessingStage(BaseStage):
         os.environ["TRANSFORMERS_CACHE"] = str(cache_dir)
         os.environ["TORCH_HOME"] = str(cache_dir)
 
-        self.logger.info("=== PreprocessingStage: старт инициализации ===")
+        self.logger.debug("=== PreprocessingStage: старт инициализации ===")
         self.debug_mode: bool = bool(self.config.get("debug_mode", False))
         self.deepfilter_enabled = bool(self.config.get("deepfilter_enabled", False))
         self.deepfilter_sample_rate = int(self.config.get("deepfilter_sample_rate", 48000))
@@ -97,7 +97,7 @@ class PreprocessingStage(BaseStage):
                     self.model, self.df_state, _ = init_df(
                         model_name, device  # type: ignore[arg-type]
                     )
-                self.logger.info(
+                self.logger.debug(
                     f"DeepFilterNet инициализировано с sample_rate="
                     f"{self.deepfilter_sample_rate}, model={model_name}, device={device}"
                 )
@@ -118,8 +118,7 @@ class PreprocessingStage(BaseStage):
                     self.rnnoise = RNNoise()  # type: ignore[arg-type]
                     if hasattr(self.rnnoise, "sample_rate"):
                         self.rnnoise.sample_rate = self.rnnoise_sample_rate
-                if self.debug_mode:
-                    self.logger.info(
+                self.logger.debug(
                         f"RNNoise инициализировано с sample_rate={self.rnnoise.sample_rate}"
                     )
             except Exception as e:
@@ -127,17 +126,17 @@ class PreprocessingStage(BaseStage):
 
         self.sox_available = self._detect_sox()
 
-        self.logger.info(self._get_model_info())
+        self.logger.debug(self._get_model_info())
 
     async def _process_impl(
         self,
         file_path: str,
         task_id: str,
         previous_results: Dict[str, Any],
-        progress_callback: Optional[Callable[[int, str], None]] = None,
+        progress_callback: Optional[Callable[[int, str], Awaitable[None]]] = None
     ) -> Dict[str, Any]:
 
-        self.logger.info(
+        self.logger.debug(
             "=== PreprocessingStage: начало обработки файла %s (task_id=%s) ===",
             file_path,
             task_id,
@@ -151,14 +150,18 @@ class PreprocessingStage(BaseStage):
         progress_step = int(self.config.get("progress_interval", 10))
 
         # подмена на sox
-        src = (
-            await self._apply_sox(file_path, task_id, target_rms)
-            if self.sox_available
-            else file_path
-        )
+        if self.sox_available:
+            if progress_callback:
+                await progress_callback(10, f"Обработка SOX '{file_path}'")
+            src = await self._apply_sox(file_path, task_id, target_rms)
+            if progress_callback:
+                await progress_callback(10, f"Обработка SOX завершена '{src}'")
+        else:
+            src = file_path
+
 
         if progress_callback:
-            await progress_callback(10, "Загрузка аудио")
+            await progress_callback(10, f"Загрузка аудио '{src}'")
 
         audio = AudioSegment.from_file(src)
         sr = audio.frame_rate
@@ -177,7 +180,7 @@ class PreprocessingStage(BaseStage):
 
             if self.deepfilter_enabled:
                 filtered = await self._apply_deepfilter(seg, sr, idx)
-                if hasattr(filtered, "get_array_of_samples"):
+                if isinstance(filtered, AudioSegment):
                     arr = np.array(filtered.get_array_of_samples(), dtype=np.float32)
                     arr /= np.iinfo(filtered.array_type).max
                     segments.append(arr)
@@ -193,7 +196,7 @@ class PreprocessingStage(BaseStage):
 
             if progress_callback and idx % max(progress_step, 1) == 0:
                 pct = 10 + int(60 * pos / total_ms)
-                await progress_callback(pct, f"preprocess chunk {idx}")
+                await progress_callback(pct, f"Обработка куска {idx}")
 
         if not segments:
             raise RuntimeError("Не удалось сгенерировать ни одного чанка.")
@@ -216,7 +219,7 @@ class PreprocessingStage(BaseStage):
         if progress_callback:
             await progress_callback(95, "Сохранение результата")
 
-        self.logger.info("=== PreprocessingStage: сохранение результата ===")
+        self.logger.debug("=== PreprocessingStage: сохранение результата ===")
 
         # Save processed WAV into the *same* processing directory
         processing_dir = Path(self.volume_path) / "processing"
@@ -226,15 +229,8 @@ class PreprocessingStage(BaseStage):
         sf.write(str(out_path), merged, sr, subtype="PCM_16")
 
         if progress_callback:
-            await progress_callback(100, "Preprocess completed")
+            await progress_callback(100, "Preprocess завершен")
 
-        # Return both the processed_path and original for downstream stages
-        try:
-            if str(out_path) != src:
-                os.rempve(src)
-        except NotFoundErr:
-            pass
-    
         return {
             "processed_path": str(out_path),
             "original_path": file_path,
@@ -266,7 +262,7 @@ class PreprocessingStage(BaseStage):
 
             tensor = torch.from_numpy(samples).unsqueeze(0).float()
             # shape becomes (1, N) – (каналы, сэмплы)
-            out = enhance(self.model, self.df_state, tensor)
+            out = enhance(self.model, self.df_state, tensor) # type: ignore
 
             if isinstance(out, torch.Tensor):
                 # out now has shape (1, N); squeeze back
@@ -281,7 +277,8 @@ class PreprocessingStage(BaseStage):
 
             # вернем деноизированный в оригинальном формате, с нормализацией
             denoised_int = (denoised * np.iinfo(seg.array_type).max).astype(seg.array_type)
-            return seg._spawn(denoised_int.tobytes())
+            #return seg._spawn(denoised_int.tobytes())
+            return denoised_int
         
         except Exception as e:
             self.logger.error("DeepFilterNet error on chunk %s: %s", idx, e, exc_info=True)
@@ -348,14 +345,14 @@ class PreprocessingStage(BaseStage):
 
             sr = seg.frame_rate
 
-            self.logger.info(f"RNNoise: orig_sr={sr}, samples_shape={samples.shape}")
+            self.logger.debug(f"RNNoise: orig_sr={sr}, samples_shape={samples.shape}")
 
             if sr <= self.rnnoise_sample_rate:
                 samples = self.upsample_audio(samples, sr, self.rnnoise_sample_rate)
-                self.logger.info(f"RNNoise: upsampled to 48kHz, new_length={len(samples)}")
+                self.logger.debug(f"RNNoise: upsampled to 48kHz, new_length={len(samples)}")
             else:
                 samples = self.downsample_audio(samples, sr, self.rnnoise_sample_rate)
-                self.logger.info(f"RNNoise: downsampled to 48kHz, new_length={len(samples)}")
+                self.logger.debug(f"RNNoise: downsampled to 48kHz, new_length={len(samples)}")
 
 
 
@@ -468,37 +465,6 @@ class PreprocessingStage(BaseStage):
         return output
 
 
-    async def _merge_chunks1(
-        self,
-        segments: List[np.ndarray],
-        overlap_ms: int,
-        sample_rate: int,
-        method: str,
-    ) -> np.ndarray:
-        """Склеивание обработанных чанков."""
-        # если один сегмент, то нечего склеивать
-        if len(segments) == 1:
-            return segments[0]
-
-        # считаем сколько семплов оверлапится
-        overlap_samples = int(overlap_ms * sample_rate / 1000)
-        # первый сегмент не оверлапится
-        out = segments[0].copy()
-
-        # далее - склеивание. Либо линейное, либо оконное
-        for seg in segments[1:]:
-            # длина сегмента меньше длины оверлапа
-            if len(seg) <= overlap_samples:
-                continue
-            # накладывание с наложением по ханингу, иначе пропускаем ханинг
-            if method == "windowed" and overlap_samples:
-                window = np.hanning(overlap_samples * 2)
-                out[-overlap_samples:] *= window[:overlap_samples]
-                seg[:overlap_samples] *= window[overlap_samples:]
-            # склеиваем подготовленные куски
-            out = np.concatenate([out, seg[overlap_samples:]])
-        # по завершению возвращаем
-        return out
 
     async def _apply_final_normalization(self, audio: np.ndarray, target_rms_db: float) -> np.ndarray:
         """Финальная нормализация уровня громкости."""

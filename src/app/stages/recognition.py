@@ -14,7 +14,7 @@ import torch
 #import librosa
 import soundfile as sf
 import pickle
-from typing import Dict, Any, Callable, Optional
+from typing import Awaitable, Dict, Any, Callable, Optional
 from pathlib import Path
 
 # Try to import faiss; if unavailable, provide a stub that tests can override.
@@ -30,8 +30,8 @@ except ImportError:
         IndexFlatIP = None
     faiss = _FaissStub()
 
-#from speechbrain.inference import EncoderClassifier
-from speechbrain.pretrained import EncoderClassifier
+from speechbrain.inference import EncoderClassifier
+#from speechbrain.pretrained import EncoderClassifier
 
 
 from .base import BaseStage
@@ -116,26 +116,33 @@ class RecognitionStage(BaseStage):
             except Exception as e:
                 self.logger.error(f"Не удалось загрузить эмбеддинг {path}: {e}")
 
-        if embeddings and getattr(faiss, "IndexFlatIP", None):
+
+        if embeddings and getattr(faiss, "normalize_L2", None):
             matrix = np.vstack(embeddings)
-            # Normalize all stored vectors
             try:
                 faiss.normalize_L2(matrix)
             except Exception:
                 self.logger.warning("Ошибка нормализации FAISS-эмбеддингов; пропускаем")
-            dim = matrix.shape[1]
-            self.index = faiss.IndexFlatIP(dim)
-            self.index.add(matrix)
-            self.logger.info(f"Загружено {len(embeddings)} эмбеддингов в FAISS")
+
+            # Pull the index class out and check it isn’t None
+            IndexFlatIP = getattr(faiss, "IndexFlatIP", None)
+            if IndexFlatIP is not None:
+                dim = matrix.shape[1]
+                self.index = IndexFlatIP(dim)
+                self.index.add(matrix)
+                self.logger.info(f"Загружено {len(embeddings)} эмбеддингов в FAISS")
+            else:
+                self.logger.warning("FAISS IndexFlatIP not available; skipping index creation")
         else:
-            self.logger.warning("FAISS IndexFlatIP not available or no embeddings to load")
+            self.logger.warning("FAISS normalize_L2 not available or no embeddings to load")
+
 
     async def _process_impl(
         self,
         file_path: str,
         task_id: str,
         previous_results: Dict[str, Any],
-        progress_callback: Optional[Callable[[int, str], None]] = None
+        progress_callback: Optional[Callable[[int, str], Awaitable[None]]] = None
     ) -> Dict[str, Any]:
         """Распознавание голосов по результатам диаризации"""
         speakers: Dict[str, SpeakerRecognition] = {}
@@ -221,15 +228,27 @@ class RecognitionStage(BaseStage):
 
     def _generate_embedding(self, audio: np.ndarray) -> np.ndarray:
         """Генерация эмбеддинга через SpeechBrain"""
+        if self.classifier is None:
+            raise RuntimeError("SpeechBrain classifier is not initialized; embeddings cannot be generated")
         tensor = torch.from_numpy(audio).to(self.device).unsqueeze(0)
         with torch.no_grad():
             emb = self.classifier.encode_batch(tensor).squeeze().cpu().numpy()
         return emb.astype("float32")
 
+
     def _match_speaker(self, embedding: np.ndarray) -> Dict[str, Any]:
         """
         Сравнение эмбеддинга с базой FAISS
         """
+        # If the FAISS index isn't initialized, skip matching:
+        if self.index is None:
+            return {
+                "identified": False,
+                "name": None,
+                "confidence": 0.0,
+                "reason": "База голосов не загружена"
+            }
+
         vec = np.ascontiguousarray(embedding.reshape(1, -1).astype("float32"))
 
         # Normalize input vector; ignore FAISS normalization errors
@@ -264,6 +283,8 @@ class RecognitionStage(BaseStage):
                 "confidence": round(sim, 3),
                 "reason": f"Сходство {sim:.3f} ниже порога {self.threshold}"
             }
+
+
 
     def _get_model_info(self) -> Dict[str, Any]:
         return {

@@ -23,7 +23,7 @@ from .schemas import VoiceInfo
 
 
 class ValidationResult:
-    def __init__(self, ok: bool, error: str = None):
+    def __init__(self, ok: bool, error: str = ""):
         self.is_valid = ok
         self.error = error
 

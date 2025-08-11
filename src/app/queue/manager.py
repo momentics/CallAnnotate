@@ -131,9 +131,14 @@ class AsyncQueueManager(QueueService):
         shutil.move(src, dest)
         metadata["file_path"] = str(dest)
 
-        await self._queue.put(job_id)
-        await self._notify_subscribers(job_id)
-        return True
+        try:
+            await self._queue.put(job_id)
+            return True
+        except asyncio.QueueFull:
+            async with self._lock:
+                self._tasks.pop(job_id, None)
+            self._logger.error(f"Queue is full, cannot add task {job_id}")
+            return False
 
     async def cancel_task(self, job_id: str) -> bool:
         async with self._lock:
@@ -248,6 +253,7 @@ class AsyncQueueManager(QueueService):
                     tr.metadata["file_path"],
                     job_id,
                     progress_callback=lambda p, m: self._update_progress(job_id, p, m),
+
                 )
                 tr.result = result
                 tr.status = TaskStatus.COMPLETED

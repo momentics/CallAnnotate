@@ -112,12 +112,12 @@ diarization:
   device: "cpu"                            # Устройство (cpu).
   batch_size: 32                           # Размер батча (32).
   window_enabled: true                     # Включить windowed режим.
-  window_size: 30.0                        # Длина окна (30 с).
-  hop_size: 10.0                           # Шаг окна (10 с).
+  window_size: 10.0                        # Длина окна (30 с).
+  hop_size: 5.0                           # Шаг окна (10 с).
 
 # Секция транскрипции (Whisper)
 transcription:
-  model: "openai/whisper-base"            # Whisper модель (base).
+  model: "openai/whisper-small"           # Whisper модель (small).
   device: "cpu"                           # Устройство (cpu).
   language: "ru"                          # Язык ("ru" или "auto").
   batch_size: 16                          # Батч для Whisper (16).

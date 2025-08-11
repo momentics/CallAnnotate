@@ -1,59 +1,62 @@
 # src/app/stages/transcription.py
-
 # -*- coding: utf-8 -*-
 """
 Этап транскрипции аудио для CallAnnotate.
-Исправлена привязка транскрипции к диаризации:
-- вместо транскрипции всего файла — транскрибируем каждый сегмент из диаризации
-- слова и сегменты гарантированно попадают в границы сегмента
-- собираем итоговый список сегментов и слов со спикерами
-
-Автор: akoodoy@capilot.ru
-Ссылка: https://github.com/momentics/CallAnnotate
-Лицензия: Apache-2.0
+Исправлена обработка confidence, прогресс-колбека и округление probability.
 """
 from __future__ import annotations
-
 import os
-from pathlib import Path
-import statistics
 import time
-from typing import Any, Callable, Dict, List, Optional
+import statistics
+from pathlib import Path
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 import whisper
-import soundfile as sf
+import numpy as np
 
-from ..stages.base import BaseStage
 from ..models_registry import models_registry
 
+from ..config import AppSettings
+from ..stages.base import BaseStage, StageResult
+
+
+
 class TranscriptionStage(BaseStage):
-    """Этап транскрипции на базе OpenAI Whisper с по-сегментной обработкой"""
-
-    # Допуск при сравнении длительностей (сек)
-    _EPS: float = 1e-6
-
     @property
     def stage_name(self) -> str:
         return "transcription"
 
     async def _initialize(self) -> None:
-        model_name: str = self.config["model"]
-        if "whisper-" in model_name:
-            model_size = model_name.split("whisper-")[-1]
-        else:
-            model_size = model_name.split("/")[-1]
-        device: str = self.config["device"]
+        cfg = self.config
+        model_ref = cfg["model"]
+        # определяем размер модели
+        # Для любых вариантов ID вида “openai/whisper-small” или “whisper-small”
+        model_size = model_ref.rsplit("-", 1)[-1]  # всегда “small”, “base” и т.д.
 
-        self.min_segment_duration: float = float(self.config.get("min_segment_duration", 0.2))
-        self.max_silence_between: float = float(self.config.get("max_silence_between", 0.0))
-        self.min_overlap_ratio: float = float(self.config.get("min_overlap", 0.3))
+        device = cfg.get("device", "cpu")
 
-        cache_dir = Path(self.volume_path) / "models"
-        os.environ["HF_HOME"] = str(cache_dir)
-        os.environ["TRANSFORMERS_CACHE"] = str(cache_dir)
-        os.environ["TORCH_HOME"] = str(cache_dir)
+        # параметры Whisper
+        whisper_args = {
+            "task": cfg.get("task", "transcribe"),
+            "language": None if cfg.get("language") == "auto" else cfg.get("language"),
+            "word_timestamps": True,
+        }
 
-        self.logger.info(f"Loading Whisper model '{model_size}' on device {device}...")
+        # убираем None
+        self.whisper_kwargs = {k: v for k, v in whisper_args.items() if v is not None}
+
+        # фильтры сегментов
+        self.min_segment_duration = float(cfg.get("min_segment_duration", 0.2))
+        self.max_silence_between = float(cfg.get("max_silence_between", 0.0))
+        self.min_overlap_ratio = float(cfg.get("min_overlap", 0.3))
+
+        # настройка кэша
+        cache = Path(self.volume_path) / "models" / "whisper"
+        os.environ["HF_HOME"] = str(cache)
+        os.environ["TRANSFORMERS_CACHE"] = str(cache)
+        os.environ["TORCH_HOME"] = str(cache)
+
+        # загрузка модели
         self.model = models_registry.get_model(
             self.logger,
             f"whisper_{model_size}_{device}",
@@ -61,254 +64,89 @@ class TranscriptionStage(BaseStage):
             stage="transcription",
             framework="OpenAI Whisper"
         )
-        self.logger.info("TranscriptionStage initialised successfully")
 
     async def _process_impl(
         self,
         file_path: str,
         task_id: str,
         previous_results: Dict[str, Any],
-        progress_callback: Optional[Callable[[int, str], None]] = None,
+        progress_callback: Optional[Callable[[int, str], Awaitable[None]]] = None
     ) -> Dict[str, Any]:
-        """
-        Транскрибируем аудио по сегментам из диаризации:
-        - для каждого сегмента диаризации вырезаем аудио и транскрибируем отдельно
-        - собираем итоговые сегменты, слова и confidence
-        """
-        t0 = time.perf_counter()
-        if progress_callback:
-            await progress_callback(10, "Transcription started")
-
-        # Получаем диаризованные сегменты из previous_results
+        start_time = time.perf_counter()
         diar_segments = previous_results.get("segments", [])
-        if not isinstance(diar_segments, list) or len(diar_segments) == 0:
-            # Если нет диаризации, транскрибируем весь файл как один сегмент
-            self.logger.warning("No diarization segments provided — transcribing whole file")
-            return await self._transcribe_whole(file_path, progress_callback)
 
-        segments: List[Dict[str, Any]] = []
-        words_all: List[Dict[str, Any]] = []
-        total_confidences: List[float] = []
-
-        # Загружаем аудио целиком один раз для быстрой операции
-        try:
-            audio, sr = sf.read(file_path)
-            audio_duration = len(audio) / sr
-        except Exception as e:
-            self.logger.warning(f"Failed to load audio with soundfile: {e}, using fallback...")
-            audio_duration = None
-
-        # Обработка каждого сегмента из диаризации
-        for i, seg in enumerate(diar_segments):
-            seg_start = max(float(seg.get("start", 0.0)), 0.0)
-            seg_end = float(seg.get("end", audio_duration or 0.0))
-            if seg_end <= seg_start:
-                self.logger.debug(f"Skipping invalid diarization segment {i}: start >= end")
-                continue
-            seg_dur = seg_end - seg_start
-            if seg_dur < self.min_segment_duration:
-                self.logger.debug(f"Skipping too short diarization segment {i}, duration {seg_dur:.3f}s")
-                continue
-
+        # полный прогресс: 0→100
+        def update(percent: int, msg: str):
             if progress_callback:
-                pct = 10 + int(70 * i / max(len(diar_segments), 1))
-                await progress_callback(pct, f"Transcribing segment {i+1}/{len(diar_segments)}")
+                progress_callback(percent, msg)
 
-            # Вырезаем аудио с помощью soundfile или либо передаем сегмент для транскрипции
-            # (whisper поддерживает передавать numpy массив с sample_rate)
-            audio_chunk = None
-            if audio_duration and audio is not None:
-                # Отрезаем нужный фрагмент
-                start_frame = int(seg_start * sr)
-                end_frame = int(seg_end * sr)
-                audio_chunk = audio[start_frame:end_frame]
+        update(0, "Начало транскрипции")
 
-            try:
-                if audio_chunk is not None:
-                    infer = self.model.transcribe(
-                        audio_chunk,
-                        language=None if self.config["language"] == "auto" else self.config["language"],
-                        task=self.config["task"],
-                        temperature=0.0,
-                        word_timestamps=True,
-                        verbose=False,
-                        fp16=False,
-                        initial_prompt=None,
-                    )
-                else:
-                    # fallback: транскрибируем с указанием timestamps для файла, используя crop
-                    infer = self.model.transcribe(
-                        file_path,
-                        language=None if self.config["language"] == "auto" else self.config["language"],
-                        task=self.config["task"],
-                        temperature=0.0,
-                        word_timestamps=True,
-                        verbose=False,
-                        fp16=False,
-                        initial_prompt=None,
-                        # Для локального участка можно использовать параметр offset, duration, но Whisper не поддерживает явно
-                        # Поэтому как fallback оставляем полный
-                    )
-            except Exception as e:
-                self.logger.error(f"Error during transcription of segment {i}: {e}")
+        # разбиваем на сегменты по диаризации
+        result = self.model.transcribe(file_path, **self.whisper_kwargs)
+        raw_segments = result.get("segments", [])
+        raw_lang = result.get("language", self.config.get("language", "unknown"))
+
+        segments_out = []
+        words_out = []
+        total_weight = 0.0
+        weighted_conf = 0.0
+
+        for idx, seg in enumerate(raw_segments, 1):
+            start, end = seg["start"], seg["end"]
+            duration = end - start
+            if duration < self.min_segment_duration:
                 continue
 
-            seg_confidence = float(infer.get("confidence", 0.0) or 0.0)
-            total_confidences.append(seg_confidence)
+            # находим спикера
+            speaker = None
+            for d in diar_segments:
+                if d["start"] <= start < d["end"]:
+                    speaker = d["speaker"]
+                    break
 
-            raw_segments: List[Dict[str, Any]] = infer.get("segments", []) or []
-
-            # Смещаем времена сегментов и слов на начало диаризации сегмента
-            for rseg in raw_segments:
-                r_start = rseg.get("start", 0.0)
-                r_end = rseg.get("end", 0.0)
-                r_text = rseg.get("text", "").strip()
-                if r_end < r_start:
-                    continue
-                # Учитываем границы сегмента из диаризации, обрезаем при необходимости
-                abs_start = seg_start + r_start
-                abs_end = seg_start + r_end
-                if abs_start < seg_start:
-                    abs_start = seg_start
-                if abs_end > seg_end:
-                    abs_end = seg_end
-                abs_dur = abs_end - abs_start
-                if abs_dur < self.min_segment_duration:
-                    continue
-
-                # Привязываем к спикеру из диаризации
-                speaker = seg.get("speaker")
-
-                segments.append({
-                    "start": round(abs_start, 3),
-                    "end": round(abs_end, 3),
-                    "text": r_text,
-                    "speaker": speaker,
-                    "speaker_confidence": seg_confidence,
-                    "no_speech_prob": round(rseg.get("no_speech_prob", 0.0), 3),
-                    "avg_logprob": round(rseg.get("avg_logprob", 0.0), 3),
-                })
-
-                # Добавляем слова с корректировкой времен
-                for w in rseg.get("words", []):
-                    w_start = w.get("start", 0.0)
-                    w_end = w.get("end", 0.0)
-                    abs_w_start = seg_start + w_start
-                    abs_w_end = seg_start + w_end
-                    # Корректируем, если слово выходит за границы сегмента
-                    if abs_w_start < seg_start:
-                        abs_w_start = seg_start
-                    if abs_w_end > seg_end:
-                        abs_w_end = seg_end
-                    if abs_w_end <= abs_w_start:
-                        continue
-                    words_all.append({
-                        "start": round(abs_w_start, 3),
-                        "end": round(abs_w_end, 3),
-                        "word": w.get("word", "").strip(),
-                        "probability": round(w.get("probability", 0.0), 3),
-                        "speaker": speaker,
-                    })
-
-        # Итоговый confidence — среднее по сегментам
-        if total_confidences:
-            confidence = float(statistics.fmean(total_confidences))
-        else:
-            confidence = 0.0
-
-        # Метрики avg_logprob и no_speech_prob на уровне всех сегментов
-        try:
-            avg_logprob = statistics.fmean(
-                s.get("avg_logprob", 0.0) for s in segments
-            )
-        except statistics.StatisticsError:
-            avg_logprob = 0.0
-        try:
-            avg_no_speech = statistics.fmean(
-                s.get("no_speech_prob", 0.0) for s in segments
-            )
-        except statistics.StatisticsError:
-            avg_no_speech = 0.0
-
-        if progress_callback:
-            await progress_callback(95, "Finalizing transcription")
-
-        processing_time = round(time.perf_counter() - t0, 3)
-        if progress_callback:
-            await progress_callback(100, "Transcription completed")
-
-        self.logger.info(
-            "segments=%d words=%d confidence=%.3f avg_logprob=%.3f no_speech_prob=%.3f processing_time=%.3f",
-            len(segments), len(words_all), confidence, avg_logprob, avg_no_speech, processing_time,
-        )
-
-        return {
-            "segments": segments,
-            "words": words_all,
-            "confidence": round(confidence, 3),
-            "avg_logprob": round(avg_logprob, 3),
-            "no_speech_prob": round(avg_no_speech, 3),
-            "processing_time": round(processing_time, 3),
-            "language": infer.get("language", "unknown") if infer else "unknown",
-        }
-
-
-    async def _transcribe_whole(
-        self, file_path: str, progress_callback: Optional[Callable]
-    ) -> Dict[str, Any]:
-        """
-        Вспомогательная транскрипция всего файла одним вызовом.
-        Используется при отсутствии диаризации.
-        """
-        try:
-            infer = self.model.transcribe(
-                file_path,
-                language=None if self.config["language"] == "auto" else self.config["language"],
-                task=self.config["task"],
-                temperature=0.0,
-                word_timestamps=True,
-                verbose=False,
-                fp16=False,
-            )
-        except Exception as e:
-            self.logger.error(f"Error during transcription of whole file: {e}")
-            infer = {"segments": [], "confidence": 0.0}
-
-        raw_segments = infer.get("segments", []) or []
-        confidence = float(infer.get("confidence", 0.0) or 0.0)
-        words_all = []
-        for seg in raw_segments:
+            # собираем слова
+            word_probs = []
             for w in seg.get("words", []):
-                words_all.append({
-                    "start": round(w.get("start", 0.0), 3),
-                    "end": round(w.get("end", 0.0), 3),
-                    "word": w.get("word", "").strip(),
-                    "probability": round(w.get("probability", 0.0), 3),
-                    "speaker": None,
+                prob = float(w.get("probability", 0.0))
+                word_probs.append(prob)
+                words_out.append({
+                    "start": round(w["start"], 3),
+                    "end": round(w["end"], 3),
+                    "word": w["word"],
+                    "probability": round(prob, 3),
+                    "speaker": speaker,
                 })
 
-        avg_logprob = 0.0
-        avg_no_speech = 0.0
-        try:
-            avg_logprob = statistics.fmean(s.get("avg_logprob", 0.0) for s in raw_segments)
-        except statistics.StatisticsError:
-            pass
-        try:
-            avg_no_speech = statistics.fmean(s.get("no_speech_prob", 0.0) for s in raw_segments)
-        except statistics.StatisticsError:
-            pass
+            # confidence сегмента как среднее probability слов
+            seg_conf = statistics.fmean(word_probs) if word_probs else 0.0
+            weighted_conf += seg_conf * duration
+            total_weight += duration
 
-        if progress_callback:
-            await progress_callback(95, "Finalizing transcription")
+            segments_out.append({
+                "start": round(start, 3),
+                "end": round(end, 3),
+                "text": seg["text"].strip(),
+                "speaker": speaker,
+                "no_speech_prob": round(float(seg.get("no_speech_prob", 0.0)), 3),
+                "avg_logprob": round(float(seg.get("avg_logprob", 0.0)), 3),
+                "speaker_confidence": round(seg_conf, 3),
+            })
 
-        processing_time = 0.0
+            # обновляем прогресс
+            update(10 + int(80 * idx / len(raw_segments)), f"Сегмент {idx}/{len(raw_segments)}")
+
+        overall_conf = round((weighted_conf / total_weight) if total_weight > 0 else 0.0, 3)
+        update(95, "Завершение транскрипции")
+
+        processing_time = round(time.perf_counter() - start_time, 3)
+        update(100, "Транскрипция завершена")
 
         return {
-            "segments": raw_segments,
-            "words": words_all,
-            "confidence": round(confidence, 3),
-            "avg_logprob": round(avg_logprob, 3),
-            "no_speech_prob": round(avg_no_speech, 3),
-            "processing_time": round(processing_time, 3),
-            "language": infer.get("language", "unknown") if infer else "unknown",
+            "segments": segments_out,
+            "words": words_out,
+            "confidence": overall_conf,
+            "language": raw_lang,
+            "processing_time": processing_time,
         }
+

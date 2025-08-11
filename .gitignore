@@ -17,5 +17,8 @@ docker-compose.override.yml
 volume/logs/*.log
 tests/fixtures/*_processed.*
 
+tests/fixtures/*phone.*
+tests/integration/test_phone_annotation.py
+
 #volume/models/embeddings
 volume/processing/*.wav

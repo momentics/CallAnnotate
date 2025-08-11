@@ -36,3 +36,6 @@ class QueueService(abc.ABC):
 
     @abc.abstractmethod
     async def stop(self) -> Awaitable[None]: ...
+
+    @abc.abstractmethod
+    async def subscribe_to_task(self, job_id: str, client_id: str): ...

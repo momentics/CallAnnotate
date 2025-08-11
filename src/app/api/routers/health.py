@@ -17,7 +17,7 @@ async def health(request: Request, queue=Depends(get_queue)) -> HealthResponse:
     info = await queue.get_queue_info()
     return HealthResponse(
         status="healthy",
-        version=CFG.server.version,
+        version=str(CFG.server.version),
         uptime=uptime,
         queue_length=info.get("queue_length", 0),
         active_tasks=len(info.get("processing_jobs", [])),
@@ -30,7 +30,7 @@ async def info(request: Request) -> InfoResponse:
     vol = Path(raw_vol).as_posix()
     return InfoResponse(
         service="CallAnnotate",
-        version=CFG.server.version,
+        version=str(CFG.server.version),
         description="Автоматическая диаризация, транскрипция и аннотация разговоров.",
         max_file_size=CFG.files.max_size,
         supported_formats=CFG.files.allowed_formats,

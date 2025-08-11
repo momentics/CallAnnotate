@@ -6,21 +6,18 @@
 Автор: akoodoy@capilot.ru
 Ссылка: https://github.com/momentics/CallAnnotate
 Лицензия: Apache-2.0
-
-Исправлено: теперь сохраняется весь результат StageResult для корректного доступа к model_info.
 """
+
 import logging
 import inspect
 import shutil
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Dict, Any, Callable, Optional
+from typing import Awaitable, Dict, Any, Callable, List, Optional
 
 from .config import AppSettings
-
 from .stages import PreprocessingStage, DiarizationStage, TranscriptionStage, RecognitionStage
 from .stages.carddav_stage import CardDAVStage
-
 from .schemas import (
     AnnotationResult, AudioMetadata, ProcessingInfo, FinalSpeaker,
     FinalSegment, FinalTranscription, Statistics, TranscriptionWord, ContactInfo
@@ -28,17 +25,16 @@ from .schemas import (
 from .models_registry import models_registry
 from .utils import extract_audio_metadata, ensure_directory
 
+
 class AnnotationService:
     """Основной сервис аннотации аудиофайлов с использованием этапной архитектуры"""
 
     def __init__(self, config: AppSettings):
-        
         self.config = config
         from .utils import setup_logging
         setup_logging(config)
 
         self.logger = logging.getLogger(__name__)
-
         self.stages = [
             PreprocessingStage(self.config, self.config.preprocess.dict(), models_registry),
             DiarizationStage(self.config, self.config.diarization.dict(), models_registry),
@@ -48,11 +44,19 @@ class AnnotationService:
         ]
         self.logger.info("AnnotationService инициализирован с архитектурой этапов")
 
+        # DEBUG: отключаем все этапы кроме диаризации
+        # self.stages = [stage for stage in self.stages if isinstance(stage, DiarizationStage)
+        #               #    or isinstance(stage, TranscriptionStage)
+        #            ]
+
+        self.logger.info(f"AnnotationService инициализирован len(stages)={len(self.stages)} ")
+
     async def process_audio(
         self,
         file_path: str,
         task_id: str,
-        progress_callback: Optional[Callable[[int, str], None]] = None
+        #progress_callback: Optional[Callable[[int, str], None]] = None
+        progress_callback: Optional[Callable[[int, str], Awaitable[Any]]] = None
     ) -> Dict[str, Any]:
         try:
             src = Path(file_path)
@@ -93,9 +97,13 @@ class AnnotationService:
                 result = await stage.process(
                     file_path, task_id, context, stage_cb
                 )
-                # Сохраняем весь объект StageResult, а не только payload
-                context[stage.stage_name] = result
 
+                if stage.stage_name == "preprocess":
+                    processed = result.payload.get("processed_path")
+                    if processed:
+                        file_path = processed
+
+                context[stage.stage_name] = result
                 await self._update_progress(progress_callback, end, f"Этап {stage.stage_name} завершен")
 
             await self._update_progress(progress_callback, 95, "Сборка финального результата")
@@ -114,10 +122,10 @@ class AnnotationService:
         message: str
     ):
         if callback:
-            res = callback(progress, message)
-            if inspect.isawaitable(res):
-                await res
-        self.logger.info(f"Прогресс {progress}%: {message}")
+            result = callback(progress, message)
+            if inspect.isawaitable(result):
+                await result
+        self.logger.info(f"Прогресс: {progress:3d}% – {message}")
 
     def _build_final_annotation(
         self,
@@ -125,11 +133,16 @@ class AnnotationService:
         audio_metadata: AudioMetadata,
         context: Dict[str, Any]
     ) -> AnnotationResult:
+        """
+        Собирает финальный результат аннотации, включая скорректированную confidence
+        на уровне всей транскрипции и сегментов, а также confidence спикеров из RecognitionStage.
+        """
         diar_result = context.get("diarization")
         trans_result = context.get("transcription")
         recog_result = context.get("recognition")
         carddav_result = context.get("carddav")
 
+        # ProcessingInfo
         processing_info = ProcessingInfo(
             diarization_model=diar_result.model_info if diar_result else {},
             transcription_model=trans_result.model_info if trans_result else {},
@@ -142,121 +155,120 @@ class AnnotationService:
             }
         )
 
+        # Сырые данные
+        raw_diar = diar_result.payload.get("segments", []) if diar_result else []
+        raw_trans = trans_result.payload if trans_result else {}
+        raw_recog = recog_result.payload.get("speakers", {}) if recog_result else {}
+
+        # --- Построение карты спикеров ---
         speakers_map: Dict[str, FinalSpeaker] = {}
-        counter = 0
-
-        diar_segments = diar_result.payload.get("segments", []) if diar_result else []
-        recog_speakers = recog_result.payload.get("speakers", {}) if recog_result else {}
-        card_speakers = carddav_result.payload.get("speakers", {}) if carddav_result else {}
-
-        known = {v.name: v for v in getattr(self.config, "voices", [])}
-
-        for seg in diar_segments:
-            label = seg.get("speaker", "unknown")
+        idx_counter = 1
+        # Инициализируем спикеров по меткам из диаризации
+        for seg in raw_diar:
+            label = seg["speaker"]
             if label not in speakers_map:
-                counter += 1
-                spid = f"speaker_{counter:02d}"
-                fs = FinalSpeaker(
-                    id=spid,
+                spk_id = f"speaker_{idx_counter:02d}"
+                idx_counter += 1
+                # Начальное значение confidence: берём из recognition payload, если есть
+                rec_info = raw_recog.get(label, {})
+                init_conf = float(rec_info.get("confidence", 0.0))
+                speakers_map[label] = FinalSpeaker(
+                    id=spk_id,
                     label=label,
                     segments_count=0,
                     total_duration=0.0,
-                    identified=False,
-                    confidence=0.0,
-                    name=None,
+                    identified=bool(rec_info.get("identified", False)),
+                    name=rec_info.get("name"),
                     contact_info=None,
-                    voice_embedding=None
+                    voice_embedding=None,
+                    confidence=round(init_conf, 3)
                 )
-                rec = recog_speakers.get(label) or {}
-                if rec.get("identified"):
-                    fs.identified = True
-                    fs.name = rec.get("name")
-                    fs.confidence = rec.get("confidence", 0.0)
-                    if fs.name in known:
-                        fs.voice_embedding = known[fs.name].embedding
 
-                cd = card_speakers.get(label) or {}
-                contact = cd.get("contact")
-                if contact:
-                    contact.setdefault("uid", "")
-                    fs.contact_info = ContactInfo(**contact)
-
-                speakers_map[label] = fs
-
-        final_segments = []
-        full_text_parts = []
+        # --- Сборка сегментов и подсчёт статистики ---
+        segments: List[FinalSegment] = []
+        full_text_parts: List[str] = []
         total_words = 0
-        speech_dur = 0.0
+        total_speech = 0.0
 
-        trans_words = trans_result.payload.get("words", []) if trans_result else []
+        for i, d in enumerate(raw_diar, start=1):
+            start, end = d["start"], d["end"]
+            duration = round(end - start, 3)
+            seg_speaker = speakers_map[d["speaker"]]
+            seg_speaker.segments_count += 1
+            seg_speaker.total_duration += duration
+            total_speech += duration
 
-        for seg in diar_segments:
-            label = seg.get("speaker", "unknown")
-            start = seg.get("start", 0.0)
-            end = seg.get("end", 0.0)
-            duration = round((end - start), 3)
+            # Текст и слова из транскрипции
+            words_in = [
+                w for w in raw_trans.get("words", [])
+                if w["start"] < end and w["end"] > start
+            ]
+            text = " ".join(w["word"] for w in words_in).strip()
 
-            sp = speakers_map[label]
-            sp.segments_count += 1
-            sp.total_duration = round((sp.total_duration + duration), 3)
+            # Confidence сегмента
+            seg_conf = 0.0
+            for seg in raw_trans.get("segments", []):
+                if abs(seg["start"] - start) < 1e-3:
+                    seg_conf = seg.get("avg_logprob", 0.0)
+                    break
+            if seg_conf == 0.0 and words_in:
+                seg_conf = sum(w["probability"] for w in words_in) / len(words_in)
 
-            words = []
-            text = ""
-
-            for w in trans_words:
-                ws, we = w.get("start", 0.0), w.get("end", 0.0)
-                if max(start, ws) < min(end, we):
-                    words.append(TranscriptionWord(**w))
-                    text += w.get("word", "") + " "
-                    total_words += 1
-
-            text = text.strip()
-            full_text_parts.append(f"[{sp.id}]: {text}")
-
-            final_segments.append(FinalSegment(
-                id=len(final_segments) + 1,
-                start=start,
-                end=end,
-                duration=round(duration, 3),
-                speaker=sp.id,
-                speaker_label=label,
+            segments.append(FinalSegment(
+                id=i,
+                start=round(start, 3),
+                end=round(end, 3),
+                duration=duration,
+                speaker=seg_speaker.id,
+                speaker_label=d["speaker"],
                 text=text,
-                words=words,
-                confidence=seg.get("confidence", 0.0)
+                words=[TranscriptionWord(**w) for w in words_in],
+                confidence=round(seg_conf, 3)
             ))
-            speech_dur += duration
+            full_text_parts.append(f"[{seg_speaker.id}]: {text}")
+            total_words += len(words_in)
 
-        final_transcription = FinalTranscription(
+        # Итоговая транскрипция
+        overall_conf = raw_trans.get("confidence", 0.0)
+        if overall_conf == 0.0 and raw_trans.get("words"):
+            overall_conf = sum(w["probability"] for w in raw_trans["words"]) / len(raw_trans["words"])
+
+        transcription = FinalTranscription(
             full_text="\n".join(full_text_parts),
-            confidence=trans_result.payload.get("confidence", 0.0) if trans_result else 0.0,
-            language=trans_result.payload.get("language", "unknown") if trans_result else "unknown",
-            words=[TranscriptionWord(**w) for w in trans_words]
+            confidence=round(overall_conf, 3),
+            language=raw_trans.get("language", "unknown"),
+            words=[TranscriptionWord(**w) for w in raw_trans.get("words", [])]
         )
 
+        # Дополняем info по спикерам: имя и карточка из CardDAV
+        for label, spk in speakers_map.items():
+            # Recognition уже установил identified, name, confidence
+            # CardDAV
+            cd = carddav_result.payload.get("speakers", {}).get(label, {}) if carddav_result else {}
+            contact = cd.get("contact")
+            if contact:
+                spk.contact_info = ContactInfo(**contact)
+
         final_speakers = list(speakers_map.values())
-        ident_cnt = sum(1 for s in final_speakers if s.identified)
 
         stats = Statistics(
             total_speakers=len(final_speakers),
-            identified_speakers=ident_cnt,
-            unknown_speakers=len(final_speakers) - ident_cnt,
-            total_segments=len(final_segments),
+            identified_speakers=sum(1 for s in final_speakers if s.identified),
+            unknown_speakers=sum(1 for s in final_speakers if not s.identified),
+            total_segments=len(segments),
             total_words=total_words,
-            speech_duration=round(speech_dur, 3),
-            silence_duration=round(max(0, audio_metadata.duration - round(speech_dur, 3)), 3)
+            speech_duration=round(total_speech, 3),
+            silence_duration=round(max(0.0, audio_metadata.duration - total_speech), 3)
         )
-
-        version = getattr(self.config, "server", None)
-        ver_str = version.version if version and hasattr(version, "version") else "1.0.0"
 
         return AnnotationResult(
             task_id=task_id,
-            version=ver_str,
-            created_at=datetime.now(timezone.utc).isoformat(),
-            audio_metadata=audio_metadata.dict(),
-            processing_info=processing_info.dict(),
-            speakers=[fs.dict() for fs in final_speakers],
-            segments=[seg.dict() for seg in final_segments],
-            transcription=final_transcription.dict(),
-            statistics=stats.dict()
+            version=str(self.config.server.version),
+            created_at=datetime.now(),
+            audio_metadata=audio_metadata,
+            processing_info=processing_info,
+            speakers=final_speakers,
+            segments=segments,
+            transcription=transcription,
+            statistics=stats
         )

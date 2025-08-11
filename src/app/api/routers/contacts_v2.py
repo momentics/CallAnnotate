@@ -24,8 +24,10 @@ class ContactFilter(BaseModel):
     email: Optional[str] = Field(None, description="Поиск по email")
 
 async def get_carddav_stage() -> CardDAVStage:
-    cfg = load_settings().carddav.dict()
-    stage = CardDAVStage(cfg, cfg)
+    cfg = load_settings()
+    config = load_settings().carddav.dict()
+
+    stage = CardDAVStage(cfg, config)
     await stage._initialize()
     return stage
 
@@ -41,7 +43,7 @@ async def list_contacts(
     фильтрует по имени, телефону или email.
     """
     if any((name, phone, email)):
-        result = stage.search_contact(name=name, phone=phone, email=email)
+        result = stage.search_contact(name=name, phone=phone, email=email) # type: ignore
     else:
         result = stage.list_contacts()
     if inspect.isawaitable(result):

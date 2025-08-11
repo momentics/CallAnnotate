@@ -7,7 +7,7 @@ CardDAV Stage для CallAnnotate: асинхронное управление �
 Лицензия: Apache-2.0
 """
 
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 import xml.etree.ElementTree as ET
 import re
 import html
@@ -99,7 +99,7 @@ class CardDAVStage(BaseStage):
         resp = await self.client.delete(href)
         return resp.status_code in (200, 204)
 
-    async def search_contact(self, *, name: str = None, phone: str = None, email: str = None) -> List[ContactInfo]:
+    async def search_contact(self, *, name: str, phone: str, email: str) -> List[ContactInfo]:
         contacts = await self.list_contacts()
         results: List[ContactInfo] = []
         for c in contacts:
@@ -180,7 +180,7 @@ class CardDAVStage(BaseStage):
         file_path: str,
         task_id: str,
         previous_results: Dict[str, Any],
-        progress_callback: Optional[Callable[[int, str], None]] = None,
+        progress_callback: Optional[Callable[[int, str], Awaitable[None]]] = None
     ) -> Dict:
         if not (self.enabled and self.client):
             return {"speakers": {}, "contacts_found": 0}
@@ -218,7 +218,7 @@ class CardDAVStage(BaseStage):
 
         return {"speakers": out, "contacts_found": found}
 
-    def _match_name(self, speaker_name: str, contact_full_name: str) -> bool:
+    def _match_name(self, speaker_name: Optional[str], contact_full_name: Optional[str]) -> bool:
         if not speaker_name or not contact_full_name:
             return False
         return speaker_name.strip().lower() in contact_full_name.strip().lower()

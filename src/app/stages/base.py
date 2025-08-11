@@ -15,6 +15,7 @@ from typing import Dict, Any, Callable, Optional
 from dataclasses import dataclass
 
 from ..config import AppSettings
+from ..utils import setup_logging
 
 @dataclass
 class StageResult:
@@ -27,7 +28,6 @@ class StageResult:
 
 class BaseStage(ABC):
     def __init__(self, cfg: AppSettings, config: Dict[str, Any], models_registry=None):
-        from ..utils import setup_logging
         setup_logging(cfg)
         self.logger = logging.getLogger(f"{self.__class__.__name__}")
         self.volume_path = cfg.queue.volume_path
