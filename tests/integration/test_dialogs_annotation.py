@@ -3,6 +3,7 @@
 import asyncio
 import json
 from pathlib import Path
+import shutil
 import time
 
 import pytest
@@ -24,6 +25,20 @@ def ensure_fixtures_volume(tmp_path_factory, monkeypatch):
     """
     # создаём временную директорию volume
     vol_dir = tmp_path_factory.mktemp("volume")
+
+    models_src = Path(__file__).parent.parent.parent / "volume" / "models"
+
+    model_pyannotate = models_src / "pyannote"
+    shutil.copytree(model_pyannotate, vol_dir / "models" / "pyannote", dirs_exist_ok=True)
+    model_whisper = models_src / "whisper"
+    shutil.copytree(model_whisper, vol_dir / "models" / "whisper", dirs_exist_ok=True)
+    model_speechbrain = models_src / "speechbrain"
+    shutil.copytree(model_speechbrain, vol_dir / "models" / "speechbrain", dirs_exist_ok=True)
+    model_embeddings = models_src / "embeddings"
+    shutil.copytree(model_embeddings, vol_dir / "models" / "embeddings", dirs_exist_ok=True)
+
+
+
     # монтируем fixtures внутрь volume/incoming
     fixtures_src = Path(__file__).parent.parent / "fixtures"
     incoming = vol_dir / "incoming"
@@ -33,6 +48,7 @@ def ensure_fixtures_volume(tmp_path_factory, monkeypatch):
     for wav in fixtures_src.glob("*.wav"):
         dest = incoming / wav.name
         dest.write_bytes(wav.read_bytes())
+
     monkeypatch.setenv("VOLUME_PATH", str(vol_dir))
 
     ensure_volume_structure(str(vol_dir))
@@ -50,7 +66,7 @@ async def test_dialog_01_annotation(ensure_fixtures_volume):
     settings = load_settings()
     vol = ensure_fixtures_volume
     settings.queue.volume_path = str(vol)
-
+    
     # Запускаем очередь и воркеры
     queue_mgr = AsyncQueueManager(settings)
     await queue_mgr.start()

@@ -57,40 +57,43 @@ class RecognitionStage(BaseStage):
 
     async def _initialize(self):
         """Инициализация модели распознавания и базы эмбеддингов"""
-        cache_dir = Path(self.volume_path) / "models"
-        os.environ["HF_HOME"] = str(cache_dir)
-        os.environ["TRANSFORMERS_CACHE"] = str(cache_dir)
-        os.environ["TORCH_HOME"] = str(cache_dir)
+        self.speechbrain_path = Path(self.volume_path) / "models" / "speechbrain"
+        self.speechbrain_path.mkdir(parents=True, exist_ok=True)
+
+        self.emb_path = Path(self.volume_path) / "models" / "embeddings"
+        self.emb_path.mkdir(parents=True, exist_ok=True)
+
+        os.environ["HF_HOME"] = str(self.speechbrain_path)
+        os.environ["TRANSFORMERS_CACHE"] = str(self.speechbrain_path)
+        os.environ["TORCH_HOME"] = str(self.speechbrain_path)
 
 
         # Only load the SpeechBrain classifier if an embeddings_path is configured
-        emb_path = self.config.get("embeddings_path")
-        if not emb_path:
-            # No embeddings directory → skip classifier and FAISS setup
-            self.classifier = None
-            self.logger.warning("No embeddings_path configured; skipping SpeechBrain classifier load")
-        else:
-            self.classifier = models_registry.get_model(self.logger,
-                f"recognition_{self.model_name}_{self.device}",
-                # allow optional 'savedir' kwarg to satisfy tests
-                lambda *args, **kwargs: EncoderClassifier.from_hparams(
-                    source=self.model_name,
-                    run_opts={"device": self.device},
-                    **{k:v for k,v in kwargs.items() if k in ("savedir","local_files_only")}
-                ),
-                stage="recognition",
-                framework="SpeechBrain"
-            )
+        self.classifier = models_registry.get_model(self.logger,
+            f"recognition_{self.model_name}_{self.device}",
+            # allow optional 'savedir' kwarg to satisfy tests
+            lambda *args, **kwargs: EncoderClassifier.from_hparams(
+                #source=self.model_name,
+                source=self.speechbrain_path,
+                overrides={"pretrained_path": self.speechbrain_path},
+                run_opts={"device": self.device},
+                #use_auth_token=True,
+                #savedir=self.speechbrain_path,
+                #huggingface_cache_dir=self.speechbrain_path,
+                **{k:v for k,v in kwargs.items() if k in ("savedir","local_files_only")}
+            ),
+            stage="recognition",
+            framework="SpeechBrain"
+        )
 
         # Prepare FAISS index: загружаем из recognition.embeddings_path
         self.index = None
         self.speaker_labels: Dict[int, str] = {}
-        emb_path = Path(self.config.get("embeddings_path") or "")
-        if emb_path.exists() and emb_path.is_dir() and getattr(faiss, "IndexFlatIP", None):
-            self._load_speaker_database(emb_path)
+        if self.emb_path.exists() and self.emb_path.is_dir() and getattr(faiss, "IndexFlatIP", None):
+            self._load_speaker_database(self.emb_path)
         else:
-            if not emb_path.exists():
-                self.logger.info(f"No embeddings directory found at '{emb_path}', skipping speaker database")
+            if not self.emb_path.exists():
+                self.logger.info(f"No embeddings directory found at '{self.emb_path}', skipping speaker database")
             else:
                 self.logger.warning("FAISS IndexFlatIP not available; skipping embedding database load")
 

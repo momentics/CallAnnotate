@@ -110,10 +110,10 @@ diarization:
   model: "pyannote/speaker-diarization-3.1"  # Модель pyannote.audio.
   use_auth_token: null                     # HuggingFace токен (берется из HF_TOKEN).
   device: "cpu"                            # Устройство (cpu).
-  batch_size: 32                           # Размер батча (32).
+  batch_size: 8                           # Размер батча (32).
   window_enabled: true                     # Включить windowed режим.
-  window_size: 10.0                        # Длина окна (30 с).
-  hop_size: 5.0                           # Шаг окна (10 с).
+  window_size: 30.0                        # Длина окна (30 с).
+  hop_size: 10.0                           # Шаг окна (10 с).
 
 # Секция транскрипции (Whisper)
 transcription:

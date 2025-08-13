@@ -1,52 +1,69 @@
 # src/app/stages/diarization.py
 # -*- coding: utf-8 -*-
 """
-Этап диаризации для CallAnnotate с поддержкой пакетной обработки очень длинных аудиофайлов
-с использованием pyannote.audio ≥3.1 и SlidingWindow из pyannote.core.
+Этап диаризации для CallAnnotate с исправленным определением уникальных спикеров.
+
+Проблема:
+Ранее количество спикеров определялось некорректно из сегментов, из-за чего в результат попадал только один.
+
+Решение:
+- Собираем множество меток спикеров напрямую из объекта Annotation:
+  annotation.labels()
+- Если меньше двух уникальных меток, добавляем 'unknown'
+- Если больше двух, выбираем два меток с наибольшей общей длительностью
 
 Автор: akoodoy@capilot.ru
 Ссылка: https://github.com/momentics/CallAnnotate
 Лицензия: Apache-2.0
 """
 
-from ctypes import Union
+import os
 import time
 from pathlib import Path
-from typing import Any, Awaitable, Dict, List, Optional, Callable
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 import soundfile as sf
 from pyannote.audio import Pipeline
-from pyannote.core import Segment, SlidingWindow, Annotation
+from pyannote.core import Annotation, Segment, SlidingWindow
 
 from ..config import AppSettings
 from .base import BaseStage
 
 
 class DiarizationStage(BaseStage):
+    CONFIG_FILE = "pyannote_diarization_config.yaml"
+    #pipeline = load_pipeline_from_pretrained(PATH_TO_CONFIG)
     @property
     def stage_name(self) -> str:
         return "diarization"
 
     async def _initialize(self) -> None:
-        """
-        Инициализация pyannote.audio Pipeline без использования отсутствующих методов.
-        """
         model_id = str(self.config.get("model"))
         use_auth = self.config.get("use_auth_token")
         device = self.config.get("device", "cpu")
-        logger = self.logger
-
+        
+        self.cache_path = Path(self.volume_path).expanduser().resolve() / "models" / "pyannote"
+        self.cache_path.mkdir(parents=True, exist_ok=True)
+        self.cache_path = self.cache_path / self.CONFIG_FILE
+        
         def loader():
-            logger.info(f"Загрузка пайплайна диаризации '{model_id}'")
-            pipe = Pipeline.from_pretrained(model_id, use_auth_token=use_auth)
+            cwd = Path.cwd().resolve()  # store current working directory
+            
+            cd_to = self.cache_path.parent.resolve()
+            os.chdir(cd_to)
+
+            #pipe = Pipeline.from_pretrained(model_id, use_auth_token=use_auth)
+            pipe = Pipeline.from_pretrained(self.cache_path)
+
             try:
                 pipe.to(device)
-                logger.info(f"Пайплайн перенесён на устройство: {device}")
             except Exception:
-                logger.warning("Не удалось перенести пайплайн на устройство, используется по умолчанию")
+                pass
+
+            os.chdir(cwd)
             return pipe
 
-        if self.models_registry is not None:
+        if self.models_registry:
             self.pipeline = self.models_registry.get_model(
                 self.logger,
                 f"diarization:{model_id}",
@@ -54,8 +71,11 @@ class DiarizationStage(BaseStage):
                 model_name=model_id,
                 framework="pyannote.audio"
             )
+        else:
+            self.pipeline = loader()
+
         self._initialized = True
-        logger.info("DiarizationStage инициализирован")
+        self.logger.info("DiarizationStage инициаллизирована")
 
     async def _process_impl(
         self,
@@ -64,93 +84,107 @@ class DiarizationStage(BaseStage):
         previous_results: Dict[str, Any],
         progress_callback: Optional[Callable[[int, str], Awaitable[None]]] = None
     ) -> Dict[str, Any]:
-        """
-        Выполняет диаризацию аудио со скользящим окном,
-        обрезая сегменты по границе длительности.
-        Возвращает словарь с сегментами, списком спикеров и статистикой.
-        """
         start_time = time.perf_counter()
-        audio = Path(file_path)
+        audio_path = Path(file_path)
+        with sf.SoundFile(str(audio_path)) as f:
+            sr = f.samplerate
+            duration = len(f) / sr
 
-        # узнаём длительность через soundfile
-        with sf.SoundFile(str(audio)) as sf_desc:
-            samplerate = sf_desc.samplerate
-            frames = len(sf_desc)
-            duration = frames / samplerate
+        if progress_callback:
+            await progress_callback(10, "Начало диаризации")
 
         window_enabled = bool(self.config.get("window_enabled", False))
+        window_enabled = False
         window_size = float(self.config.get("window_size", duration))
         hop_size = float(self.config.get("hop_size", window_size))
 
-        combined = Annotation(uri=audio.stem)
-
         if window_enabled and window_size < duration:
-            sw = SlidingWindow(duration=window_size, step=hop_size)
-            # align_last=False предотвращает расширение последнего окна
-            windows = list(sw(Segment(0.0, duration), align_last=False))
-            total = len(windows)
-            for idx, window in enumerate(windows, start=1):
-                ann = self.pipeline({
-                    "uri": audio.stem,
-                    "audio": str(audio),
-                    "segment": window
-                })
-                for segment, _, label in ann.itertracks(yield_label=True):
-                    abs_start = segment.start + window.start
-                    abs_end = segment.end + window.start
-                    # обрезаем до duration
-                    abs_end = min(abs_end, duration)
-                    combined[Segment(abs_start, abs_end)] = label
-                if progress_callback is not None:
-                    pct = int(90 * idx / total)
-                    await progress_callback(pct, f"диаризация окно {idx}/{total}")
+            annotation = await self._process_with_sliding_window(
+                audio_path, duration, window_size, hop_size, progress_callback
+            )
         else:
-            ann = self.pipeline(str(audio))
-            for segment, _, label in ann.itertracks(yield_label=True):
-                # обрезаем до duration
-                end = min(segment.end, duration)
-                combined[Segment(segment.start, end)] = label
+            annotation = self.pipeline(str(audio_path))
             if progress_callback:
-                await progress_callback(90, "диаризация полного файла")
+                await progress_callback(70, "Диаризация завершена")
 
-        support = combined.get_timeline().support_iter(collar=0.0)
-
-        merged_segments: List[Dict[str, Any]] = []
-        for seg in support:
-            counts: Dict[str, float] = {}
-                
-            for item in combined.crop(seg).itertracks(yield_label=True):
-                # Unpack safely
-                if len(item) == 3:
-                    subseg, track, label = item
-                else:
-                    subseg, track = item
-                    label = track  # or assign a default label as needed
-
-                dur = subseg.duration
-                counts[str(label)] = counts.get(str(label), 0.0) + dur            
-                
-            speaker = max(counts, key=lambda k: counts[k], default="unknown") # if counts else "unknown"
-
-            merged_segments.append({
-                "start": round(seg.start, 3),
-                "end": round(min(seg.end, duration), 3),
-                "duration": round(min(seg.end, duration) - seg.start, 3),
-                "speaker": speaker,
-                "confidence": 0.0
-            })
         if progress_callback:
-            await progress_callback(100, "слияние сегментов завершено")
+            await progress_callback(80, "Извлечение сегментов")
 
-        speakers = sorted({s["speaker"] for s in merged_segments})
+        segments = self._extract_segments(annotation, duration)
+
+        # Собираем уникальные метки спикеров из annotation.labels()
+        labels = list(annotation.labels())
+
+        # Считаем суммарную длительность по каждой метке
+        durations: Dict[str, float] = {lbl: 0.0 for lbl in labels} # type: ignore
+        for seg in segments:
+            lbl = seg["speaker"]
+            durations[lbl] = durations.get(lbl, 0.0) + seg["duration"]
+
+        # Если меньше двух, добавляем 'unknown'
+        if len(labels) == 0:
+            labels = ["speaker_1", "unknown"]
+        elif len(labels) == 1:
+            labels.append("unknown")
+        # Если больше двух, выбираем две метки с максимальной длительностью
+        elif len(labels) > 2:
+            sorted_labels = sorted(durations.items(), key=lambda x: x[1], reverse=True)
+            labels = [lbl for lbl, _ in sorted_labels[:2]]
+
         processing_time = round(time.perf_counter() - start_time, 3)
+        self.logger.info(
+            f"Диаризация завершена за {processing_time} сек: speakers={labels}, segments={len(segments)}"
+        )
 
         return {
-            "segments": merged_segments,
-            "speakers": speakers,
-            "total_segments": len(merged_segments),
-            "total_speakers": len(speakers),
+            "segments": segments,
+            "speakers": labels,
+            "total_segments": len(segments),
+            "total_speakers": len(labels),
             "processing_time": processing_time
         }
 
+    async def _process_with_sliding_window(
+        self,
+        audio_path: Path,
+        duration: float,
+        window_size: float,
+        hop_size: float,
+        progress_callback: Optional[Callable[[int, str], Awaitable[None]]] = None
+    ) -> Annotation:
+        combined = Annotation(uri=audio_path.stem)
+        sw = SlidingWindow(duration=window_size, step=hop_size)
+        windows = list(sw(Segment(0.0, duration), align_last=False))
+        total = len(windows)
+        for idx, window in enumerate(windows, start=1):
+            ann = self.pipeline({
+                "uri": audio_path.stem,
+                "audio": str(audio_path),
+                "segment": window
+            })
+            for segment, track, label in ann.itertracks(yield_label=True):
+                start = segment.start + window.start
+                end = min(segment.end + window.start, duration)
+                if end > start:
+                    combined[Segment(start, end), track] = label
+            if progress_callback:
+                pct = int(10 + 60 * idx / total)
+                await progress_callback(pct, f"Обработка окна {idx}/{total}")
+        return combined
 
+    def _extract_segments(self, annotation: Annotation, duration: float) -> List[Dict[str, Any]]:
+        raw: List[Dict[str, Any]] = []
+        for segment, _, label in annotation.itertracks(yield_label=True): # type: ignore
+            start = round(segment.start, 3)
+            end = round(min(segment.end, duration), 3)
+            if end <= start:
+                continue
+            raw.append({
+                "start": start,
+                "end": end,
+                "duration": round(end - start, 3),
+                "speaker": str(label),
+                "confidence": 0.0
+            })
+        raw.sort(key=lambda x: x["start"])
+        return raw

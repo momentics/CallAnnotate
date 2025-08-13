@@ -36,7 +36,8 @@ class AnnotationService:
 
         self.logger = logging.getLogger(__name__)
         self.stages = [
-            PreprocessingStage(self.config, self.config.preprocess.dict(), models_registry),
+# дефектный препроцессинг. Оставлено на потом.
+#            PreprocessingStage(self.config, self.config.preprocess.dict(), models_registry),
             DiarizationStage(self.config, self.config.diarization.dict(), models_registry),
             TranscriptionStage(self.config, self.config.transcription.dict(), models_registry),
             RecognitionStage(self.config, self.config.recognition.dict(), models_registry),
@@ -45,9 +46,10 @@ class AnnotationService:
         self.logger.info("AnnotationService инициализирован с архитектурой этапов")
 
         # DEBUG: отключаем все этапы кроме диаризации
-        # self.stages = [stage for stage in self.stages if isinstance(stage, DiarizationStage)
-        #               #    or isinstance(stage, TranscriptionStage)
-        #            ]
+#        self.stages = [stage for stage in self.stages if isinstance(stage, DiarizationStage)
+#                           or isinstance(stage, TranscriptionStage)
+#                           #or isinstance(stage, PreprocessingStage)
+#                    ]
 
         self.logger.info(f"AnnotationService инициализирован len(stages)={len(self.stages)} ")
 
