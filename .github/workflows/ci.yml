@@ -18,6 +18,15 @@ jobs:
       - name: Checkout CallAnnotate repository
         uses: actions/checkout@v3
 
+      - name: Unpack multi-volume archive
+        run: |
+          cd volume/models
+          run: 7z x '*.zip' -o. -aoa
+          rm *.zip
+          rm *.z0*
+          cd ..
+          cd ..
+
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
