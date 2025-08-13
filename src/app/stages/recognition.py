@@ -68,6 +68,11 @@ class RecognitionStage(BaseStage):
         os.environ["TORCH_HOME"] = str(self.speechbrain_path)
 
 
+        cwd = Path.cwd().resolve()  # store current working directory
+            
+        cd_to = self.speechbrain_path.resolve()
+        os.chdir(cd_to)
+
         # Only load the SpeechBrain classifier if an embeddings_path is configured
         self.classifier = models_registry.get_model(self.logger,
             f"recognition_{self.model_name}_{self.device}",
@@ -75,16 +80,18 @@ class RecognitionStage(BaseStage):
             lambda *args, **kwargs: EncoderClassifier.from_hparams(
                 #source=self.model_name,
                 source=self.speechbrain_path,
-                overrides={"pretrained_path": self.speechbrain_path},
+                #overrides={"pretrained_path": self.speechbrain_path},
                 run_opts={"device": self.device},
                 #use_auth_token=True,
                 #savedir=self.speechbrain_path,
                 #huggingface_cache_dir=self.speechbrain_path,
-                **{k:v for k,v in kwargs.items() if k in ("savedir","local_files_only")}
+                #**{k:v for k,v in kwargs.items() if k in ("savedir","local_files_only")}
             ),
             stage="recognition",
             framework="SpeechBrain"
         )
+
+        os.chdir(cwd)
 
         # Prepare FAISS index: загружаем из recognition.embeddings_path
         self.index = None
