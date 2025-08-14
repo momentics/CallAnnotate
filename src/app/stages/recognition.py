@@ -63,10 +63,9 @@ class RecognitionStage(BaseStage):
         self.emb_path = Path(self.volume_path) / "models" / "embeddings"
         self.emb_path.mkdir(parents=True, exist_ok=True)
 
-        os.environ["HF_HOME"] = str(self.speechbrain_path)
-        os.environ["TRANSFORMERS_CACHE"] = str(self.speechbrain_path)
-        os.environ["TORCH_HOME"] = str(self.speechbrain_path)
-
+        #os.environ["HF_HOME"] = str(self.speechbrain_path)
+        #os.environ["TRANSFORMERS_CACHE"] = str(self.speechbrain_path)
+        #os.environ["TORCH_HOME"] = str(self.speechbrain_path)
 
         cwd = Path.cwd().resolve()  # store current working directory
             

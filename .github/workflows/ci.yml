@@ -5,8 +5,8 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-#  release:
-#   types: [ published ]
+  release:
+   types: [ published ]
 
 jobs:
   build-and-test:
@@ -90,18 +90,18 @@ jobs:
         run: |
           python scripts/check_notice_completeness.py
 
-#  build-docker:
-#    name: Build Docker on Release
-#    runs-on: ubuntu-latest
-#    needs: build-and-test
-#    if: github.event_name == 'release' && github.event.action == 'published'
-#    steps:
-#      - name: Checkout repository
-#        uses: actions/checkout@v3
-#
-#      - name: Build Docker image
-#        run: |
-#          docker build \
-#            --file docker/Dockerfile \
-#            --tag capilot/callannotate:latest \
-#            .
+  build-docker:
+    name: Build Docker on Release
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --file docker/Dockerfile \
+            --tag capilot/callannotate:latest \
+            .

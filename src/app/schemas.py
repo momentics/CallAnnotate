@@ -71,17 +71,6 @@ class JobStatusResponse(BaseModel):
     error: Optional[str] = None
 
 
-# Аудио метаданные и обработка
-class AudioMetadata(BaseModel):
-    """Метаданные аудиофайла"""
-    filename: str
-    duration: float = Field(..., ge=0, description="Длительность в секундах")
-    sample_rate: int = Field(..., gt=0, description="Частота дискретизации")
-    channels: int = Field(..., gt=0, description="Количество каналов")
-    format: str = Field(..., description="Формат файла")
-    bitrate: Optional[int] = Field(None, gt=0, description="Битрейт")
-    size_bytes: int = Field(..., ge=0, description="Размер файла в байтах")
-
 
 
 class BaseStageResult(BaseModel):
@@ -114,23 +103,6 @@ class DiarizationSegment(BaseModel):
         return v
 
 
-class TranscriptionWord(BaseModel):
-    """Слово с временными метками"""
-    start: float = Field(..., ge=0, description="Начало слова в секундах")
-    end: float = Field(..., gt=0, description="Конец слова в секундах")
-    word: str = Field(..., description="Текст слова")
-    probability: float = Field(..., ge=0.0, le=1.0, description="Вероятность распознавания")
-
-
-
-class TranscriptionSegment(BaseModel):
-    start: float = Field(..., ge=0)
-    end: float = Field(..., gt=0)
-    text: str
-    no_speech_prob: float = Field(0.0, ge=0.0, le=1.0)
-    avg_logprob: float
-    speaker: Optional[str] = None
-    speaker_confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
 
 
 class SpeakerRecognition(BaseModel):
@@ -138,13 +110,6 @@ class SpeakerRecognition(BaseModel):
     name: Optional[str] = None
     confidence: float = Field(0.0, ge=0.0, le=1.0)
     reason: Optional[str] = None
-
-class ProcessingInfo(BaseModel):
-    """Информация о процессе обработки"""
-    diarization_model: Dict[str, Any] = Field(default_factory=dict)
-    transcription_model: Dict[str, Any] = Field(default_factory=dict)
-    recognition_model: Dict[str, Any] = Field(default_factory=dict)
-    processing_time: Dict[str, float] = Field(default_factory=dict)
 
 class ContactInfo(BaseModel):
     """Информация о контакте из CardDAV"""
@@ -157,62 +122,8 @@ class ContactInfo(BaseModel):
     organization: Optional[str] = None
 
 
-class FinalSpeaker(BaseModel):
-    """Финальная информация о спикере"""
-    id: str = Field(..., description="Внутренний ID спикера")
-    label: str = Field(..., description="Метка из диаризации")
-    segments_count: int = Field(0, ge=0)
-    total_duration: float = Field(0.0, ge=0.0)
-    identified: bool = False
-    name: Optional[str] = None
-    contact_info: Optional[ContactInfo] = None
-    voice_embedding: Optional[str] = None
-    confidence: float = Field(0.0, ge=0.0, le=1.0)
 
 
-class FinalSegment(BaseModel):
-    """Финальный сегмент с полной информацией"""
-    id: int = Field(..., ge=1)
-    start: float = Field(..., ge=0.0)
-    end: float = Field(..., gt=0.0)
-    duration: float = Field(..., gt=0.0)
-    speaker: str = Field(..., description="ID спикера")
-    speaker_label: str = Field(..., description="Оригинальная метка спикера")
-    text: str = Field("", description="Текст сегмента")
-    words: List[TranscriptionWord] = Field(default_factory=list)
-    confidence: float = Field(0.0, ge=0.0, le=1.0)
-
-
-class FinalTranscription(BaseModel):
-    """Финальная транскрипция"""
-    full_text: str = Field("", description="Полный текст с разметкой спикеров")
-    confidence: float = Field(0.0, ge=0.0, le=1.0)
-    language: str = Field("unknown")
-    words: List[TranscriptionWord] = Field(default_factory=list)
-
-
-
-class Statistics(BaseModel):
-    """Статистика обработки"""
-    total_speakers: int = Field(0, ge=0)
-    identified_speakers: int = Field(0, ge=0)
-    unknown_speakers: int = Field(0, ge=0)
-    total_segments: int = Field(0, ge=0)
-    total_words: int = Field(0, ge=0)
-    speech_duration: float = Field(0.0, ge=0.0)
-    silence_duration: float = Field(0.0, ge=0.0)
-
-
-class AnnotationResult(BaseModel):
-    task_id: str
-    version: str = "1.0.0"
-    created_at: datetime
-    audio_metadata: AudioMetadata
-    processing_info: ProcessingInfo
-    speakers: List[FinalSpeaker] = Field(default_factory=list)
-    segments: List[FinalSegment] = Field(default_factory=list)
-    transcription: FinalTranscription
-    statistics: Statistics
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
@@ -323,3 +234,101 @@ class ContactUpdate(BaseModel):
     emails: List[str] = []
     organization: Optional[str] = None
 
+#------------------
+class TranscriptionWord(BaseModel):
+    """Слово с временными метками"""
+    start: float = Field(..., ge=0, description="Начало слова в секундах")
+    end: float = Field(..., gt=0, description="Конец слова в секундах")
+    word: str = Field(..., description="Текст слова")
+    probability: float = Field(..., ge=0.0, le=1.0, description="Вероятность распознавания")
+    speaker: Optional[str] = Field(None, description="ID спикера, говорившего слово")
+    speaker_confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Уверенность привязки слова к спикеру")
+
+
+class TranscriptionSegment(BaseModel):
+    """Сегмент транскрипции с метаданными"""
+    start: float = Field(..., ge=0, description="Начало сегмента в секундах")
+    end: float = Field(..., gt=0, description="Конец сегмента в секундах")
+    text: str = Field(..., description="Текст сегмента")
+    speaker: Optional[str] = Field(None, description="ID спикера из этапа диаризации")
+    speaker_confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Уверенность спикера")
+    no_speech_prob: Optional[float] = Field(None, ge=0.0, le=1.0, description="Вероятность отсутствия речи")
+    avg_logprob: Optional[float] = Field(None, description="Средняя логарифмическая вероятность")
+    confidence: Optional[float] = Field(None, description="Средняя вероятность слов сегмента")
+
+
+class FinalTranscription(BaseModel):
+    """Финальная транскрипция"""
+    full_text: str = Field("", description="Полный текст с разметкой спикеров")
+    confidence: float = Field(0.0, ge=0.0, le=1.0)
+    language: str = Field("unknown")
+    segments: List[TranscriptionSegment] = Field(default_factory=list, description="Список сегментов транскрипции")
+    #words: List[TranscriptionWord] = Field(default_factory=list, description="Детализированные слова")
+
+
+class FinalSpeaker(BaseModel):
+    """Финальная информация о спикере"""
+    id: str
+    label: str
+    segments_count: int
+    total_duration: float
+    identified: bool
+    name: Optional[str] = None
+    contact_info: Optional[Any] = None
+    voice_embedding: Optional[str] = None
+    confidence: float
+
+
+class FinalSegment(BaseModel):
+    """Финальный сегмент с полной информацией"""
+    id: int
+    start: float
+    end: float
+    duration: float
+    speaker: str
+    speaker_label: str
+    text: str
+    words: List[TranscriptionWord]
+    confidence: float
+
+
+class AudioMetadata(BaseModel):
+    filename: str
+    duration: float
+    sample_rate: int
+    channels: int
+    format: str
+    bitrate: Optional[int]
+    size_bytes: int
+
+
+class ProcessingInfo(BaseModel):
+    diarization_model: Dict[str, Any]
+    transcription_model: Dict[str, Any]
+    recognition_model: Dict[str, Any]
+    processing_time: Dict[str, float]
+
+
+class Statistics(BaseModel):
+    total_speakers: int
+    identified_speakers: int
+    unknown_speakers: int
+    total_segments: int
+    total_words: int
+    speech_duration: float
+    silence_duration: float
+
+
+class AnnotationResult(BaseModel):
+    task_id: str
+    version: str
+    created_at: datetime
+    audio_metadata: AudioMetadata
+    processing_info: ProcessingInfo
+    speakers: List[FinalSpeaker]
+    segments: List[FinalSegment]
+    transcription: FinalTranscription
+    statistics: Statistics
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}

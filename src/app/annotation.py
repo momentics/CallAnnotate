@@ -20,7 +20,7 @@ from .stages import PreprocessingStage, DiarizationStage, TranscriptionStage, Re
 from .stages.carddav_stage import CardDAVStage
 from .schemas import (
     AnnotationResult, AudioMetadata, ProcessingInfo, FinalSpeaker,
-    FinalSegment, FinalTranscription, Statistics, TranscriptionWord, ContactInfo
+    FinalSegment, FinalTranscription, Statistics, TranscriptionSegment, TranscriptionWord, ContactInfo
 )
 from .models_registry import models_registry
 from .utils import extract_audio_metadata, ensure_directory
@@ -53,11 +53,11 @@ class AnnotationService:
 
         self.logger.info(f"AnnotationService инициализирован len(stages)={len(self.stages)} ")
 
+
     async def process_audio(
         self,
         file_path: str,
         task_id: str,
-        #progress_callback: Optional[Callable[[int, str], None]] = None
         progress_callback: Optional[Callable[[int, str], Awaitable[Any]]] = None
     ) -> Dict[str, Any]:
         try:
@@ -136,19 +136,46 @@ class AnnotationService:
         context: Dict[str, Any]
     ) -> AnnotationResult:
         """
-        Собирает финальный результат аннотации, включая скорректированную confidence
-        на уровне всей транскрипции и сегментов, а также confidence спикеров из RecognitionStage.
+        Собирает финальный результат аннотации.
+        Соответствует структуре docs/callannotate-schema.json.
         """
         diar_result = context.get("diarization")
         trans_result = context.get("transcription")
         recog_result = context.get("recognition")
         carddav_result = context.get("carddav")
 
-        # ProcessingInfo
+        # Собираем processing_info согласно схеме
+        diar_cfg = self.config.diarization
+        trans_cfg = self.config.transcription
+        recog_cfg = self.config.recognition
+
+        diar_model_info = {
+            "stage": "diarization",
+            "model_name": diar_result.model_info.get("model_name") if diar_result else None,
+            "device": diar_cfg.device,
+            "framework": diar_result.model_info.get("framework") if diar_result else None
+        }
+
+        trans_model_info = {
+            "stage": "transcription",
+            "model_size": trans_cfg.model.split("/")[-1],
+            "device": trans_cfg.device,
+            "framework": "OpenAI Whisper"
+        }
+
+        recog_model_info = {
+            "stage": "recognition",
+            "model_name": recog_cfg.model,
+            "device": recog_cfg.device,
+            "threshold": recog_cfg.threshold,
+            "database_size": len(context.get("recognition").payload.get("speakers", {})), # type: ignore
+            "framework": "SpeechBrain + FAISS"
+        }
+
         processing_info = ProcessingInfo(
-            diarization_model=diar_result.model_info if diar_result else {},
-            transcription_model=trans_result.model_info if trans_result else {},
-            recognition_model=recog_result.model_info if recog_result else {},
+            diarization_model=diar_model_info,
+            transcription_model=trans_model_info,
+            recognition_model=recog_model_info,
             processing_time={
                 "diarization": round(diar_result.processing_time, 3) if diar_result else 0.0,
                 "transcription": round(trans_result.processing_time, 3) if trans_result else 0.0,
@@ -157,21 +184,17 @@ class AnnotationService:
             }
         )
 
-        # Сырые данные
         raw_diar = diar_result.payload.get("segments", []) if diar_result else []
         raw_trans = trans_result.payload if trans_result else {}
         raw_recog = recog_result.payload.get("speakers", {}) if recog_result else {}
 
-        # --- Построение карты спикеров ---
         speakers_map: Dict[str, FinalSpeaker] = {}
         idx_counter = 1
-        # Инициализируем спикеров по меткам из диаризации
         for seg in raw_diar:
             label = seg["speaker"]
             if label not in speakers_map:
                 spk_id = f"speaker_{idx_counter:02d}"
                 idx_counter += 1
-                # Начальное значение confidence: берём из recognition payload, если есть
                 rec_info = raw_recog.get(label, {})
                 init_conf = float(rec_info.get("confidence", 0.0))
                 speakers_map[label] = FinalSpeaker(
@@ -186,73 +209,76 @@ class AnnotationService:
                     confidence=round(init_conf, 3)
                 )
 
-        # --- Сборка сегментов и подсчёт статистики ---
         segments: List[FinalSegment] = []
         full_text_parts: List[str] = []
         total_words = 0
         total_speech = 0.0
 
-        for i, d in enumerate(raw_diar, start=1):
+        words_all = raw_trans.get("words", [])
+        for idx, d in enumerate(raw_diar, start=1):
             start, end = d["start"], d["end"]
             duration = round(end - start, 3)
-            seg_speaker = speakers_map[d["speaker"]]
-            seg_speaker.segments_count += 1
-            seg_speaker.total_duration += duration
+            spk = speakers_map[d["speaker"]]
+            spk.segments_count += 1
+            spk.total_duration += duration
             total_speech += duration
 
-            # Текст и слова из транскрипции
             words_in = [
-                w for w in raw_trans.get("words", [])
+                w for w in words_all
                 if w["start"] < end and w["end"] > start
             ]
             text = " ".join(w["word"] for w in words_in).strip()
 
-            # Confidence сегмента
-            seg_conf = 0.0
-            for seg in raw_trans.get("segments", []):
-                if abs(seg["start"] - start) < 1e-3:
-                    seg_conf = seg.get("avg_logprob", 0.0)
-                    break
+            seg_conf = d.get("confidence", 0.0)
             if seg_conf == 0.0 and words_in:
                 seg_conf = sum(w["probability"] for w in words_in) / len(words_in)
 
             segments.append(FinalSegment(
-                id=i,
+                id=idx,
                 start=round(start, 3),
                 end=round(end, 3),
                 duration=duration,
-                speaker=seg_speaker.id,
+                speaker=spk.id,
                 speaker_label=d["speaker"],
                 text=text,
                 words=[TranscriptionWord(**w) for w in words_in],
                 confidence=round(seg_conf, 3)
             ))
-            full_text_parts.append(f"[{seg_speaker.id}]: {text}")
+            full_text_parts.append(f"[{spk.id}]: {text}")
             total_words += len(words_in)
 
-        # Итоговая транскрипция
         overall_conf = raw_trans.get("confidence", 0.0)
-        if overall_conf == 0.0 and raw_trans.get("words"):
-            overall_conf = sum(w["probability"] for w in raw_trans["words"]) / len(raw_trans["words"])
+        if overall_conf == 0.0 and words_all:
+            overall_conf = sum(w["probability"] for w in words_all) / len(words_all)
 
         transcription = FinalTranscription(
             full_text="\n".join(full_text_parts),
             confidence=round(overall_conf, 3),
             language=raw_trans.get("language", "unknown"),
-            words=[TranscriptionWord(**w) for w in raw_trans.get("words", [])]
+            segments=[
+                TranscriptionSegment(
+                    start=s["start"],
+                    end=s["end"],
+                    text=s.get("text", ""),
+                    speaker=s.get("speaker"),
+                    speaker_confidence=s.get("speaker_confidence"),
+                    no_speech_prob=s.get("no_speech_prob"),
+                    avg_logprob=s.get("avg_logprob"),
+                    confidence=s.get("confidence")
+                )
+                for s in raw_trans.get("segments", [])
+            ],
+            #words=[TranscriptionWord(**w) for w in words_all]
         )
 
-        # Дополняем info по спикерам: имя и карточка из CardDAV
-        for label, spk in speakers_map.items():
-            # Recognition уже установил identified, name, confidence
-            # CardDAV
-            cd = carddav_result.payload.get("speakers", {}).get(label, {}) if carddav_result else {}
-            contact = cd.get("contact")
-            if contact:
-                spk.contact_info = ContactInfo(**contact)
+        if carddav_result:
+            cd_speakers = carddav_result.payload.get("speakers", {})
+            for label, spk in speakers_map.items():
+                cd = cd_speakers.get(label, {}).get("contact")
+                if cd:
+                    spk.contact_info = ContactInfo(**cd)
 
         final_speakers = list(speakers_map.values())
-
         stats = Statistics(
             total_speakers=len(final_speakers),
             identified_speakers=sum(1 for s in final_speakers if s.identified),
@@ -266,7 +292,7 @@ class AnnotationService:
         return AnnotationResult(
             task_id=task_id,
             version=str(self.config.server.version),
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
             audio_metadata=audio_metadata,
             processing_info=processing_info,
             speakers=final_speakers,
