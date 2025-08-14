@@ -21,7 +21,7 @@ jobs:
       - name: Unpack multi-volume archive
         run: |
           cd volume/models
-          run: 7z x '*.zip' -o. -aoa
+          7z x '*.zip' -o. -aoa
           rm *.zip
           rm *.z0*
           cd ..
