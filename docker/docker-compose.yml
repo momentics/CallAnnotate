@@ -6,7 +6,7 @@ services:
   callannotate:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
       args:
         - WHISPER_MODEL=small
         - BUILDKIT_INLINE_CACHE=1

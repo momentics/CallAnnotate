@@ -22,7 +22,7 @@ RUN apt-get update \
 # Установка RNNoise
 RUN git clone https://github.com/xiph/rnnoise.git /tmp/rnnoise \
     && cd /tmp/rnnoise \
-    && export CFLAGS="-march=native -O3" \
+    && export CFLAGS="-march=native -O2" \
     && ./autogen.sh \
     && ./configure \
     && make \
@@ -44,31 +44,26 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
 COPY scripts/preload_whisper.py /app/preload_whisper.py
 COPY scripts/preload_hf_models.py /app/preload_hf_models.py
 
-# Предзагрузка моделей в volume/models/cache
-RUN mkdir -p /volume/models/cache \
-    && mkdir -p /volume/models/diarization \
-    && mkdir -p /volume/models/recognition \
+# Предзагрузка моделей в volume/models/
+RUN mkdir -p /volume/models/embeddings \
+    && mkdir -p /volume/models/pyannote \
+    && mkdir -p /volume/models/speechbrain \
+    && mkdir -p /volume/models/whisper \
     && chown -R callannotate:callannotate /volume/models
 
-# Устанавливаем переменные для оффлайн-кеша
-ENV HF_HOME=/volume/models/cache \
-    TRANSFORMERS_CACHE=/volume/models/cache \
-    TORCH_HOME=/volume/models/cache
+COPY volume/models /volume/models
 
-# Предзагружаем Whisper
-RUN echo "Предзагрузка Whisper модели: $WHISPER_MODEL" \
-    && python /app/preload_whisper.py --model $WHISPER_MODEL --cache-dir /volume/models/cache
-
-# Предзагрузка Pyannote и SpeechBrain моделей
-RUN python /app/preload_hf_models.py \
-      --cache-dir /volume/models/cache \
-      $DIAR_MODEL $RECOG_MODEL
+# Unpack multi-volume archive
+RUN cd /volume/models \
+    && 7z x '*.zip' -o. -aoa \
+    && rm *.zip \
+    && rm *.z0* 
 
 COPY src/ /app/src/
 COPY config/ /app/config/
 
 RUN chown -R callannotate:callannotate /app \
-    && chmod +x /app/preload_whisper.py /app/preload_hf_models.sh
+    && chmod +x /app/preload_whisper.py /app/preload_hf_models.py
 
 USER callannotate
 
@@ -76,7 +71,9 @@ ENV PYTHONPATH=/app/src \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     CONFIG_PATH=/app/config/default.yaml \
-    VOLUME_PATH=/volume
+    VOLUME_PATH=/volume \
+    HF_DATASETS_OFFLINE=1 \
+    TRANSFORMERS_OFFLINE=1
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/api/v1/health || exit 1
