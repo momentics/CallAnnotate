@@ -15,8 +15,11 @@ jobs:
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
-      - name: Checkout CallAnnotate repository
-        uses: actions/checkout@v3
+      - name: Checkout CallAnnotate repository and pull LFS files
+        uses: actions/checkout@v4
+        with:
+          # Эта строчка скажет action'у выполнить git lfs pull
+          lfs: true
 
       - name: Unpack multi-volume archive
         run: |
