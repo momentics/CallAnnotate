@@ -26,38 +26,38 @@ RUN apt-get update && \
       starlette==0.27.0 \
       uvicorn[standard]==0.24.0 \
       python-multipart==0.0.6 \
-      websockets>=11.0.3,<12.0 \
+      "websockets>=11.0.3,<12.0" \
       aiofiles==23.2.1 \
       httpx==0.24.1 \
       anyio==3.7.1 \
-      openai-whisper>=20231117 \
-      speechbrain>=1.0.0 \
-      pyannote.audio>=3.1.1 \
-      faiss-cpu>=1.7.4 \
-      torch>=2.1.1,<2.8.0 \
-      torchaudio>=2.2.0,<2.8.0 \
+      "openai-whisper>=20231117" \
+      "speechbrain>=1.0.0" \
+      "pyannote.audio>=3.1.1" \
+      "faiss-cpu>=1.7.4" \
+      "torch>=2.1.1,<2.8.0" \
+      "torchaudio>=2.2.0,<2.8.0" \
       librosa==0.10.1 \
       soundfile==0.12.1 \
-      numpy>=1.24,<2.0 \
+      "numpy>=1.24,<2.0" \
       scipy==1.11.4 \
-      deepfilternet>=0.2.0 \
-      pydub>=0.25.1 \
-      transformers>=4.35.2 \
-      pytorch-lightning>=2.5.2 \
-      caldav>=1.3.9 \
-      vobject>=0.9.6.1 \
-      requests>=2.32.4 \
-      pyyaml>=6.0.1 \
-      python-dotenv>=1.0.0 \
-      pydantic>=2.5.0 \
-      pydantic-settings>=2.1.0 \
-      python-dateutil>=2.8.2 \
-      pytz>=2025.2 \
-      click>=8.1.7 \
+      "deepfilternet>=0.2.0" \
+      "pydub>=0.25.1" \
+      "transformers>=4.35.2" \
+      "pytorch-lightning>=2.5.2" \
+      "caldav>=1.3.9" \
+      "vobject>=0.9.6.1" \
+      "requests>=2.32.4" \
+      "pyyaml>=6.0.1" \
+      "python-dotenv>=1.0.0" \
+      "pydantic>=2.5.0" \
+      "pydantic-settings>=2.1.0" \
+      "python-dateutil>=2.8.2" \
+      "pytz>=2025.2" \
+      "click>=8.1.7" \
       pytest==7.4.0 \
-      pytest-mock>=3.12.0 \
-      pytest-aioresponses>=0.3.0 \
-      pytest-httpx>=0.18.0 \
+      "pytest-mock>=3.12.0" \
+      "pytest-aioresponses>=0.3.0" \
+      "pytest-httpx>=0.18.0" \
       pytest-asyncio==0.21.1 \
     && \
     # Очищаем кеш apt и временные файлы
