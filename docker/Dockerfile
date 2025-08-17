@@ -81,11 +81,11 @@ RUN mkdir -p /volume/models/embeddings /volume/models/pyannote /volume/models/wh
     # Удаляем архивы после распаковки
     rm -f /volume/models/*.zip /volume/models/*.z0*
 
-# Создаём пользователя и устанавливаем права
-RUN groupadd --gid 1000 callannotate && \
-    useradd --uid 1000 --gid callannotate --shell /bin/bash --create-home callannotate && \
-    chown -R callannotate:callannotate /app /volume && \
-    chmod +x /app/preload_models.sh
+# Устанавливаем права и убираем несуществующую chmod
+RUN groupadd --gid 1000 callannotate \
+ && useradd --uid 1000 --gid callannotate --shell /bin/bash --create-home callannotate \
+ && chown -R callannotate:callannotate /app /volume
+
 
 # Переключаемся на непривилегированного пользователя
 USER callannotate
