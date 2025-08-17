@@ -6,7 +6,7 @@ FROM python:3.11-slim-bullseye
 # утилиты для распаковки архивов и сборки RNNoise
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      build-essential autoconf libtool git unzip p7zip-full libsndfile1-dev ffmpeg sox curl wget \
+    build-essential autoconf automake libtool git unzip p7zip-full libsndfile1-dev ffmpeg sox curl wget \
     && \
     # Сборка и установка RNNoise из исходников
     git clone https://github.com/xiph/rnnoise.git /tmp/rnnoise && \
@@ -61,7 +61,7 @@ RUN apt-get update && \
     && \
     # Очищаем кеш apt и временные файлы
     #apt-get purge -y --auto-remove build-essential autoconf libtool git unzip p7zip-full && \
-    apt-get purge -y --auto-remove build-essential autoconf libtool git && \
+    apt-get purge -y --auto-remove build-essential autoconf automake libtool git && \
     rm -rf /var/lib/apt/lists/*
 
 # Копируем исходный код приложения
