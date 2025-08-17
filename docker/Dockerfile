@@ -17,7 +17,7 @@ RUN apt-get update && \
     make && \
     make install && \
     ldconfig && \
-    && cd / \
+    && cd / && \
     rm -rf /tmp/rnnoise && \
     # Обновляем pip и устанавливаем Python-зависимости
     pip install --no-cache-dir --upgrade pip setuptools wheel && \
