@@ -67,7 +67,7 @@ RUN apt-get update && \
 # Копируем исходный код приложения
 COPY src/ /app/src/
 COPY config/ /app/config/
-COPY docker/preload_models.sh /app/preload_models.sh
+COPY scripts/ /app/scripts/
 
 # Копируем локальные архивы моделей в контейнер и распаковываем
 # Предполагается, что в контексте сборки есть каталог volume/models с zip-архивами
