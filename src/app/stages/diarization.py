@@ -1,16 +1,13 @@
 # src/app/stages/diarization.py
 # -*- coding: utf-8 -*-
 """
-Этап диаризации для CallAnnotate с исправленным определением уникальных спикеров.
+Этап диаризации для CallAnnotate с исправленным определением уникальных спикеров
+и передачей метаданных модели в payload для корректного заполнения processing_info.
 
-Проблема:
-Ранее количество спикеров определялось некорректно из сегментов, из-за чего в результат попадал только один.
-
-Решение:
-- Собираем множество меток спикеров напрямую из объекта Annotation:
-  annotation.labels()
-- Если меньше двух уникальных меток, добавляем 'unknown'
-- Если больше двух, выбираем два меток с наибольшей общей длительностью
+Дополнительно:
+- Добавлен постпроцессинг сегментов: фильтрация сверхкоротких, слияние соседних сегментов одного спикера.
+  Это устраняет артефактные микро-сегменты (например, 0.017с), которые дублируют начало следующего сегмента
+  и приводят к некорректному увеличению количества сегментов в итоговом JSON.
 
 Автор: akoodoy@capilot.ru
 Ссылка: https://github.com/momentics/CallAnnotate
@@ -32,7 +29,7 @@ from .base import BaseStage
 
 class DiarizationStage(BaseStage):
     CONFIG_FILE = "pyannote_diarization_config.yaml"
-    #pipeline = load_pipeline_from_pretrained(PATH_TO_CONFIG)
+
     @property
     def stage_name(self) -> str:
         return "diarization"
@@ -41,18 +38,21 @@ class DiarizationStage(BaseStage):
         model_id = str(self.config.get("model"))
         use_auth = self.config.get("use_auth_token")
         device = self.config.get("device", "cpu")
-        
+
+        # Кэш для локальной конфигурации pyannote
         self.cache_path = Path(self.volume_path).expanduser().resolve() / "models" / "pyannote"
         self.cache_path.mkdir(parents=True, exist_ok=True)
         self.cache_path = self.cache_path / self.CONFIG_FILE
-        
+
         def loader():
-            cwd = Path.cwd().resolve()  # store current working directory
-            
+            # Подгружаем pipeline. Если используется локальный конфиг — загружаем из файла.
+            cwd = Path.cwd().resolve()
             cd_to = self.cache_path.parent.resolve()
             os.chdir(cd_to)
 
-            #pipe = Pipeline.from_pretrained(model_id, use_auth_token=use_auth)
+            # Если у вас есть локальный конфиг self.cache_path — используем его,
+            # иначе можно раскомментировать загрузку с HuggingFace:
+            # pipe = Pipeline.from_pretrained(model_id, use_auth_token=use_auth)
             pipe = Pipeline.from_pretrained(self.cache_path)
 
             try:
@@ -93,8 +93,8 @@ class DiarizationStage(BaseStage):
         if progress_callback:
             await progress_callback(10, "Начало диаризации")
 
+        # Используем настройки оконного режима из конфига (не перезаписываем насильно)
         window_enabled = bool(self.config.get("window_enabled", False))
-        window_enabled = False
         window_size = float(self.config.get("window_size", duration))
         hop_size = float(self.config.get("hop_size", window_size))
 
@@ -110,38 +110,54 @@ class DiarizationStage(BaseStage):
         if progress_callback:
             await progress_callback(80, "Извлечение сегментов")
 
-        segments = self._extract_segments(annotation, duration)
+        raw_segments = self._extract_segments(annotation, duration)
 
-        # Собираем уникальные метки спикеров из annotation.labels()
-        labels = list(annotation.labels())
+        # Пост-обработка: фильтрация коротких и слияние соседних сегментов одного спикера.
+        # Порог минимальной длительности берём из конфигурации транскрипции (если доступен),
+        # чтобы согласовать логику с min_segment_duration.
+        # Если конфиг недоступен — используем дефолт 0.2 секунды.
+        try:
+            min_seg = float(self.app_config.transcription.min_segment_duration)  # type: ignore[attr-defined]
+        except Exception:
+            min_seg = 0.2
 
-        # Считаем суммарную длительность по каждой метке
-        durations: Dict[str, float] = {lbl: 0.0 for lbl in labels} # type: ignore
+        # Порог для объединения "стыкующихся" сегментов одного спикера: 0.05с
+        merge_gap = 0.05
+
+        segments = self._merge_and_filter_segments(raw_segments, min_duration=min_seg, merge_gap=merge_gap)
+
+        # Собираем уникальные метки спикеров из отфильтрованных сегментов
+        labels = []
         for seg in segments:
-            lbl = seg["speaker"]
-            durations[lbl] = durations.get(lbl, 0.0) + seg["duration"]
+            if seg["speaker"] not in labels:
+                labels.append(seg["speaker"])
 
         # Если меньше двух, добавляем 'unknown'
         if len(labels) == 0:
             labels = ["speaker_1", "unknown"]
         elif len(labels) == 1:
             labels.append("unknown")
-        # Если больше двух, выбираем две метки с максимальной длительностью
-        elif len(labels) > 2:
-            sorted_labels = sorted(durations.items(), key=lambda x: x[1], reverse=True)
-            labels = [lbl for lbl, _ in sorted_labels[:2]]
+        # Если больше двух — оставляем как есть (в реальных кейсах допускается >2),
+        # а выбор топ-2 по длительности был удалён, чтобы не терять реальных спикеров.
 
         processing_time = round(time.perf_counter() - start_time, 3)
         self.logger.info(
             f"Диаризация завершена за {processing_time} сек: speakers={labels}, segments={len(segments)}"
         )
 
+        # Информация о модели для заполнения processing_info
+        model_info = {
+            "model_name": str(self.config.get("model")),
+            "framework": "pyannote.audio"
+        }
+
         return {
             "segments": segments,
             "speakers": labels,
             "total_segments": len(segments),
             "total_speakers": len(labels),
-            "processing_time": processing_time
+            "processing_time": processing_time,
+            "model_info": model_info
         }
 
     async def _process_with_sliding_window(
@@ -173,8 +189,11 @@ class DiarizationStage(BaseStage):
         return combined
 
     def _extract_segments(self, annotation: Annotation, duration: float) -> List[Dict[str, Any]]:
+        """
+        Преобразует pyannote Annotation в список сегментов.
+        """
         raw: List[Dict[str, Any]] = []
-        for segment, _, label in annotation.itertracks(yield_label=True): # type: ignore
+        for segment, _, label in annotation.itertracks(yield_label=True):  # type: ignore
             start = round(segment.start, 3)
             end = round(min(segment.end, duration), 3)
             if end <= start:
@@ -188,3 +207,48 @@ class DiarizationStage(BaseStage):
             })
         raw.sort(key=lambda x: x["start"])
         return raw
+
+    def _merge_and_filter_segments(
+        self,
+        segments: List[Dict[str, Any]],
+        min_duration: float = 0.2,
+        merge_gap: float = 0.05
+    ) -> List[Dict[str, Any]]:
+        """
+        Фильтрует сверхкороткие сегменты и сливает соседние сегменты одного спикера,
+        если разрыв между ними меньше merge_gap.
+
+        - min_duration: минимальная длительность сегмента (сегменты короче отбрасываются).
+        - merge_gap: если следующий сегмент того же спикера начинается в пределах этого зазора,
+          они объединяются.
+
+        Возвращает упорядоченный список сегментов.
+        """
+        if not segments:
+            return []
+
+        # Предварительно: избавимся от совсем коротких кусочков, которые часто являются артефактами.
+        pre = [s for s in segments if float(s["duration"]) >= float(min_duration)]
+
+        if not pre:
+            return []
+
+        pre.sort(key=lambda x: (x["speaker"], x["start"]))
+        merged: List[Dict[str, Any]] = []
+        current = pre[0].copy()
+
+        for s in pre[1:]:
+            same_spk = (s["speaker"] == current["speaker"])
+            gap = float(s["start"]) - float(current["end"])
+            if same_spk and gap >= -1e-6 and gap <= merge_gap:
+                # Сливаем сегменты одного спикера, которые «стыкуются» или почти соприкасаются
+                current["end"] = max(float(current["end"]), float(s["end"]))
+                current["duration"] = round(float(current["end"]) - float(current["start"]), 3)
+            else:
+                merged.append(current)
+                current = s.copy()
+        merged.append(current)
+
+        # Финальная сортировка по времени
+        merged.sort(key=lambda x: x["start"])
+        return merged
