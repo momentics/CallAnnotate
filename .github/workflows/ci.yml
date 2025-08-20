@@ -15,11 +15,18 @@ jobs:
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
+      - name: Install Git LFS
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-lfs
+          git lfs install
+
       - name: Checkout CallAnnotate repository and pull LFS files
         uses: actions/checkout@v4
         with:
           # Эта строчка скажет action'у выполнить git lfs pull
           lfs: true
+          fetch-depth: 0
 
       - name: Unpack multi-volume archive
         run: |
