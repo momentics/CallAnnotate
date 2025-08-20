@@ -1,132 +1,115 @@
 # src/app/stages/preprocessing.py
 # -*- coding: utf-8 -*-
 """
-Этап предобработки аудио: SoX-поддержка, чанковая нормализация,
-RNNoise и DeepFilterNet.
+Рефакторинг этапа предобработки аудио для CallAnnotate.
 
-Автор: akoodoy@capilot.ru
-Ссылка: https://github.com/momentics/CallAnnotate
-Лицензия: Apache-2.0
+Ключевые улучшения:
+- Изоляция сложных зависимостей (SoX, RNNoise, DFN) во вспомогательных модулях.
+- Потоковая обработка длинных файлов: чтение -> чанки -> фильтры -> склейка.
+- Детерминированная нормализация RMS: только «вниз», без усиления шума.
+- Устойчивое поведение: при любых ошибках возвращаем входной результат.
+- Подробные комментарии и понятные лог-сообщения.
+
+Совместимость:
+- Подписывается под BaseStage и возвращает {"processed_path", "original_path", "processing_time"}.
+- Учитывает конфигурацию из AppSettings.PreprocessingConfig.
 """
-
 from __future__ import annotations
 
-import inspect
-import os
-import shutil
-import subprocess
-import time
-from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional
-from xml.dom import NotFoundErr
+from pathlib import Path
+import time
+import logging
 
 import numpy as np
 import soundfile as sf
-import torch
 from pydub import AudioSegment
-from scipy.signal import resample_poly
 
-from ..rnnoise_wrapper import RNNoise
 from .base import BaseStage
+from ..config import AppSettings
+from ..rnnoise_wrapper import FRAME_SIZE as RN_FRAME_SIZE  # используем для тестов/валидаций
 
-
-# Поддержка разных расположений функций init_df / enhance в DeepFilterNet
-init_df: Optional[Callable] = None
-enhance: Optional[Callable] = None
-for _path in (
-    "df.deepfilternet2",
-    "df.deepfilternet3",
-    "df.deepfilternet",
-    "df.enhance",
-):
-    try:
-        mod = __import__(_path, fromlist=["init_df", "enhance"])
-        init_df = getattr(mod, "init_df", None)
-        enhance = getattr(mod, "enhance", None)
-        if callable(init_df) and callable(enhance):
-            break
-    except ModuleNotFoundError:
-        continue
+# Локальные утилиты аудио-подсистемы
+from .audio.io import (
+    load_audio_segment,
+    ensure_channels_and_rate,
+    to_mono_float32,
+    from_mono_float32,
+)
+from .audio.sox_tools import apply_sox_noise_reduce, is_sox_available
+from .audio.denoise_rnnoise import RNNoiseWrapper
+from .audio.denoise_dfn import DeepFilter
+from .audio.chunking import iter_overlapping_chunks
+from .audio.mix import merge_chunks_linear, merge_chunks_windowed
+from .audio.level import apply_rms_ceiling
 
 
 class PreprocessingStage(BaseStage):
-    """SoX → RNNoise → DeepFilterNet → нормализация"""
-    def __init__(self, cfg, config, models_registry=None):
-        super().__init__(cfg, config, models_registry)
-        self._cfg = cfg
+    """
+    Пайплайн: (опционально) SoX -> RNNoise -> DeepFilterNet -> Merge -> RMS ceiling -> Save.
+    Каждый шаг устойчив к ошибкам и может быть отключён конфигурацией.
+    """
 
     @property
     def stage_name(self) -> str:
         return "preprocess"
 
     async def _initialize(self) -> None:
-        cache_dir = Path(self.volume_path) / "models"
-        os.environ["HF_HOME"] = str(cache_dir)
-        os.environ["TRANSFORMERS_CACHE"] = str(cache_dir)
-        os.environ["TORCH_HOME"] = str(cache_dir)
+        """
+        Инициализация подэтапов и состояний. Делается один раз на весь жизненный цикл экземпляра.
+        """
+        cfg = self.config
+        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
-        self.logger.debug("=== PreprocessingStage: старт инициализации ===")
-        self.debug_mode: bool = bool(self.config.get("debug_mode", False))
-        self.deepfilter_enabled = bool(self.config.get("deepfilter_enabled", False))
-        self.deepfilter_sample_rate = int(self.config.get("deepfilter_sample_rate", 48000))
+        # Флаги и параметры
+        self.debug_mode: bool = bool(cfg.get("debug_mode", False))
 
-        self.rnnoise_sample_rate = int(self.config.get("rnnoise_sample_rate", 48000))
+        # SoX
+        self.sox_enabled: bool = bool(cfg.get("sox_enabled", False))
+        self.sox_noise_profile_duration: float = float(cfg.get("sox_noise_profile_duration", 2.0))
+        self.sox_noise_reduction: float = float(cfg.get("sox_noise_reduction", 0.3))
+        self.sox_gain_normalization: bool = bool(cfg.get("sox_gain_normalization", True))
+        self.sox_available: bool = is_sox_available() if self.sox_enabled else False
 
-        if init_df is None or enhance is None:
-            raise RuntimeError(
-                "Не установлена зависимость deepfilternet. "
-                "Установите пакет `deepfilternet` для работы этапа preprocess."
-            )
+        # RNNoise
+        self.rnnoise_enabled: bool = bool(cfg.get("rnnoise_enabled", True))
+        self._rn = RNNoiseWrapper(enabled=self.rnnoise_enabled, allow_passthrough=True)
 
-        if self.deepfilter_enabled:
-            model_name = self.config.get("model", "DeepFilterNet2")
-            device = self.config.get("device", "cpu")
+        # DeepFilterNet
+        self.deepfilter_enabled: bool = bool(cfg.get("deepfilter_enabled", False))
+        df_target_sr: int = int(cfg.get("deepfilter_sample_rate", 48_000))
+        model_name: str = str(cfg.get("model", "DeepFilterNet2"))
+        device: str = str(cfg.get("device", "cpu"))
+        self._df = DeepFilter(enable=self.deepfilter_enabled, model_name=model_name, device=device, target_sr=df_target_sr)
 
-            try:
-                sig = inspect.signature(init_df)
-                if len(sig.parameters) == 0 or any(
-                    p.kind == inspect.Parameter.VAR_KEYWORD
-                    for p in sig.parameters.values()
-                ):
-                    self.model, self.df_state, _ = init_df()  # type: ignore[arg-type]
-                elif "model" in sig.parameters and "device" in sig.parameters:
-                    self.model, self.df_state, _ = init_df(
-                        model=model_name, device=device  # type: ignore[arg-type]
-                    )
-                else:
-                    self.model, self.df_state, _ = init_df(
-                        model_name, device  # type: ignore[arg-type]
-                    )
-                self.logger.debug(
-                    f"DeepFilterNet инициализировано с sample_rate="
-                    f"{self.deepfilter_sample_rate}, model={model_name}, device={device}"
-                )
-            except Exception as e:
-                self._log_deepfilternet_error(e)
-                self.deepfilter_enabled = False
-                raise
-        else:
-            self.model = None
+        # IO/выход
+        self.output_suffix: str = str(cfg.get("output_suffix", "_processed"))
+        self.audio_format: str = str(cfg.get("audio_format", "wav")).lower()
+        self.channels_mode: str = str(cfg.get("channels", "mono")).lower()
+        self.sample_rate_target: Optional[int] = cfg.get("sample_rate_target", 16000)
+        self.sample_rate_target = int(self.sample_rate_target) if self.sample_rate_target not in (None, "null") else None
 
-        self.rnnoise: Optional[RNNoise] = None
-        if self.config.get("rnnoise_enabled", True):
-            try:
-                sig = inspect.signature(RNNoise.__init__)
-                if "sample_rate" in sig.parameters:
-                    self.rnnoise = RNNoise(sample_rate=self.rnnoise_sample_rate)
-                else:
-                    self.rnnoise = RNNoise()  # type: ignore[arg-type]
-                    if hasattr(self.rnnoise, "sample_rate"):
-                        self.rnnoise.sample_rate = self.rnnoise_sample_rate
-                self.logger.debug(
-                        f"RNNoise инициализировано с sample_rate={self.rnnoise.sample_rate}"
-                    )
-            except Exception as e:
-                self._log_rnnoise_error(e)
+        # Чанкование
+        self.chunk_duration_sec: float = float(cfg.get("chunk_duration", 10.0))
+        self.overlap_sec: float = float(cfg.get("overlap", 0.5))
+        self.chunk_overlap_method: str = str(cfg.get("chunk_overlap_method", "linear")).lower()
+        self.progress_step: int = int(cfg.get("progress_interval", 10))
 
-        self.sox_available = self._detect_sox()
+        # Уровень
+        self.target_rms_db: float = float(cfg.get("target_rms", -20.0))
 
-        self.logger.debug(self._get_model_info())
+        # Лимиты/служебное (не жёстко применяем в коде, но используем в дальнейших улучшениях)
+        self.processing_threads: int = int(cfg.get("processing_threads", 1))
+        self.memory_limit_mb: int = int(cfg.get("memory_limit_mb", 1024))
+        self.temp_cleanup: bool = bool(cfg.get("temp_cleanup", True))
+        self.preserve_original: bool = bool(cfg.get("preserve_original", True))
+        self.save_intermediate: bool = bool(cfg.get("save_intermediate", False))
+
+        self.logger.info(
+            "Preprocessing initialized: sox=%s rnnoise=%s dfn=%s out=%s/%s, chunk=%.1fs overlap=%.3fs",
+            self.sox_available, self._rn.enabled, self._df.is_ready(), self.channels_mode, self.audio_format,
+            self.chunk_duration_sec, self.overlap_sec
+        )
 
     async def _process_impl(
         self,
@@ -135,414 +118,136 @@ class PreprocessingStage(BaseStage):
         previous_results: Dict[str, Any],
         progress_callback: Optional[Callable[[int, str], Awaitable[None]]] = None
     ) -> Dict[str, Any]:
+        """
+        Основная обработка:
+        1) (опционально) SoX noisered на исходном файле -> временный WAV (если возможно).
+        2) Чтение через pydub -> нормализация каналов/частоты.
+        3) Чанки: RNNoise -> DeepFilterNet.
+        4) Склейка chunk-результатов.
+        5) Финальный RMS ceiling.
+        6) Сохранение в /volume/processing с суффиксом.
 
-        self.logger.debug(
-            "=== PreprocessingStage: начало обработки файла %s (task_id=%s) ===",
-            file_path,
-            task_id,
-        )
-        t0 = time.perf_counter()
+        Возврат: processed_path/original_path/processing_time
+        """
+        started = time.perf_counter()
+        async def progress(p: int, msg: str):
+            if progress_callback:
+                await progress_callback(p, msg)
+            self.logger.debug("preprocess: %3d%% %s", p, msg)
 
-        chunk_ms = int(self.config.get("chunk_duration", 2.0) * 1000)
-        overlap_ms = int(self.config.get("overlap", 0.5) * 1000)
-        target_rms = float(self.config.get("target_rms", -20.0))
-        output_suffix = str(self.config.get("output_suffix", "_processed"))
-        progress_step = int(self.config.get("progress_interval", 10))
+        await progress(3, "preprocess: старт")
 
-        # подмена на sox
+        # 1) SoX (опционально, безопасный возврат исходника при ошибке)
+        src_for_pipeline = file_path
+        temp_dir = str(Path(self.volume_path) / "temp")
+
         if self.sox_available:
-            if progress_callback:
-                await progress_callback(10, f"Обработка SOX '{file_path}'")
-            src = await self._apply_sox(file_path, task_id, target_rms)
-            if progress_callback:
-                await progress_callback(10, f"Обработка SOX завершена '{src}'")
+            await progress(6, "preprocess: sox профилирование")
+            src_for_pipeline = apply_sox_noise_reduce(
+                src_path=file_path,
+                dst_dir=temp_dir,
+                task_id=task_id,
+                profile_duration=self.sox_noise_profile_duration,
+                reduction=self.sox_noise_reduction,
+                rms_gain_normalization=self.sox_gain_normalization,
+                target_rms_db=self.target_rms_db
+            )
+
+        # 2) Чтение, выравнивание каналов/частоты
+        await progress(10, "preprocess: загрузка аудио")
+        try:
+            seg = load_audio_segment(src_for_pipeline)
+        except Exception as e:
+            # В крайнем случае отдаём исходник без изменения
+            self.logger.warning("preprocess: ошибка чтения (%s), пропуск этапа", e)
+            return {
+                "processed_path": file_path,
+                "original_path": file_path,
+                "processing_time": round(time.perf_counter() - started, 3)
+            }
+
+        seg = ensure_channels_and_rate(seg, self.channels_mode, self.sample_rate_target)
+        sr = seg.frame_rate
+        total_ms = len(seg)
+
+        # 3) Чанкование и обработка
+        chunk_ms = int(max(1.0, self.chunk_duration_sec * 1000.0))
+        overlap_ms = int(max(0.0, self.overlap_sec * 1000.0))
+        overlap_samples = int(round(overlap_ms * sr / 1000.0))
+        chunks_f32: List[np.ndarray] = []
+        processed_count = 0
+
+        await progress(15, "preprocess: обработка чанков")
+        for i, (s_ms, e_ms, sub) in enumerate(iter_overlapping_chunks(seg, chunk_ms, overlap_ms), start=1):
+            # RNNoise — возвращает сегмент (возможно, с rate=48k); доведём потом
+            try:
+                rn = self._rn.filter_segment(sub) if self._rn.enabled else sub
+                # Нормализуем rate/каналы к текущим (pydub копирует метаданные)
+                if rn.frame_rate != sr:
+                    rn = rn.set_frame_rate(sr)
+                if rn.channels != seg.channels:
+                    rn = rn.set_channels(seg.channels)
+            except Exception:
+                rn = sub  # fallback
+
+            # DFN — работает в float32 моно
+            f32 = to_mono_float32(rn)
+            try:
+                if self._df.is_ready():
+                    f32 = self._df.process(f32, sr)
+            except Exception:
+                # fallback на raw после RNNoise
+                pass
+            chunks_f32.append(f32.astype(np.float32, copy=False))
+
+            processed_count += 1
+            if self.progress_step and (processed_count % max(1, self.progress_step) == 0):
+                pct = 15 + int(60.0 * (e_ms / max(1, total_ms)))
+                await progress(min(75, pct), f"preprocess: чанки {processed_count}")
+
+        if not chunks_f32:
+            # Нечего обрабатывать — отдаём оригинал
+            self.logger.warning("preprocess: нет чанков, пропуск")
+            return {
+                "processed_path": file_path,
+                "original_path": file_path,
+                "processing_time": round(time.perf_counter() - started, 3)
+            }
+
+        # 4) Склейка
+        await progress(80, "preprocess: склейка")
+        if self.chunk_overlap_method == "windowed":
+            merged = merge_chunks_windowed(chunks_f32, overlap_samples=overlap_samples)
         else:
-            src = file_path
+            merged = merge_chunks_linear(chunks_f32, overlap_samples=overlap_samples)
 
+        # 5) Финальная RMS нормализация вниз
+        await progress(88, "preprocess: RMS ceiling")
+        merged = apply_rms_ceiling(merged, self.target_rms_db)
 
-        if progress_callback:
-            await progress_callback(10, f"Загрузка аудио '{src}'")
-
-        audio = AudioSegment.from_file(src)
-        sr = audio.frame_rate
-        total_ms = len(audio)
-
-        segments: List[np.ndarray] = []
-        pos = 0
-        idx = 0
-        step = chunk_ms - overlap_ms
-        while pos < total_ms:
-            end = min(pos + chunk_ms, total_ms)
-            seg = audio[pos:end]
-
-            if self.rnnoise:
-                seg = await self._apply_rnnoise(seg, idx)
-
-            if self.deepfilter_enabled:
-                filtered = await self._apply_deepfilter(seg, sr, idx)
-                if isinstance(filtered, AudioSegment):
-                    arr = np.array(filtered.get_array_of_samples(), dtype=np.float32)
-                    arr /= np.iinfo(filtered.array_type).max
-                    segments.append(arr)
-                else:
-                    segments.append(filtered)
-            else:
-                samples = np.array(seg.get_array_of_samples(), dtype=np.float32)
-                samples /= np.iinfo(seg.array_type).max
-                segments.append(samples)
-
-            idx += 1
-            pos += step
-
-            if progress_callback and idx % max(progress_step, 1) == 0:
-                pct = 10 + int(60 * pos / total_ms)
-                await progress_callback(pct, f"Обработка куска {idx}")
-
-        if not segments:
-            raise RuntimeError("Не удалось сгенерировать ни одного чанка.")
-
-        if progress_callback:
-            await progress_callback(75, "Склеивание чанков")
-
-        merged = await self._merge_chunks(
-            segments,
-            overlap_ms,
-            sr,
-            str(self.config.get("chunk_overlap_method", "linear")).lower(),
-        )
-
-        if progress_callback:
-            await progress_callback(90, "Финальная нормализация")
-
-        merged = await self._apply_final_normalization(merged, target_rms)
-
-        if progress_callback:
-            await progress_callback(95, "Сохранение результата")
-
-        self.logger.debug("=== PreprocessingStage: сохранение результата ===")
-
-        # Save processed WAV into the *same* processing directory
+        # 6) Сохранение PCM_16 в processing/
+        await progress(95, "preprocess: сохранение")
         processing_dir = Path(self.volume_path) / "processing"
         processing_dir.mkdir(parents=True, exist_ok=True)
-        out_filename = Path(file_path).stem + output_suffix + Path(file_path).suffix
-        out_path = processing_dir / out_filename
-        sf.write(str(out_path), merged, sr, subtype="PCM_16")
 
-        if progress_callback:
-            await progress_callback(100, "Preprocess завершен")
+        in_path = Path(file_path)
+        out_name = f"{in_path.stem}{self.output_suffix}.{self.audio_format}"
+        out_path = processing_dir / out_name
 
+        try:
+            sf.write(str(out_path), np.clip(merged, -1.0, 1.0), sr, subtype="PCM_16")
+        except Exception as e:
+            # На случай проблем записи — откат к исходнику
+            self.logger.error("preprocess: ошибка записи файла (%s), отдаём оригинал", e)
+            return {
+                "processed_path": file_path,
+                "original_path": file_path,
+                "processing_time": round(time.perf_counter() - started, 3)
+            }
+
+        await progress(100, "preprocess: завершено")
         return {
             "processed_path": str(out_path),
             "original_path": file_path,
-            "processing_time": round(time.perf_counter() - t0, 3)
+            "processing_time": round(time.perf_counter() - started, 3)
         }
-
-    # --------------------------------------------------------------------- #
-    # DEEPFILTERNET                                                         #
-    # --------------------------------------------------------------------- #
-    async def _apply_deepfilter(self, seg: AudioSegment, sr: int, idx: int) -> np.ndarray:
-
-        # это является лучшей практикой, преобразовывать в [-1:1] float32
-        samples = np.array(seg.get_array_of_samples(), dtype=np.float32)
-        samples /= np.iinfo(seg.array_type).max
-
-        if seg.channels > 1:
-            samples = samples.reshape(-1, seg.channels).mean(axis=1)
-
-        if self.model is None:
-            return samples
-
-        sr = seg.frame_rate
-
-        try:
-            if sr <= self.deepfilter_sample_rate:
-                samples = self.upsample_audio(samples, sr, self.deepfilter_sample_rate)
-            else:
-                samples = self.downsample_audio(samples, sr, self.deepfilter_sample_rate)
-
-            tensor = torch.from_numpy(samples).unsqueeze(0).float()
-            # shape becomes (1, N) – (каналы, сэмплы)
-            out = enhance(self.model, self.df_state, tensor) # type: ignore
-
-            if isinstance(out, torch.Tensor):
-                # out now has shape (1, N); squeeze back
-                denoised = out.squeeze(0).cpu().numpy().astype(np.float32)
-            else:
-                denoised = np.asarray(out, dtype=np.float32)
-
-            if sr <= self.deepfilter_sample_rate:
-                denoised = self.downsample_audio(denoised, self.deepfilter_sample_rate, sr)
-            else:
-                denoised = self.upsample_audio(denoised, self.deepfilter_sample_rate, sr)
-
-            # вернем деноизированный в оригинальном формате, с нормализацией
-            denoised_int = (denoised * np.iinfo(seg.array_type).max).astype(seg.array_type)
-            #return seg._spawn(denoised_int.tobytes())
-            return denoised_int
-        
-        except Exception as e:
-            self.logger.error("DeepFilterNet error on chunk %s: %s", idx, e, exc_info=True)
-            return samples
-
-    async def _apply_sox(self, file_path: str, task_id: str, target_rms_db: float) -> str:
-        """Шумоподавление + нормализация через SoX."""
-
-        
-        # профайл шума
-        prof = Path(self._cfg.queue.volume_path) / "temp"/ f"{task_id}.prof"
-        # результирующий файл после обработки
-        dst = Path(self._cfg.queue.volume_path) / "temp" / f"{task_id}_sox.wav"
-
-        try:
-            # получаем профиль шума
-            subprocess.run(
-                ["sox", file_path, "-n", "trim", "0", "2", "noiseprof", str(prof)],
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-
-            # обрабаываем файл профилем и нормализуем RMS
-            subprocess.run(
-                [
-                    "sox",
-                    file_path,
-                    str(dst),
-                    "noisered",
-                    str(prof),
-                    str(self.config.get("sox_noise_reduction", 0.3)),
-                    "gain",
-                    "-n",
-                    str(target_rms_db),
-                ],
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            # вернем путь к файлу после шумодава
-            return str(dst)
-        
-        except subprocess.CalledProcessError as e:
-            self.logger.warning("SoX processing failed (%s), используем оригинальный файл.", e)
-            # в случае ошибки возвращаем оригинальный путь
-            return file_path
-        finally:
-            # закрываем файл профиля
-            prof.unlink(missing_ok=True)
-
-    async def _apply_rnnoise(self, seg: AudioSegment, idx: int) -> AudioSegment:
-        """Применение RNNoise к чанку."""
-        if not self.rnnoise:
-            return seg
-
-        try:
-            # Это является бест практикой, преобразовывать в [-1:1] float32
-            samples = np.array(seg.get_array_of_samples(), dtype=np.float32)
-            samples /= np.iinfo(seg.array_type).max
-
-            if seg.channels > 1:
-                samples = samples.reshape(-1, seg.channels).mean(axis=1)
-
-            sr = seg.frame_rate
-
-            self.logger.debug(f"RNNoise: orig_sr={sr}, samples_shape={samples.shape}")
-
-            if sr <= self.rnnoise_sample_rate:
-                samples = self.upsample_audio(samples, sr, self.rnnoise_sample_rate)
-                self.logger.debug(f"RNNoise: upsampled to 48kHz, new_length={len(samples)}")
-            else:
-                samples = self.downsample_audio(samples, sr, self.rnnoise_sample_rate)
-                self.logger.debug(f"RNNoise: downsampled to 48kHz, new_length={len(samples)}")
-
-
-
-            if hasattr(self.rnnoise, "filter"):
-                # --- NEW CODE ---------------------------------------------------------
-                filtered = self.rnnoise.filter(seg)
-
-                # 1.  AudioSegment → float32 NumPy array in range [-1, 1]
-                if isinstance(filtered, AudioSegment):
-                    filt_samples = np.array(filtered.get_array_of_samples(),
-                                            dtype=np.float32)
-                    filt_samples /= np.iinfo(filtered.array_type).max
-                    if filtered.channels > 1:
-                        filt_samples = (
-                            filt_samples.reshape(-1, filtered.channels).mean(axis=1)
-                        )
-                    filt_sr = filtered.frame_rate
-                else:                           # already ndarray
-                    filt_samples = filtered
-                    filt_sr = self.rnnoise_sample_rate      # rnnoise works at 48 kHz
-                # ---------------------------------------------------------------------
-
-                # 2.  Resample to original sample-rate
-                if filt_sr > sr:
-                    resampled = self.downsample_audio(filt_samples, filt_sr, sr)
-                elif filt_sr < sr:
-                    resampled = self.upsample_audio(filt_samples, filt_sr, sr)
-                else:
-                    resampled = filt_samples
-
-                # 3.  NumPy array → AudioSegment that matches the input format
-                resampled_int = (
-                    resampled * np.iinfo(seg.array_type).max
-                ).astype(seg.array_type)
-                return seg._spawn(resampled_int.tobytes())
-
-            frames = []
-            # пропускаем speech probability и возвращаем только фреймы
-            for _, frame in self.rnnoise.denoise_chunk(samples[np.newaxis, :]):  # type: ignore[attr-defined]
-                if sr <= self.rnnoise_sample_rate:
-                    frames.append(self.downsample_audio(frame, self.rnnoise_sample_rate, sr))
-                else:
-                    frames.append(self.upsample_audio(frame, self.rnnoise_sample_rate, sr))
-
-            if not frames:
-                return seg
-
-            # уже ресемплированы в sr
-            denoised = np.concatenate(frames).astype(np.float32)
-            denoised_int = (denoised * np.iinfo(seg.array_type).max).astype(seg.array_type)
-
-            return seg._spawn(denoised_int.tobytes())
-        
-        except Exception as e:
-            self.logger.warning("RNNoise error on chunk %s: %s", idx, e)
-            return seg
-
-    async def _merge_chunks(
-        self,
-        segments: List[np.ndarray],
-        overlap_ms: int,
-        sample_rate: int,
-        method: str,
-    ) -> np.ndarray:
-        """Merge processed audio chunks.
-
-        Args:
-            segments: List of 1-D numpy arrays representing audio chunks.
-            overlap_ms: Overlap duration between chunks in milliseconds.
-            sample_rate: Sample rate of the audio in Hz.
-            method: "linear" for simple overlap-and-concatenate,
-                    "windowed" to apply a Hanning window in the overlap region.
-
-        Returns:
-            A single 1-D numpy array representing the merged audio.
-        """
-        # If only one segment, return it unchanged
-        if len(segments) == 1:
-            return segments[0]
-
-        # Calculate number of samples corresponding to overlap_ms
-        overlap_samples = int(overlap_ms * sample_rate / 1000)
-
-        # Start with the first chunk unchanged
-        output = segments[0].copy()
-
-        # Precompute Hanning window if needed
-        if method == "windowed" and overlap_samples > 0:
-            # Create a Hanning window twice as long, split into two halves
-            hann = np.hanning(overlap_samples * 2)
-            win_a = hann[:overlap_samples]
-            win_b = hann[overlap_samples:]
-
-        # Iterate through subsequent chunks
-        for chunk in segments[1:]:
-            # If chunk shorter than overlap, skip blending
-            if len(chunk) <= overlap_samples:
-                continue
-
-            if method == "windowed" and overlap_samples > 0:
-                # Apply windowed overlap-add:
-                # taper end of output and start of chunk
-                output_end = output[-overlap_samples:].copy()
-                chunk_start = chunk[:overlap_samples].copy()
-                output[-overlap_samples:] = output_end * win_a
-                chunk[:overlap_samples] = chunk_start * win_b
-            # Concatenate, skipping overlap_samples from the start of chunk
-            output = np.concatenate([output, chunk[overlap_samples:]])
-
-        return output
-
-
-
-    async def _apply_final_normalization(self, audio: np.ndarray, target_rms_db: float) -> np.ndarray:
-        """Финальная нормализация уровня громкости."""
-        current_rms = float(np.sqrt(np.mean(audio**2)))
-
-        if current_rms == 0.0:
-            # тишина
-            return audio
-
-        # иначе выравниваем RMS
-        target_linear = 10 ** (target_rms_db / 20)
-        if current_rms > target_linear:
-            gain = target_linear / current_rms
-            audio = np.clip(audio * gain, -1.0, 1.0)
-
-        # возвращаем выровненный результат
-        return audio
-
-    async def _save(self, audio: np.ndarray, 
-                    original: str, 
-                    suffix: str, 
-                    sample_rate: int) -> str:
-        """Сохранение результата на диск."""
-        out_path = str(Path(original).with_stem(Path(original).stem + suffix))
-        # преобразуем итоговый формат файла после шумоподавления
-        sf.write(out_path, audio, sample_rate, subtype="PCM_16")
-        # возвращаем путь до него
-        return out_path
-
-    def _detect_sox(self) -> bool:
-        """Проверка доступности SoX."""
-        return bool(
-            self.config.get("sox_enabled", False)
-            and shutil.which("sox")
-        )
-
-    def _log_rnnoise_error(self, exc: Exception) -> None:
-        """Логирование ошибок при инициализации RNNoise."""
-        self.logger.warning(
-            "RNNoise инициализация не удалась: %s. Шумоподавление RNNoise будет пропущено", exc
-        )
-
-    def _log_deepfilternet_error(self, exc: Exception) -> None:
-        """Логирование ошибок при инициализации deepfilternet."""
-        self.logger.warning(
-            "DeepFilterNet инициализация не удалась: %s. Шумоподавление DeepFilterNet будет пропущено", exc
-        )
-
-    def _get_model_info(self) -> Dict[str, Any]:
-        """Метаданные конфигурации PreprocessingStage."""
-        return {
-            "stage": self.stage_name,
-            "sox": self.sox_available,
-            "rnnoise": self.rnnoise is not None,
-            "deepfilternet": self.model is not None,
-            "debug": self.debug_mode,
-        }
-
-
-    def upsample_audio(self, samples: np.ndarray, orig_sr: int, target_sr: int) -> np.ndarray:
-        """Апсемплирует сигнал из orig_sr до target_sr (target_sr > orig_sr) с фильтрацией"""
-        if target_sr <= orig_sr:
-            raise ValueError("target_sr должен быть больше orig_sr для апсемплинга")
-        gcd = np.gcd(orig_sr, target_sr)
-        up = target_sr // gcd
-        down = orig_sr // gcd
-        # полифазный ресемплер
-        upsampled = resample_poly(samples, up, down)
-        return upsampled.astype(np.float32)
-
-    def downsample_audio(self, samples: np.ndarray, orig_sr: int, target_sr: int) -> np.ndarray:
-        """Даунсемплирует сигнал из orig_sr до target_sr (target_sr < orig_sr) с фильтрацией"""
-        if target_sr >= orig_sr:
-            raise ValueError("target_sr должен быть меньше orig_sr для даунсемплинга")
-        gcd = np.gcd(orig_sr, target_sr)
-        up = target_sr // gcd
-        down = orig_sr // gcd
-        # полифазный ресемплер
-        downsampled = resample_poly(samples, up, down)
-        return downsampled.astype(np.float32)
-
