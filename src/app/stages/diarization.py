@@ -97,13 +97,18 @@ class DiarizationStage(BaseStage):
         window_enabled = bool(self.config.get("window_enabled", False))
         window_size = float(self.config.get("window_size", duration))
         hop_size = float(self.config.get("hop_size", window_size))
+        min_spk = int(self.config.get("min_speakers", 1))
+        max_spk = int(self.config.get("max_speakers", 2))
 
         if window_enabled and window_size < duration:
             annotation = await self._process_with_sliding_window(
-                audio_path, duration, window_size, hop_size, progress_callback
+                audio_path, duration, window_size, hop_size, min_spk, max_spk, 
+                progress_callback                
             )
         else:
-            annotation = self.pipeline(str(audio_path))
+            if progress_callback:
+                await progress_callback(10, "Диаризация файла целиком")
+            annotation = self.pipeline(str(audio_path), min_speakers=min_spk, max_speakers=max_spk)
             if progress_callback:
                 await progress_callback(70, "Диаризация завершена")
 
@@ -166,26 +171,31 @@ class DiarizationStage(BaseStage):
         duration: float,
         window_size: float,
         hop_size: float,
+        min_spk: int, max_spk: int,
         progress_callback: Optional[Callable[[int, str], Awaitable[None]]] = None
     ) -> Annotation:
         combined = Annotation(uri=audio_path.stem)
         sw = SlidingWindow(duration=window_size, step=hop_size)
         windows = list(sw(Segment(0.0, duration), align_last=False))
         total = len(windows)
+        if progress_callback:
+            await progress_callback(10, f"Разбиваем на окна Окон={total} duration={window_size} step={hop_size}")
         for idx, window in enumerate(windows, start=1):
             ann = self.pipeline({
                 "uri": audio_path.stem,
                 "audio": str(audio_path),
                 "segment": window
-            })
+                },
+                min_speakers=min_spk,
+                max_speakers=max_spk)
+            if progress_callback:
+                pct = int(11 + 60 * idx / total)
+                await progress_callback(pct, f"Обработка окна {idx}/{total}")
             for segment, track, label in ann.itertracks(yield_label=True):
                 start = segment.start + window.start
                 end = min(segment.end + window.start, duration)
                 if end > start:
                     combined[Segment(start, end), track] = label
-            if progress_callback:
-                pct = int(10 + 60 * idx / total)
-                await progress_callback(pct, f"Обработка окна {idx}/{total}")
         return combined
 
     def _extract_segments(self, annotation: Annotation, duration: float) -> List[Dict[str, Any]]:

@@ -3,11 +3,13 @@
 """
 Сервис аннотации аудио для CallAnnotate
 
-Добавлено:
-- Дополнительная финальная нормализация сегментов после сборки (после маппинга слов и подсчёта текста):
-  удаление сверхкоротких артефактов и слияние соседних сегментов одного спикера
-  (порог min_segment_duration берём из конфига, merge_gap=0.05s).
-- Это гарантирует отсутствие микро-сегментов даже если они каким-то образом пройдут через предыдущие этапы.
+Изменения:
+- Сохранение speaker_confidence для слов: не терять поле при маппинге спикеров к словам.
+- Проброс speaker_confidence в FinalSegment.words (TranscriptionWord).
+- Агрегация speakers[].confidence:
+  • при наличии confidence от recognition — используем его;
+  • иначе вычисляем из фактических слов спикера (среднее по probability; если есть speaker_confidence у слова — усредняем с probability).
+- Небольшие доработки _assign_speakers_to_transcription: если слово уже имеет speaker_confidence от транскрипции, не затираем; если нет и присваиваем спикера по overlap, проставляем speaker_confidence = best_ratio.
 
 Автор: akoodoy@capilot.ru
 Ссылка: https://github.com/momentics/CallAnnotate
@@ -148,6 +150,8 @@ class AnnotationService:
     ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """
         Присваивает спикеров словам и сегментам транскрипции на основании диаризации.
+        Важно: не затирать уже имеющийся speaker_confidence у слов; если назначаем спикера сами —
+        выставлять speaker_confidence ~ best_ratio.
         """
         for w in trans_words:
             ws = float(w.get("start", 0.0))
@@ -160,7 +164,12 @@ class AnnotationService:
                     best_ratio = ratio
                     best_label = d["speaker_label"] if "speaker_label" in d else d["speaker"]
             if best_label and best_ratio >= min_overlap:
-                w["speaker"] = diar_label_to_id.get(best_label, diar_label_to_id.get(str(best_label), "unknown"))
+                # Назначаем speaker, если его нет
+                if not w.get("speaker"):
+                    w["speaker"] = diar_label_to_id.get(best_label, diar_label_to_id.get(str(best_label), "unknown"))
+                # Если speaker_confidence отсутствует — выставляем по перекрытию
+                if w.get("speaker_confidence") is None:
+                    w["speaker_confidence"] = round(float(best_ratio), 3)
 
         for s in trans_segments:
             ss = float(s.get("start", 0.0))
@@ -214,7 +223,7 @@ class AnnotationService:
                 cur.words = words
                 # Текст пересобираем из слов (надёжнее)
                 cur.text = " ".join((w.word or "").strip() for w in cur.words).strip()
-                # Уверенность как среднее по словам (если нужны уточнения, можно изменить)
+                # Уверенность как среднее по словам
                 if cur.words:
                     cur.confidence = round(sum(w.probability for w in cur.words) / max(1, len(cur.words)), 3)
             else:
@@ -331,6 +340,7 @@ class AnnotationService:
 
         min_overlap = max(0.0, min(1.0, float(self.config.transcription.min_overlap)))
 
+        # Важно: не терять speaker_confidence из trans-этапа
         words_all, trans_segments_raw = self._assign_speakers_to_transcription(
             diar_segments=diar_for_map,
             diar_label_to_id=diar_label_to_id,
@@ -374,7 +384,9 @@ class AnnotationService:
                     "end": float(w["end"]),
                     "word": str(w["word"]),
                     "probability": float(w.get("probability", 0.0)),
-                    "speaker": str(w.get("speaker", spk.id))
+                    "speaker": str(w.get("speaker", spk.id)),
+                    # Новое: переносим speaker_confidence, если присутствует
+                    "speaker_confidence": None if w.get("speaker_confidence") is None else float(w.get("speaker_confidence")) # type: ignore
                 }) for w in words_in],
                 confidence=round(seg_conf, 3)
             ))
@@ -431,7 +443,6 @@ class AnnotationService:
             confidence=round(overall_conf, 3),
             language=raw_trans.get("language", "unknown"),
             segments=fixed_trans_segments,
-            # Список слов возвращаем в составе fin-сегментов; при необходимости можно добавить общим списком
         )
 
         # CardDAV сопоставление, если доступно
@@ -441,6 +452,28 @@ class AnnotationService:
                 cd = cd_speakers.get(label, {}).get("contact")
                 if cd:
                     spk.contact_info = ContactInfo(**cd)
+
+        # Дополнительная агрегация уверенности спикеров:
+        # Если confidence от recognition == 0.0, заполним из слов этого спикера.
+        # Используем среднюю по словам probability; если у слова есть speaker_confidence —
+        # можно усреднить (probability + speaker_confidence)/2.
+        spk_words: Dict[str, List[TranscriptionWord]] = {}
+        for seg in segments:
+            spk_words.setdefault(seg.speaker, []).extend(seg.words)
+
+        for label, spk in speakers_map.items():
+            # spk.id — это "speaker_XX"
+            if spk.confidence == 0.0:
+                ws = spk_words.get(spk.id, [])
+                if ws:
+                    vals = []
+                    for w in ws:
+                        if w.speaker_confidence is not None:
+                            vals.append((float(w.probability) + float(w.speaker_confidence)) / 2.0)
+                        else:
+                            vals.append(float(w.probability))
+                    if vals:
+                        spk.confidence = round(sum(vals) / max(1, len(vals)), 3)
 
         final_speakers = list(speakers_map.values())
         stats = Statistics(
@@ -464,3 +497,4 @@ class AnnotationService:
             transcription=transcription,
             statistics=stats
         )
+        

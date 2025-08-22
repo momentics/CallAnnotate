@@ -56,6 +56,8 @@ class DiarizationConfig(BaseSettings):
     window_enabled: bool = Field(True, description="Включить оконный режим диаризации")
     window_size: float = Field(30.0, gt=0, description="Длина окна (сек)")
     hop_size: float = Field(10.0, ge=0, description="Шаг окна (сек)")
+    min_speakers: int = Field(1, gt=0, description="Минимальное количество спикеров")
+    max_speakers: int = Field(2, gt=1, description="Максимальное количество спикеров")
 
     class Config:
         env_prefix = "DIARIZATION_"
